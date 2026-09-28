@@ -1,0 +1,1464 @@
+<!DOCTYPE html>
+<html lang="id" style="color-scheme: light;">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>TRASTAR — Performance Parts for Every Ride</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<style>
+  :root{
+    --trs-red:#E11D2E;
+    --trs-red-dark:#B5121F;
+    --trs-dark:#111111;
+    --trs-dark-2:#1B1B1B;
+    --trs-white:#FFFFFF;
+    --trs-bg:#F7F7F7;
+    --trs-gray:#6B7280;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    box-sizing: border-box;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-padding-top: calc(64px + var(--safe-t)); scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--trs-bg);
+    color:var(--trs-dark);
+    padding-top:var(--safe-t);
+    padding-bottom:var(--safe-b);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,h4,.font-display{font-family:'Manrope',system-ui,sans-serif;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:8px;}
+  .no-scrollbar::-webkit-scrollbar{display:none;}
+  .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}
+  .trs-btn-primary{background:var(--trs-red);color:#fff;transition:background .15s ease, transform .1s ease;}
+  .trs-btn-primary:hover{background:var(--trs-red-dark);}
+  .trs-btn-primary:active{transform:scale(0.98);}
+  .trs-scroll-x{scroll-snap-type:x mandatory;}
+  .trs-scroll-x > *{scroll-snap-align:start;}
+  input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible{outline:2px solid var(--trs-red); outline-offset:2px;}
+  @keyframes trs-fade-up{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+  .trs-animate-in{animation:trs-fade-up .35s ease both;}
+  @keyframes trs-spin{to{transform:rotate(360deg);}}
+  .trs-spin{animation:trs-spin 1s linear infinite;}
+  .trs-line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  table{border-collapse:collapse;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+window.addEventListener('error', function(e){ console.error('TRASTAR runtime error:', e.error || e.message); });
+</script>
+<script>
+// ==================== HELPERS ====================
+const h = React.createElement;
+const { useState, useEffect, useMemo, useRef, useCallback, createContext, useContext } = React;
+
+function cx(...args){ return args.filter(Boolean).join(' '); }
+function formatIDR(n){
+  return 'Rp' + Math.round(n).toLocaleString('id-ID');
+}
+function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+function loadLS(key, fallback){
+  try{ const raw = window.localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+  catch(e){ return fallback; }
+}
+function saveLS(key, value){
+  try{ window.localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+}
+
+// ==================== ICONS ====================
+function Icon({ name, size = 20, className = '', strokeWidth = 1.8 }){
+  const common = { width:size, height:size, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth, strokeLinecap:'round', strokeLinejoin:'round', className };
+  switch(name){
+    case 'search': return h('svg', common, h('circle',{cx:11,cy:11,r:7}), h('line',{x1:21,y1:21,x2:16.2,y2:16.2}));
+    case 'user': return h('svg', common, h('circle',{cx:12,cy:8,r:4}), h('path',{d:'M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7'}));
+    case 'heart': return h('svg', common, h('path',{d:'M12 20s-7.5-4.6-10-9.3C.4 7.4 2.3 4 5.8 4c2 0 3.4 1 6.2 3.6C14.8 5 16.2 4 18.2 4c3.5 0 5.4 3.4 3.8 6.7C19.5 15.4 12 20 12 20z'}));
+    case 'heart-fill': return h('svg', {...common, fill:'currentColor'}, h('path',{d:'M12 20s-7.5-4.6-10-9.3C.4 7.4 2.3 4 5.8 4c2 0 3.4 1 6.2 3.6C14.8 5 16.2 4 18.2 4c3.5 0 5.4 3.4 3.8 6.7C19.5 15.4 12 20 12 20z'}));
+    case 'cart': return h('svg', common, h('circle',{cx:9,cy:20,r:1.4}), h('circle',{cx:18,cy:20,r:1.4}), h('path',{d:'M2 3h2.4l2.1 11.4a2 2 0 0 0 2 1.6h8.4a2 2 0 0 0 2-1.6L21 7H6'}));
+    case 'menu': return h('svg', common, h('line',{x1:3,y1:6,x2:21,y2:6}), h('line',{x1:3,y1:12,x2:21,y2:12}), h('line',{x1:3,y1:18,x2:21,y2:18}));
+    case 'x': return h('svg', common, h('line',{x1:5,y1:5,x2:19,y2:19}), h('line',{x1:19,y1:5,x2:5,y2:19}));
+    case 'chevron-down': return h('svg', common, h('polyline',{points:'6 9 12 15 18 9'}));
+    case 'chevron-right': return h('svg', common, h('polyline',{points:'9 6 15 12 9 18'}));
+    case 'chevron-left': return h('svg', common, h('polyline',{points:'15 6 9 12 15 18'}));
+    case 'plus': return h('svg', common, h('line',{x1:12,y1:5,x2:12,y2:19}), h('line',{x1:5,y1:12,x2:19,y2:12}));
+    case 'minus': return h('svg', common, h('line',{x1:5,y1:12,x2:19,y2:12}));
+    case 'check': return h('svg', common, h('polyline',{points:'20 6 9 17 4 12'}));
+    case 'check-circle': return h('svg', common, h('circle',{cx:12,cy:12,r:9}), h('polyline',{points:'8 12.5 11 15.5 16 9'}));
+    case 'copy': return h('svg', common, h('rect',{x:9,y:9,width:12,height:12,rx:2}), h('path',{d:'M5 15V5a2 2 0 0 1 2-2h10'}));
+    case 'truck': return h('svg', common, h('rect',{x:1,y:6,width:14,height:11,rx:1.5}), h('path',{d:'M15 10h4l3 3.5V17h-7z'}), h('circle',{cx:6,cy:19,r:1.6}), h('circle',{cx:17.5,cy:19,r:1.6}));
+    case 'shield': return h('svg', common, h('path',{d:'M12 3l7 3v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6z'}));
+    case 'refresh': return h('svg', common, h('path',{d:'M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3'}), h('polyline',{points:'18 3 18 7 14 7'}), h('polyline',{points:'6 21 6 17 10 17'}));
+    case 'headset': return h('svg', common, h('path',{d:'M4 13v-1a8 8 0 0 1 16 0v1'}), h('rect',{x:2,y:13,width:5,height:7,rx:1.5}), h('rect',{x:17,y:13,width:5,height:7,rx:1.5}), h('path',{d:'M20 20a4 4 0 0 1-4 3h-2'}));
+    case 'star': return h('svg', {...common, fill:'currentColor', stroke:'none'}, h('polygon',{points:'12 2.5 15.1 8.9 22.2 9.9 17.1 14.8 18.3 21.8 12 18.5 5.7 21.8 6.9 14.8 1.8 9.9 8.9 8.9'}));
+    case 'star-outline': return h('svg', common, h('polygon',{points:'12 2.5 15.1 8.9 22.2 9.9 17.1 14.8 18.3 21.8 12 18.5 5.7 21.8 6.9 14.8 1.8 9.9 8.9 8.9'}));
+    case 'map-pin': return h('svg', common, h('path',{d:'M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z'}), h('circle',{cx:12,cy:9,r:2.4}));
+    case 'phone': return h('svg', common, h('path',{d:'M5 4h3l1.5 4.5L7 10.5a12 12 0 0 0 6.5 6.5l1.8-2.5L20 16v3a2 2 0 0 1-2.2 2A16 16 0 0 1 3 6.2 2 2 0 0 1 5 4z'}));
+    case 'mail': return h('svg', common, h('rect',{x:3,y:5,width:18,height:14,rx:2}), h('polyline',{points:'3 7 12 13 21 7'}));
+    case 'wallet': return h('svg', common, h('rect',{x:3,y:6,width:18,height:13,rx:2}), h('path',{d:'M17 12.5h2.5'}), h('path',{d:'M3 9h18'}));
+    case 'building': return h('svg', common, h('rect',{x:5,y:3,width:14,height:18}), h('line',{x1:9,y1:7,x2:9,y2:7}), h('line',{x1:9,y1:11,x2:9,y2:11}), h('line',{x1:9,y1:15,x2:9,y2:15}), h('line',{x1:15,y1:7,x2:15,y2:7}), h('line',{x1:15,y1:11,x2:15,y2:11}), h('line',{x1:15,y1:15,x2:15,y2:15}));
+    case 'qr': return h('svg', common, h('rect',{x:3,y:3,width:7,height:7}), h('rect',{x:14,y:3,width:7,height:7}), h('rect',{x:3,y:14,width:7,height:7}), h('line',{x1:14,y1:14,x2:14,y2:21}), h('line',{x1:21,y1:14,x2:21,y2:21}), h('line',{x1:17.5,y1:14,x2:17.5,y2:17.5}), h('line',{x1:14,y1:17.5,x2:21,y2:17.5}));
+    case 'disc': return h('svg', common, h('circle',{cx:12,cy:12,r:9}), h('circle',{cx:12,cy:12,r:3}));
+    case 'zap': return h('svg', {...common, fill:'currentColor', stroke:'none'}, h('polygon',{points:'13 2 4 14 11 14 10 22 20 9 13 9'}));
+    case 'settings': return h('svg', common, h('circle',{cx:12,cy:12,r:3}), h('path',{d:'M19 12a7 7 0 0 0-.2-1.6l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2.8-1.6L13 2h-2l-.6 2.8a7 7 0 0 0-2.8 1.6l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .5 0 1.1.2 1.6l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2.8 1.6L11 22h2l.6-2.8a7 7 0 0 0 2.8-1.6l2.4 1 2-3.4-2-1.6c.2-.5.2-1.1.2-1.6z'}));
+    case 'wind': return h('svg', common, h('path',{d:'M3 8h10a3 3 0 1 0-3-3'}), h('path',{d:'M3 12h14a3 3 0 1 1-3 3'}), h('path',{d:'M3 16h8'}));
+    case 'gauge': return h('svg', common, h('circle',{cx:12,cy:13,r:8}), h('line',{x1:12,y1:13,x2:15.5,y2:9.5}), h('line',{x1:8,y1:5,x2:8.6,y2:6.4}), h('line',{x1:16,y1:5,x2:15.4,y2:6.4}));
+    case 'layers': return h('svg', common, h('polygon',{points:'12 3 21 8 12 13 3 8'}), h('polyline',{points:'3 15 12 20 21 15'}), h('polyline',{points:'3 11.5 12 16.5 21 11.5'}));
+    case 'package': return h('svg', common, h('path',{d:'M21 8l-9-5-9 5 9 5 9-5z'}), h('path',{d:'M3 8v8l9 5 9-5V8'}), h('line',{x1:12,y1:13,x2:12,y2:21}));
+    case 'instagram': return h('svg', common, h('rect',{x:3,y:3,width:18,height:18,rx:5}), h('circle',{cx:12,cy:12,r:4}), h('circle',{cx:17.3,cy:6.7,r:0.6,fill:'currentColor'}));
+    case 'facebook': return h('svg', common, h('path',{d:'M14 8.5h2.5V5H14c-2.2 0-3.5 1.4-3.5 3.6V11H8v3h2.5v7H14v-7h2.3l.4-3H14V9.2c0-.6.3-.7.7-.7z', fill:'currentColor', stroke:'none'}));
+    case 'youtube': return h('svg', common, h('rect',{x:2,y:5.5,width:20,height:13,rx:3}), h('polygon',{points:'10.5 9 15.5 12 10.5 15', fill:'currentColor', stroke:'none'}));
+    case 'whatsapp': return h('svg', {...common, fill:'currentColor', stroke:'none'}, h('path',{d:'M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.1l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.2-.3.2-.5.1-.7-.3-1.4-.7-2-1.3-.6-.5-1-1.2-1.2-1.4-.1-.2 0-.4.1-.5l.4-.5c.1-.1.1-.3.1-.4-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.6.6-.9 1.3-.9 2.1.1 1 .4 1.9 1.1 2.8 1.2 1.7 2.6 2.9 4.3 3.6.7.3 1.3.5 1.8.6.7.2 1.3.2 1.8.1.6-.1 1.4-.6 1.6-1.1.2-.6.2-1.1.1-1.2-.1-.1-.2-.2-.4-.3z'}));
+    case 'tiktok': return h('svg', {...common, fill:'currentColor', stroke:'none'}, h('path',{d:'M14 3h2.2c.2 1.6 1.3 3 3 3.4V8.7c-1.1 0-2.2-.3-3.1-.9v6.4a5 5 0 1 1-4-4.9v2.3a2.7 2.7 0 1 0 1.9 2.6V3z'}));
+    case 'loader': return h('svg', {...common, className: cx(className,'trs-spin')}, h('path',{d:'M12 3a9 9 0 1 0 9 9'}));
+    case 'shirt': return h('svg', common, h('path',{d:'M8 4l4 2 4-2 4 4-3 3v11H7V11L4 8z'}));
+    case 'inbox': return h('svg', common, h('polyline',{points:'22 12 16 12 14 15 10 15 8 12 2 12'}), h('path',{d:'M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z'}));
+    default: return null;
+  }
+}
+
+function StarRating({ rating, size = 14 }){
+  const full = Math.floor(rating);
+  const hasHalf = rating - full >= 0.4;
+  const stars = [];
+  for(let i=0;i<5;i++){
+    if(i < full) stars.push(h(Icon,{key:i,name:'star',size,className:'text-amber-400'}));
+    else stars.push(h(Icon,{key:i,name:'star-outline',size,className:'text-gray-300'}));
+  }
+  return h('div',{className:'flex items-center gap-0.5'}, stars);
+}
+
+// ==================== DATA ====================
+const CATEGORIES = [
+  { name:'Engine Parts', icon:'settings' },
+  { name:'Brake System', icon:'disc' },
+  { name:'Suspension', icon:'gauge' },
+  { name:'Electrical', icon:'zap' },
+  { name:'Lighting', icon:'zap' },
+  { name:'Transmission', icon:'layers' },
+  { name:'Body Parts', icon:'shirt' },
+  { name:'Accessories', icon:'package' },
+];
+
+const BRANDS = ['Honda','Yamaha','Kawasaki','Suzuki','Vespa'];
+const MODELS_BY_BRAND = {
+  Honda: ['Vario 125','Vario 150','Vario 160','PCX 160','Beat','CBR150R'],
+  Yamaha: ['NMAX','Aerox 155','Mio','XMAX','R15'],
+  Kawasaki: ['Ninja 250','KLX 150','W175'],
+  Suzuki: ['Satria F150','Nex II','GSX-R150'],
+  Vespa: ['Sprint 150','Primavera','LX 125'],
+};
+const YEARS = ['2026','2025','2024','2023','2022','2021','2020'];
+
+function img(seed){ return seed; }
+
+const PRODUCTS = [
+  { id:1, slug:'brake-disc-racing', name:'TRASTAR Racing Brake Disc 220MM', brand:'TRASTAR', category:'Brake System', icon:'disc',
+    price:525000, salePrice:425000, rating:4.9, reviewCount:124, stock:38,
+    description:'High performance racing brake disc dengan material stainless steel berkualitas tinggi untuk pengereman lebih responsif dan stabil. Dirancang dengan pola ventilasi khusus untuk membuang panas lebih cepat sehingga performa pengereman tetap konsisten meski dipakai agresif.\n\nCocok untuk penggunaan harian maupun track day, disc ini melalui proses precision-machining untuk memastikan permukaan rata dan minim getaran pada kecepatan tinggi.',
+    compatibility:['Honda Vario 125','Honda Vario 150','Honda Vario 160','Honda PCX 160'],
+    specs:{ Material:'Stainless Steel', Diameter:'220 MM', Thickness:'3.5 MM', Weight:'800 gram', Brand:'TRASTAR', Warranty:'6 Bulan' },
+    variants:{ Diameter:['220MM','240MM'], Color:['Silver','Black','Gold'] }, sku:'TRS-BRK-001' },
+  { id:2, slug:'performance-brake-pad', name:'TRASTAR Performance Brake Pad', brand:'TRASTAR', category:'Brake System', icon:'disc',
+    price:220000, salePrice:185000, rating:4.7, reviewCount:98, stock:52,
+    description:'Brake pad dengan campuran material semi-metallic yang memberikan gigitan rem lebih pakem tanpa membuat piringan cepat aus. Minim decit dan tahan panas tinggi.\n\nDiformulasikan khusus untuk penggunaan harian di perkotaan maupun perjalanan jauh.',
+    compatibility:['Honda Vario 125','Honda Beat','Yamaha NMAX','Yamaha Aerox 155'],
+    specs:{ Material:'Semi-Metallic', Fitment:'Universal Bracket', Weight:'150 gram', Brand:'TRASTAR', Warranty:'3 Bulan' },
+    variants:{ Compound:['Standard','Sport'], Color:['Black'] }, sku:'TRS-BRK-002' },
+  { id:3, slug:'led-headlight-pro', name:'TRASTAR LED Headlight Pro', brand:'TRASTAR', category:'Lighting', icon:'zap',
+    price:320000, salePrice:275000, rating:4.8, reviewCount:210, stock:64,
+    description:'Headlight LED dengan output cahaya lebih terang dan hemat daya dibanding bohlam halogen standar. Beam pattern dirancang agar tidak menyilaukan pengendara dari arah berlawanan.\n\nBody aluminium dengan heatsink membuat unit ini tahan lama meski digunakan dalam durasi panjang.',
+    compatibility:['Honda Vario series','Yamaha NMAX','Yamaha Aerox 155','Suzuki Nex II'],
+    specs:{ 'Light Output':'6000 Lumen', 'Color Temp':'6500K', Voltage:'12V', Brand:'TRASTAR', Warranty:'1 Tahun' },
+    variants:{ Beam:['H4','H11'], Color:['White 6500K','Ice Blue'] }, sku:'TRS-LGT-001' },
+  { id:4, slug:'premium-chain-kit', name:'TRASTAR Premium Chain Kit', brand:'TRASTAR', category:'Transmission', icon:'layers',
+    price:560000, salePrice:495000, rating:4.9, reviewCount:156, stock:29,
+    description:'Satu set chain kit (rantai, gear depan, gear belakang) dengan material high-carbon steel yang lebih kuat dan awet. Cocok untuk motor harian maupun motor dengan performa yang sudah ditingkatkan.\n\nProses heat-treatment membuat komponen ini lebih tahan terhadap keausan dan perpanjangan rantai.',
+    compatibility:['Honda CBR150R','Yamaha R15','Suzuki GSX-R150','Kawasaki Ninja 250'],
+    specs:{ Material:'High-Carbon Steel', 'Chain Size':'428H', Links:'128', Brand:'TRASTAR', Warranty:'6 Bulan' },
+    variants:{ Size:['420','428H'], Color:['Gold','Silver'] }, sku:'TRS-TRN-001' },
+  { id:5, slug:'adjustable-shock', name:'TRASTAR Adjustable Shock', brand:'TRASTAR', category:'Suspension', icon:'gauge',
+    price:950000, salePrice:850000, rating:4.8, reviewCount:87, stock:21,
+    description:'Shockbreaker belakang dengan preload yang bisa disesuaikan untuk kenyamanan maupun handling yang lebih presisi. Menggunakan gas nitrogen untuk redaman yang lebih stabil di berbagai kondisi jalan.\n\nDilengkapi per progresif yang membuat karakter suspensi tetap empuk di kecepatan rendah namun stabil saat menikung.',
+    compatibility:['Honda Vario 160','Yamaha Aerox 155','Yamaha NMAX'],
+    specs:{ Type:'Gas Nitrogen', Length:'320 MM', Adjustability:'7-step preload', Brand:'TRASTAR', Warranty:'1 Tahun' },
+    variants:{ Length:['320MM','330MM'], Color:['Red','Black','Gold'] }, sku:'TRS-SUS-001' },
+  { id:6, slug:'racing-spark-plug', name:'TRASTAR Racing Spark Plug', brand:'TRASTAR', category:'Engine Parts', icon:'settings',
+    price:120000, salePrice:95000, rating:4.6, reviewCount:143, stock:110,
+    description:'Busi racing dengan elektroda iridium untuk pengapian yang lebih sempurna, membantu pembakaran lebih efisien dan tarikan mesin lebih responsif.\n\nDirekomendasikan untuk penggantian berkala guna menjaga performa mesin tetap optimal.',
+    compatibility:['Universal 125-160cc'],
+    specs:{ Electrode:'Iridium', Thread:'M10 x 1.0', Brand:'TRASTAR', Warranty:'3 Bulan' },
+    variants:{ Type:['Standard','Racing'], Color:['-'] }, sku:'TRS-ENG-001' },
+  { id:7, slug:'cnc-brake-lever', name:'TRASTAR CNC Brake Lever', brand:'TRASTAR', category:'Brake System', icon:'disc',
+    price:375000, salePrice:325000, rating:4.7, reviewCount:76, stock:40,
+    description:'Tuas rem hasil proses CNC dari billet aluminium, memberikan tampilan lebih premium sekaligus bobot yang lebih ringan dibanding tuas standar.\n\nDilengkapi adjuster 6 posisi untuk menyesuaikan jarak tuas dengan genggaman tangan.',
+    compatibility:['Honda Vario series','Honda PCX 160','Yamaha NMAX'],
+    specs:{ Material:'CNC Billet Aluminum', Adjuster:'6-position', Brand:'TRASTAR', Warranty:'6 Bulan' },
+    variants:{ Side:['Kiri & Kanan'], Color:['Red','Black','Blue','Gold'] }, sku:'TRS-BRK-003' },
+  { id:8, slug:'usb-fast-charger', name:'TRASTAR USB Fast Charger', brand:'TRASTAR', category:'Accessories', icon:'zap',
+    price:210000, salePrice:175000, rating:4.5, reviewCount:189, stock:75,
+    description:'Modul dual USB charger dengan indikator tegangan aki, memudahkan pengisian daya smartphone maupun perangkat lain selama berkendara.\n\nDilengkapi waterproof cap untuk melindungi port saat tidak digunakan.',
+    compatibility:['Universal semua motor matic'],
+    specs:{ Output:'2x USB, 3.1A', Display:'Voltmeter LED', Brand:'TRASTAR', Warranty:'3 Bulan' },
+    variants:{ Mount:['Stang','Dek Depan'], Color:['Black'] }, sku:'TRS-ACC-001' },
+  { id:9, slug:'air-filter-racing', name:'TRASTAR Air Filter Racing', brand:'TRASTAR', category:'Engine Parts', icon:'wind',
+    price:165000, salePrice:139000, rating:4.6, reviewCount:112, stock:58,
+    description:'Filter udara racing dengan material foam berlapis yang memiliki aliran udara lebih baik dibanding filter standar, membantu proses pembakaran lebih optimal.\n\nDapat dicuci dan digunakan kembali (reusable) untuk efisiensi jangka panjang.',
+    compatibility:['Honda Vario series','Honda Beat','Yamaha Mio'],
+    specs:{ Material:'Multi-layer Foam', Type:'Reusable', Brand:'TRASTAR', Warranty:'3 Bulan' },
+    variants:{ Type:['Standard','High-Flow'], Color:['-'] }, sku:'TRS-ENG-002' },
+  { id:10, slug:'digital-speedometer', name:'TRASTAR Digital Speedometer', brand:'TRASTAR', category:'Electrical', icon:'gauge',
+    price:480000, salePrice:420000, rating:4.8, reviewCount:64, stock:19,
+    description:'Speedometer digital full LCD dengan tampilan RPM, kecepatan, odometer, dan indikator bahan bakar yang lebih jelas dibanding panel analog standar.\n\nAnti air dan anti getar, cocok untuk penggunaan harian maupun modifikasi tampilan panel.',
+    compatibility:['Honda Vario 125','Honda Vario 150','Honda Beat'],
+    specs:{ Display:'Full LCD', 'Water Resistance':'IP67', Brand:'TRASTAR', Warranty:'6 Bulan' },
+    variants:{ Backlight:['White','Blue'], Color:['Black'] }, sku:'TRS-ELC-001' },
+  { id:11, slug:'body-fairing-set', name:'TRASTAR Body Fairing Set', brand:'TRASTAR', category:'Body Parts', icon:'shirt',
+    price:1250000, salePrice:1050000, rating:4.7, reviewCount:41, stock:12,
+    description:'Satu set body fairing dengan material ABS berkualitas tinggi, presisi dengan lekukan body asli sehingga mudah dipasang tanpa modifikasi berlebihan.\n\nSudah termasuk primer coating sehingga siap untuk proses pengecatan sesuai selera.',
+    compatibility:['Yamaha R15', 'Honda CBR150R'],
+    specs:{ Material:'ABS Plastic', Finish:'Primer Coated', Brand:'TRASTAR', Warranty:'3 Bulan' },
+    variants:{ Set:['Half Set','Full Set'], Color:['Primer White'] }, sku:'TRS-BDY-001' },
+  { id:12, slug:'racing-exhaust-slip-on', name:'TRASTAR Racing Exhaust Slip-On', brand:'TRASTAR', category:'Engine Parts', icon:'wind',
+    price:1450000, salePrice:1250000, rating:4.9, reviewCount:167, stock:16,
+    description:'Knalpot slip-on dengan konstruksi full stainless steel yang memberikan karakter suara lebih sporty tanpa mengorbankan tenaga di putaran bawah.\n\nDatang dengan sertifikat uji emisi dan kebisingan sesuai standar yang berlaku.',
+    compatibility:['Yamaha NMAX','Yamaha Aerox 155','Honda PCX 160'],
+    specs:{ Material:'Full Stainless Steel', Type:'Slip-On', Brand:'TRASTAR', Warranty:'1 Tahun' },
+    variants:{ Finish:['Matte Black','Chrome'], Color:['-'] }, sku:'TRS-ENG-003' },
+];
+
+function getProductBySlug(slug){ return PRODUCTS.find(p => p.slug === slug); }
+function discountPct(p){ return Math.round((1 - p.salePrice/p.price)*100); }
+
+// ==================== ROUTER ====================
+function getHashPath(){
+  const raw = window.location.hash.replace(/^#/, '');
+  return raw === '' ? '/' : raw;
+}
+function matchRoute(pattern, path){
+  const pParts = pattern.split('/').filter(Boolean);
+  const uParts = path.split('/').filter(Boolean);
+  if(pParts.length !== uParts.length) return null;
+  const params = {};
+  for(let i=0;i<pParts.length;i++){
+    if(pParts[i].startsWith(':')) params[pParts[i].slice(1)] = decodeURIComponent(uParts[i]);
+    else if(pParts[i] !== uParts[i]) return null;
+  }
+  return params;
+}
+const RouterContext = createContext(null);
+function useRouter(){ return useContext(RouterContext); }
+function Link({ to, className, children, onClick, ariaLabel }){
+  const { navigate } = useRouter();
+  return h('a', {
+    href:'#'+to, className, 'aria-label': ariaLabel,
+    onClick:(e)=>{ e.preventDefault(); if(onClick) onClick(); navigate(to); }
+  }, children);
+}
+
+// ==================== APP STATE (CART / CHECKOUT / ORDERS) ====================
+const AppStateContext = createContext(null);
+function useAppState(){ return useContext(AppStateContext); }
+
+function defaultCheckout(){
+  return {
+    fullName:'Budi Santoso', email:'budi@email.com', phone:'081234567890',
+    province:'D.I. Yogyakarta', city:'Sleman', district:'Depok', postalCode:'55281',
+    address:'Jl. Kaliurang KM 7, Sleman',
+    shippingMethod:'jne',
+  };
+}
+const SHIPPING_METHODS = [
+  { id:'jne', name:'JNE Regular', cost:20000, eta:'2-3 Hari' },
+  { id:'jnt', name:'J&T Express', cost:22000, eta:'1-2 Hari' },
+  { id:'sicepat', name:'SiCepat', cost:18000, eta:'2-3 Hari' },
+  { id:'instant', name:'Instant Courier', cost:35000, eta:'Same Day' },
+];
+
+function useCartLogic(){
+  const [items, setItems] = useState(()=> loadLS('trastar_cart', []));
+  useEffect(()=>{ saveLS('trastar_cart', items); }, [items]);
+
+  const [coupon, setCoupon] = useState(()=> loadLS('trastar_coupon', null));
+  useEffect(()=>{ saveLS('trastar_coupon', coupon); }, [coupon]);
+
+  function variantKey(variant){ return Object.values(variant||{}).join('|'); }
+
+  function addToCart(product, variant, qty){
+    setItems(prev=>{
+      const key = variantKey(variant);
+      const idx = prev.findIndex(it => it.productId === product.id && it.variantKey === key);
+      if(idx > -1){
+        const next = [...prev];
+        next[idx] = { ...next[idx], qty: next[idx].qty + qty };
+        return next;
+      }
+      return [...prev, { productId: product.id, variant, variantKey: key, qty }];
+    });
+  }
+  function updateQty(idx, qty){
+    setItems(prev => prev.map((it,i)=> i===idx ? { ...it, qty: Math.max(1, qty) } : it));
+  }
+  function removeItem(idx){
+    setItems(prev => prev.filter((_,i)=> i!==idx));
+  }
+  function clearCart(){ setItems([]); setCoupon(null); }
+
+  function applyCoupon(code){
+    const norm = (code||'').trim().toUpperCase();
+    if(norm === 'TRASTAR10'){ setCoupon({ code:norm, percent:10 }); return { ok:true, message:'Kupon berhasil diterapkan! Diskon 10%.' }; }
+    setCoupon(null);
+    return { ok:false, message:'Kode kupon tidak valid.' };
+  }
+
+  const enrichedItems = items.map((it,idx)=>({ ...it, index: idx, product: PRODUCTS.find(p=>p.id===it.productId) })).filter(it=>it.product);
+  const subtotal = enrichedItems.reduce((sum,it)=> sum + it.product.salePrice * it.qty, 0);
+  const discount = coupon ? Math.round(subtotal * coupon.percent/100) : 0;
+  const itemCount = enrichedItems.reduce((sum,it)=> sum + it.qty, 0);
+
+  return { items: enrichedItems, addToCart, updateQty, removeItem, clearCart, coupon, applyCoupon, subtotal, discount, itemCount };
+}
+
+function useOrdersLogic(){
+  function generateOrderNumber(){
+    const d = new Date();
+    const dateStr = d.getFullYear().toString() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
+    let seq = loadLS('trastar_order_seq', 0) + 1;
+    saveLS('trastar_order_seq', seq);
+    return 'TRS' + dateStr + String(seq).padStart(3,'0');
+  }
+  function saveOrder(order){
+    const all = loadLS('trastar_orders', {});
+    all[order.orderNumber] = order;
+    saveLS('trastar_orders', all);
+    saveLS('trastar_last_order', order.orderNumber);
+  }
+  function getOrder(orderNumber){
+    const all = loadLS('trastar_orders', {});
+    return all[orderNumber] || null;
+  }
+  function getLastOrderNumber(){ return loadLS('trastar_last_order', null); }
+  return { generateOrderNumber, saveOrder, getOrder, getLastOrderNumber };
+}
+
+// ==================== SHARED UI ====================
+function ProductThumb({ product, className }){
+  const gradients = {
+    'Brake System': ['#1B1B1B','#3a1216'],
+    'Lighting': ['#1B1B1B','#3a3312'],
+    'Transmission': ['#1B1B1B','#20242f'],
+    'Suspension': ['#1B1B1B','#2a1b3a'],
+    'Engine Parts': ['#1B1B1B','#12251f'],
+    'Accessories': ['#1B1B1B','#1f2733'],
+    'Electrical': ['#1B1B1B','#2b1f38'],
+    'Body Parts': ['#1B1B1B','#3a1b1b'],
+  };
+  const [c1,c2] = gradients[product.category] || ['#1B1B1B','#2a2a2a'];
+  const gid = 'g'+product.id;
+  return h('div',{ className: cx('relative w-full h-full flex items-center justify-center overflow-hidden', className), style:{ background:`linear-gradient(135deg, ${c1}, ${c2})` } },
+    h('svg',{ viewBox:'0 0 200 200', className:'w-2/3 h-2/3 opacity-90' },
+      h('defs',null, h('linearGradient',{id:gid, x1:'0%',y1:'0%',x2:'100%',y2:'100%'},
+        h('stop',{offset:'0%', stopColor:'#E11D2E'}), h('stop',{offset:'100%', stopColor:'#ffffff', stopOpacity:0.15}))),
+      h('circle',{cx:100,cy:100,r:70,fill:'none',stroke:`url(#${gid})`,strokeWidth:3, strokeDasharray:'6 10'}),
+      h('circle',{cx:100,cy:100,r:46,fill:'none',stroke:'#ffffff',strokeOpacity:0.25,strokeWidth:2}),
+      h('g',{transform:'translate(68,68)'}, h(Icon,{name:product.icon,size:64,className:'text-white'}))
+    ),
+    h('span',{ className:'absolute bottom-2 left-2 text-[10px] tracking-wide uppercase text-white/70 font-medium' }, product.category)
+  );
+}
+
+function Badge({ children, tone='red' }){
+  const tones = {
+    red:'bg-[var(--trs-red)] text-white',
+    dark:'bg-[var(--trs-dark)] text-white',
+    outline:'border border-gray-300 text-gray-600 bg-white',
+    green:'bg-emerald-500 text-white',
+  };
+  return h('span',{ className: cx('inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold', tones[tone]) }, children);
+}
+
+function Breadcrumb({ items }){
+  return h('nav',{ className:'flex items-center flex-wrap gap-1.5 text-sm text-gray-500 mb-4' },
+    items.map((it,i)=> h(React.Fragment,{key:i},
+      i>0 && h(Icon,{name:'chevron-right', size:14, className:'text-gray-300'}),
+      it.to ? h(Link,{to:it.to, className:'hover:text-[var(--trs-red)] transition-colors'}, it.label)
+            : h('span',{ className:'text-gray-800 font-medium' }, it.label)
+    ))
+  );
+}
+
+function QuantitySelector({ value, onChange, size='md' }){
+  const pad = size==='sm' ? 'w-7 h-7' : 'w-9 h-9';
+  return h('div',{ className:'inline-flex items-center border border-gray-200 rounded-lg overflow-hidden' },
+    h('button',{ type:'button', className: cx(pad,'flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600'), onClick:()=>onChange(Math.max(1,value-1)), 'aria-label':'Kurangi jumlah' }, h(Icon,{name:'minus',size:14})),
+    h('span',{ className: cx('flex items-center justify-center font-semibold text-sm select-none', size==='sm'?'w-8':'w-10') }, value),
+    h('button',{ type:'button', className: cx(pad,'flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600'), onClick:()=>onChange(value+1), 'aria-label':'Tambah jumlah' }, h(Icon,{name:'plus',size:14}))
+  );
+}
+
+function ProductCard({ product }){
+  const { addToCart } = useAppState();
+  const [wish, setWish] = useState(false);
+  const pct = discountPct(product);
+  return h('div',{ className:'group bg-white rounded-xl border border-gray-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 overflow-hidden flex flex-col' },
+    h(Link,{ to:'/product/'+product.slug, className:'relative block aspect-square' },
+      h(ProductThumb,{ product }),
+      pct>0 && h('div',{className:'absolute top-2 left-2'}, h(Badge,null, '-'+pct+'%')),
+      h('button',{ type:'button', 'aria-label':'Wishlist', onClick:(e)=>{ e.preventDefault(); e.stopPropagation(); setWish(w=>!w); },
+        className:'absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-sm hover:scale-105 transition-transform' },
+        h(Icon,{ name: wish?'heart-fill':'heart', size:15, className: wish ? 'text-[var(--trs-red)]' : 'text-gray-500' }))
+    ),
+    h('div',{ className:'p-3 flex flex-col gap-1.5 flex-1' },
+      h('span',{ className:'text-[11px] font-semibold text-[var(--trs-red)] tracking-wide' }, product.brand),
+      h(Link,{ to:'/product/'+product.slug, className:'font-semibold text-sm text-gray-900 trs-line-clamp-2 leading-snug hover:text-[var(--trs-red)] transition-colors' }, product.name),
+      h('div',{ className:'flex items-center gap-1.5' }, h(StarRating,{rating:product.rating, size:12}), h('span',{className:'text-[11px] text-gray-400'}, '('+product.reviewCount+')')),
+      h('div',{ className:'flex items-baseline gap-2 mt-0.5' },
+        h('span',{ className:'font-bold text-[var(--trs-dark)]' }, formatIDR(product.salePrice)),
+        pct>0 && h('span',{ className:'text-xs text-gray-400 line-through' }, formatIDR(product.price))
+      ),
+      h('button',{ type:'button', onClick:()=> addToCart(product, defaultVariant(product), 1),
+        className:'trs-btn-primary mt-auto w-full py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5' },
+        h(Icon,{name:'cart', size:14}), 'Add to Cart')
+    )
+  );
+}
+function defaultVariant(product){
+  const v = {};
+  Object.keys(product.variants||{}).forEach(k=> v[k] = product.variants[k][0]);
+  return v;
+}
+
+function CategoryCard({ cat, onClick }){
+  return h('button',{ type:'button', onClick, className:'group flex flex-col items-center gap-2.5 p-4 rounded-xl bg-white border border-gray-100 hover:border-[var(--trs-red)]/40 hover:shadow-md transition-all' },
+    h('div',{ className:'w-12 h-12 rounded-full bg-[var(--trs-bg)] flex items-center justify-center group-hover:bg-[var(--trs-red)]/10 transition-colors' },
+      h(Icon,{ name:cat.icon, size:22, className:'text-[var(--trs-dark)] group-hover:text-[var(--trs-red)] transition-colors' })),
+    h('span',{ className:'text-xs font-semibold text-gray-700 text-center leading-tight' }, cat.name)
+  );
+}
+
+// ==================== SEARCH ====================
+function SearchBox({ variant='desktop', onNavigate }){
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const results = q.trim().length>0 ? PRODUCTS.filter(p=> p.name.toLowerCase().includes(q.toLowerCase())).slice(0,6) : [];
+
+  useEffect(()=>{
+    function onDoc(e){ if(ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', onDoc);
+    return ()=> document.removeEventListener('mousedown', onDoc);
+  },[]);
+
+  return h('div',{ ref, className:'relative w-full' },
+    h('div',{ className:'relative' },
+      h(Icon,{ name:'search', size:16, className:'absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' }),
+      h('input',{
+        type:'text', value:q, placeholder:'Search sparepart, brand, motorcycle...',
+        onFocus:()=>setOpen(true),
+        onChange:(e)=>{ setQ(e.target.value); setOpen(true); },
+        className:'w-full pl-9 pr-3 py-2.5 rounded-lg bg-gray-100 text-sm focus:bg-white focus:ring-2 focus:ring-[var(--trs-red)]/30 transition-colors border border-transparent'
+      })
+    ),
+    open && results.length>0 && h('div',{ className:'absolute z-40 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden' },
+      results.map(p => h('button',{ key:p.id, type:'button',
+        onClick:()=>{ setOpen(false); setQ(''); onNavigate('/product/'+p.slug); },
+        className:'w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 text-left transition-colors' },
+        h('div',{ className:'w-10 h-10 rounded-md overflow-hidden flex-shrink-0' }, h(ProductThumb,{product:p})),
+        h('div',{ className:'flex-1 min-w-0' },
+          h('div',{ className:'text-sm font-medium text-gray-800 truncate' }, p.name),
+          h('div',{ className:'text-xs text-gray-400' }, p.category)),
+        h('span',{ className:'text-sm font-semibold text-[var(--trs-dark)]' }, formatIDR(p.salePrice))
+      ))
+    ),
+    open && q.trim().length>0 && results.length===0 && h('div',{ className:'absolute z-40 mt-2 w-full bg-white rounded-xl shadow-xl border border-gray-100 p-4 text-sm text-gray-400 text-center' }, 'Tidak ada produk ditemukan.')
+  );
+}
+
+// ==================== HEADER / FOOTER ====================
+const NAV_LINKS = [
+  { label:'Home', to:'/' },
+  { label:'Shop', to:'/shop' },
+  { label:'Categories', to:'/shop' },
+  { label:'Brands', to:'/shop' },
+  { label:'Promo', to:'/shop' },
+  { label:'About', to:'/about' },
+  { label:'Contact', to:'/contact' },
+];
+
+function Header(){
+  const { navigate, path } = useRouter();
+  const { itemCount } = useAppState();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileSearch, setMobileSearch] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(()=>{
+    function onScroll(){ setScrolled(window.scrollY > 8); }
+    window.addEventListener('scroll', onScroll);
+    return ()=> window.removeEventListener('scroll', onScroll);
+  },[]);
+
+  return h('div',{ className:'sticky z-50', style:{ top: 'var(--safe-t)' } },
+    h('div',{ className:'bg-[var(--trs-dark)] text-white text-[11px] sm:text-xs' },
+      h('div',{ className:'max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-between gap-4 overflow-hidden whitespace-nowrap' },
+        h('div',{ className:'flex items-center gap-4' },
+          h('span',{className:'hidden sm:inline'}, 'Gratis Ongkir untuk pembelian tertentu'),
+          h('span',{className:'flex items-center gap-1'}, h(Icon,{name:'check-circle',size:12,className:'text-[var(--trs-red)]'}),'100% Original Product')
+        ),
+        h('span',{ className:'flex items-center gap-1.5' }, h(Icon,{name:'whatsapp', size:12}), 'Support: WhatsApp')
+      )
+    ),
+    h('header',{ className: cx('bg-white transition-shadow', scrolled ? 'shadow-md' : 'shadow-sm') },
+      h('div',{ className:'max-w-7xl mx-auto px-4' },
+        h('div',{ className:'flex items-center gap-4 py-3.5' },
+          h('button',{ type:'button', className:'lg:hidden text-gray-700', onClick:()=>setMobileOpen(true), 'aria-label':'Buka menu' }, h(Icon,{name:'menu', size:24})),
+          h(Link,{ to:'/', className:'font-display font-extrabold text-2xl tracking-tight flex-shrink-0' },
+            h('span',{className:'text-[var(--trs-dark)]'},'TRA'), h('span',{className:'text-[var(--trs-red)]'},'STAR')),
+          h('nav',{ className:'hidden lg:flex items-center gap-6 ml-4' },
+            NAV_LINKS.map(l => h(Link,{ key:l.label, to:l.to, className: cx('text-sm font-medium transition-colors', path===l.to ? 'text-[var(--trs-red)]' : 'text-gray-600 hover:text-[var(--trs-dark)]') }, l.label))
+          ),
+          h('div',{ className:'hidden md:block flex-1 max-w-md ml-auto' }, h(SearchBox,{ onNavigate:navigate })),
+          h('div',{ className:'flex items-center gap-1 sm:gap-2 ml-auto md:ml-4' },
+            h('button',{ type:'button', className:'md:hidden w-9 h-9 flex items-center justify-center text-gray-600', onClick:()=>setMobileSearch(s=>!s), 'aria-label':'Search' }, h(Icon,{name:'search',size:20})),
+            h('button',{ type:'button', className:'hidden sm:flex w-9 h-9 items-center justify-center text-gray-600 hover:text-[var(--trs-dark)]', 'aria-label':'Account' }, h(Icon,{name:'user',size:20})),
+            h('button',{ type:'button', className:'hidden sm:flex w-9 h-9 items-center justify-center text-gray-600 hover:text-[var(--trs-dark)]', 'aria-label':'Wishlist' }, h(Icon,{name:'heart',size:20})),
+            h(Link,{ to:'/cart', className:'relative w-9 h-9 flex items-center justify-center text-gray-600 hover:text-[var(--trs-dark)]', ariaLabel:'Cart' },
+              h(Icon,{name:'cart',size:20}),
+              itemCount>0 && h('span',{ className:'absolute -top-0.5 -right-0.5 bg-[var(--trs-red)] text-white text-[10px] font-bold w-4.5 h-4.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center' }, itemCount)
+            )
+          )
+        ),
+        mobileSearch && h('div',{ className:'md:hidden pb-3' }, h(SearchBox,{ onNavigate:(p)=>{ navigate(p); setMobileSearch(false); } }))
+      )
+    ),
+    mobileOpen && h('div',{ className:'fixed inset-0 z-[60] lg:hidden' },
+      h('div',{ className:'absolute inset-0 bg-black/40', onClick:()=>setMobileOpen(false) }),
+      h('div',{ className:'absolute left-0 top-0 bottom-0 w-72 bg-white shadow-2xl flex flex-col', style:{ paddingTop:'var(--safe-t)' } },
+        h('div',{ className:'flex items-center justify-between p-4 border-b border-gray-100' },
+          h('span',{ className:'font-display font-extrabold text-xl' }, h('span',null,'TRA'), h('span',{className:'text-[var(--trs-red)]'},'STAR')),
+          h('button',{ type:'button', onClick:()=>setMobileOpen(false), 'aria-label':'Tutup menu' }, h(Icon,{name:'x',size:22}))
+        ),
+        h('nav',{ className:'flex flex-col p-2 overflow-y-auto' },
+          NAV_LINKS.map(l => h(Link,{ key:l.label, to:l.to, onClick:()=>setMobileOpen(false), className:'px-3 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50' }, l.label))
+        ),
+        h('div',{ className:'mt-auto p-4 border-t border-gray-100 flex items-center gap-4 text-gray-500' },
+          h(Icon,{name:'user',size:18}), h(Icon,{name:'heart',size:18}), h(Icon,{name:'whatsapp',size:18})
+        )
+      )
+    )
+  );
+}
+
+function Footer(){
+  const { navigate } = useRouter();
+  return h('footer',{ className:'bg-[var(--trs-dark)] text-gray-300 mt-16' },
+    h('div',{ className:'max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-4 gap-8' },
+      h('div',{ className:'col-span-2 md:col-span-1' },
+        h('div',{ className:'font-display font-extrabold text-2xl mb-3' }, h('span',{className:'text-white'},'TRA'), h('span',{className:'text-[var(--trs-red)]'},'STAR')),
+        h('p',{ className:'text-sm text-gray-400 leading-relaxed' }, 'Performance Parts for Every Ride.'),
+        h('div',{ className:'flex items-center gap-3 mt-4' },
+          ['instagram','facebook','tiktok','youtube','whatsapp'].map(ic => h('button',{key:ic, type:'button', className:'w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-[var(--trs-red)] transition-colors', 'aria-label':ic }, h(Icon,{name:ic, size:14})))
+        )
+      ),
+      h('div',null,
+        h('h4',{ className:'text-white font-semibold text-sm mb-3' }, 'Shop'),
+        h('ul',{ className:'space-y-2 text-sm text-gray-400' },
+          ['Best Seller','Promo','Brake System','Engine Parts','Accessories'].map(t => h('li',{key:t}, h('button',{type:'button', onClick:()=>navigate('/shop'), className:'hover:text-white transition-colors text-left'}, t)))
+        )
+      ),
+      h('div',null,
+        h('h4',{ className:'text-white font-semibold text-sm mb-3' }, 'Customer Service'),
+        h('ul',{ className:'space-y-2 text-sm text-gray-400' },
+          ['Cara Belanja','Pengiriman','Pengembalian Barang','FAQ'].map(t => h('li',{key:t}, h('span',{className:'hover:text-white transition-colors cursor-pointer'}, t)))
+        )
+      ),
+      h('div',null,
+        h('h4',{ className:'text-white font-semibold text-sm mb-3' }, 'Contact'),
+        h('ul',{ className:'space-y-2.5 text-sm text-gray-400' },
+          h('li',{className:'flex items-start gap-2'}, h(Icon,{name:'map-pin',size:14,className:'mt-0.5 flex-shrink-0'}), 'Jl. Kaliurang KM 7, Sleman, Yogyakarta'),
+          h('li',{className:'flex items-center gap-2'}, h(Icon,{name:'phone',size:14}), '+62 812-3456-7890'),
+          h('li',{className:'flex items-center gap-2'}, h(Icon,{name:'mail',size:14}), 'hello@trastar.id')
+        )
+      )
+    ),
+    h('div',{ className:'border-t border-white/10' },
+      h('div',{ className:'max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500' },
+        h('span',null,'© 2026 TRASTAR. All rights reserved.'),
+        h('span',null,'Prototype for demo purposes only.')
+      )
+    )
+  );
+}
+
+// ==================== HOMEPAGE ====================
+function SectionHeading({ title, subtitle, action }){
+  return h('div',{ className:'flex items-end justify-between mb-6 gap-4' },
+    h('div',null,
+      h('h2',{ className:'font-display font-extrabold text-xl sm:text-2xl text-[var(--trs-dark)]' }, title),
+      subtitle && h('p',{ className:'text-sm text-gray-500 mt-1' }, subtitle)
+    ),
+    action
+  );
+}
+
+function MotoSelector({ onSearch }){
+  const [brand, setBrand] = useState('Honda');
+  const [model, setModel] = useState(MODELS_BY_BRAND['Honda'][0]);
+  const [year, setYear] = useState(YEARS[0]);
+  const [category, setCategory] = useState(CATEGORIES[0].name);
+  useEffect(()=>{ setModel(MODELS_BY_BRAND[brand][0]); }, [brand]);
+  const selectCls = 'w-full appearance-none bg-white border border-gray-200 rounded-lg px-3 py-2.5 text-sm text-gray-700 focus:ring-2 focus:ring-[var(--trs-red)]/30';
+  const Field = (label, children) => h('div',{ className:'flex-1 min-w-[140px]' },
+    h('label',{ className:'block text-xs text-gray-500 mb-1.5' }, label),
+    h('div',{ className:'relative' }, children, h(Icon,{ name:'chevron-down', size:14, className:'absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none' }))
+  );
+  return h('div',{ className:'bg-white rounded-2xl shadow-xl p-5 sm:p-6 -mt-10 sm:-mt-14 relative z-20 mx-4 sm:mx-auto max-w-5xl' },
+    h('h3',{ className:'font-display font-bold text-base text-[var(--trs-dark)] mb-4' }, 'Cari Sparepart Sesuai Motor'),
+    h('div',{ className:'flex flex-wrap gap-3' },
+      Field('Brand Motor', h('select',{ className:selectCls, value:brand, onChange:e=>setBrand(e.target.value) }, BRANDS.map(b=> h('option',{key:b, value:b}, b)))),
+      Field('Model Motor', h('select',{ className:selectCls, value:model, onChange:e=>setModel(e.target.value) }, MODELS_BY_BRAND[brand].map(m=> h('option',{key:m, value:m}, m)))),
+      Field('Tahun', h('select',{ className:selectCls, value:year, onChange:e=>setYear(e.target.value) }, YEARS.map(y=> h('option',{key:y, value:y}, y)))),
+      Field('Kategori Sparepart', h('select',{ className:selectCls, value:category, onChange:e=>setCategory(e.target.value) }, CATEGORIES.map(c=> h('option',{key:c.name, value:c.name}, c.name))))
+    ),
+    h('button',{ type:'button', onClick:()=>onSearch({brand,model,year,category}), className:'trs-btn-primary mt-4 w-full sm:w-auto sm:px-8 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2' },
+      h(Icon,{name:'search', size:16}), 'CARI SPAREPART')
+  );
+}
+
+const TESTIMONIALS = [
+  { name:'Rizky A.', role:'Pemilik Bengkel — Depok', text:'Kualitas sparepart TRASTAR jauh di atas ekspektasi untuk harganya. Brake disc-nya awet dan pengiriman cepat.', rating:5 },
+  { name:'Dewi P.', role:'Komunitas Vario Club Jogja', text:'Sudah 3x order buat kebutuhan komunitas, selalu original dan sesuai deskripsi. Recommended banget.', rating:5 },
+  { name:'Fajar S.', role:'Pengguna Harian NMAX', text:'CS-nya responsif dan barangnya sampai lebih cepat dari estimasi. Bakal repeat order lagi.', rating:4.5 },
+];
+
+function HomePage(){
+  const { navigate } = useRouter();
+  const bestSellers = PRODUCTS.slice(0,8);
+  return h('div',null,
+    // HERO
+    h('section',{ className:'relative bg-[var(--trs-dark)] overflow-hidden' },
+      h('div',{ className:'absolute inset-0 opacity-20', style:{ background:'radial-gradient(circle at 80% 20%, var(--trs-red), transparent 55%)' } }),
+      h('div',{ className:'max-w-7xl mx-auto px-4 pt-14 pb-24 sm:pt-20 sm:pb-32 relative grid md:grid-cols-2 gap-8 items-center' },
+        h('div',{ className:'trs-animate-in' },
+          h('span',{ className:'inline-flex items-center gap-2 text-[var(--trs-red)] font-semibold text-xs tracking-wide mb-4' }, h(Icon,{name:'zap',size:14}), 'PERFORMANCE PARTS'),
+          h('h1',{ className:'font-display font-extrabold text-4xl sm:text-6xl text-white leading-[1.05] mb-4' }, 'Upgrade Your Ride.'),
+          h('p',{ className:'text-gray-400 text-base sm:text-lg max-w-md mb-8' }, 'Sparepart & aksesoris motor berkualitas untuk performa maksimal.'),
+          h('div',{ className:'flex flex-wrap gap-3' },
+            h(Link,{ to:'/shop', className:'trs-btn-primary px-7 py-3.5 rounded-lg text-sm font-bold' }, 'SHOP NOW'),
+            h(Link,{ to:'/shop', className:'px-7 py-3.5 rounded-lg text-sm font-bold border border-white/25 text-white hover:bg-white/10 transition-colors' }, 'EXPLORE PRODUCTS')
+          )
+        ),
+        h('div',{ className:'relative hidden md:block' },
+          h('svg',{ viewBox:'0 0 400 400', className:'w-full h-auto' },
+            h('circle',{ cx:200, cy:200, r:170, fill:'none', stroke:'#E11D2E', strokeOpacity:0.3, strokeWidth:2, strokeDasharray:'10 14' }),
+            h('circle',{ cx:200, cy:200, r:120, fill:'#1B1B1B', stroke:'#ffffff', strokeOpacity:0.1 }),
+            h('g',{ transform:'translate(120,120)' }, h(Icon,{ name:'disc', size:160, className:'text-[var(--trs-red)]', strokeWidth:1 })),
+            h('g',{ transform:'translate(60,40)' }, h(Icon,{ name:'zap', size:40, className:'text-white' })),
+            h('g',{ transform:'translate(300,300)' }, h(Icon,{ name:'settings', size:36, className:'text-white/70' }))
+          )
+        )
+      )
+    ),
+    h(MotoSelector,{ onSearch:()=> navigate('/shop') }),
+
+    // CATEGORIES
+    h('section',{ className:'max-w-7xl mx-auto px-4 pt-16 pb-4' },
+      h(SectionHeading,{ title:'Belanja Berdasarkan Kategori', subtitle:'Temukan sparepart sesuai kebutuhan motor Anda.' }),
+      h('div',{ className:'grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4' },
+        CATEGORIES.map(c => h(CategoryCard,{ key:c.name, cat:c, onClick:()=> navigate('/shop') }))
+      )
+    ),
+
+    // BEST SELLER
+    h('section',{ className:'max-w-7xl mx-auto px-4 py-12' },
+      h(SectionHeading,{ title:'Best Seller', subtitle:'Produk paling banyak dibeli pelanggan TRASTAR.', action: h(Link,{to:'/shop', className:'text-sm font-semibold text-[var(--trs-red)] hover:underline hidden sm:block'},'Lihat Semua') }),
+      h('div',{ className:'grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5' },
+        bestSellers.map(p => h(ProductCard,{ key:p.id, product:p }))
+      )
+    ),
+
+    // PROMO BANNER
+    h('section',{ className:'max-w-7xl mx-auto px-4 pb-12' },
+      h('div',{ className:'relative rounded-2xl overflow-hidden bg-[var(--trs-red)]' },
+        h('div',{ className:'absolute inset-0 opacity-25', style:{ background:'repeating-linear-gradient(135deg, #fff 0 2px, transparent 2px 24px)' } }),
+        h('div',{ className:'relative px-6 sm:px-12 py-10 sm:py-14 flex flex-col sm:flex-row items-center justify-between gap-6' },
+          h('div',{ className:'text-center sm:text-left' },
+            h('p',{ className:'text-white/80 text-xs font-bold tracking-widest mb-2' }, 'GEAR UP SALE'),
+            h('h3',{ className:'font-display font-extrabold text-3xl sm:text-4xl text-white' }, 'Up to 40% OFF')
+          ),
+          h(Link,{ to:'/shop', className:'bg-white text-[var(--trs-red)] font-bold text-sm px-7 py-3.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0' }, 'SHOP SALE')
+        )
+      )
+    ),
+
+    // SHOP BY BRAND
+    h('section',{ className:'max-w-7xl mx-auto px-4 pb-14' },
+      h(SectionHeading,{ title:'Belanja Berdasarkan Brand' }),
+      h('div',{ className:'grid grid-cols-3 sm:grid-cols-5 gap-3' },
+        BRANDS.map(b => h('button',{ key:b, type:'button', onClick:()=>navigate('/shop'), className:'bg-white border border-gray-100 rounded-xl py-6 flex items-center justify-center font-display font-bold text-gray-700 hover:border-[var(--trs-red)]/40 hover:text-[var(--trs-red)] hover:shadow-md transition-all text-sm sm:text-base' }, b))
+      )
+    ),
+
+    // WHY TRASTAR
+    h('section',{ className:'bg-white border-y border-gray-100 py-14' },
+      h('div',{ className:'max-w-7xl mx-auto px-4' },
+        h(SectionHeading,{ title:'Kenapa Pilih TRASTAR' }),
+        h('div',{ className:'grid grid-cols-2 sm:grid-cols-5 gap-6' },
+          [
+            {icon:'shield', label:'Original Product'},
+            {icon:'truck', label:'Fast Delivery'},
+            {icon:'wallet', label:'Secure Payment'},
+            {icon:'refresh', label:'Easy Return'},
+            {icon:'headset', label:'Customer Support'},
+          ].map(b => h('div',{ key:b.label, className:'flex flex-col items-center text-center gap-2.5' },
+            h('div',{ className:'w-14 h-14 rounded-full bg-[var(--trs-bg)] flex items-center justify-center' }, h(Icon,{ name:b.icon, size:24, className:'text-[var(--trs-red)]' })),
+            h('span',{ className:'text-sm font-semibold text-gray-700' }, b.label)
+          ))
+        )
+      )
+    ),
+
+    // REVIEWS
+    h('section',{ className:'max-w-7xl mx-auto px-4 py-14' },
+      h(SectionHeading,{ title:'Apa Kata Pelanggan' }),
+      h('div',{ className:'grid sm:grid-cols-3 gap-5' },
+        TESTIMONIALS.map((t,i) => h('div',{ key:i, className:'bg-white rounded-xl border border-gray-100 p-5' },
+          h(StarRating,{ rating:t.rating, size:14 }),
+          h('p',{ className:'text-sm text-gray-600 mt-3 leading-relaxed' }, '"'+t.text+'"'),
+          h('div',{ className:'mt-4 flex items-center gap-3' },
+            h('div',{ className:'w-9 h-9 rounded-full bg-[var(--trs-dark)] text-white flex items-center justify-center font-semibold text-sm' }, t.name[0]),
+            h('div',null, h('p',{ className:'text-sm font-semibold text-gray-800' }, t.name), h('p',{ className:'text-xs text-gray-400' }, t.role))
+          )
+        ))
+      )
+    ),
+
+    // NEWSLETTER
+    h('section',{ className:'bg-[var(--trs-dark)]' },
+      h('div',{ className:'max-w-3xl mx-auto px-4 py-14 text-center' },
+        h('h3',{ className:'font-display font-extrabold text-2xl text-white mb-2' }, 'Get Deals & New Product Updates'),
+        h('p',{ className:'text-gray-400 text-sm mb-6' }, 'Berlangganan untuk mendapat info promo dan produk terbaru TRASTAR.'),
+        h(NewsletterForm)
+      )
+    )
+  );
+}
+
+function NewsletterForm(){
+  const [email, setEmail] = useState('');
+  const [sent, setSent] = useState(false);
+  return h('form',{ className:'flex flex-col sm:flex-row gap-3 max-w-md mx-auto', onSubmit:(e)=>{ e.preventDefault(); if(email) setSent(true); } },
+    h('input',{ type:'email', required:true, value:email, onChange:e=>setEmail(e.target.value), placeholder:'Alamat email Anda', className:'flex-1 px-4 py-3 rounded-lg text-sm bg-white/10 text-white placeholder-gray-500 border border-white/15 focus:bg-white/15' }),
+    h('button',{ type:'submit', className:'trs-btn-primary px-6 py-3 rounded-lg text-sm font-bold whitespace-nowrap' }, sent ? 'Subscribed ✓' : 'SUBSCRIBE')
+  );
+}
+
+// ==================== SHOP PAGE ====================
+function ShopPage(){
+  const [category, setCategory] = useState('Semua');
+  const [sort, setSort] = useState('popular');
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  let list = [...PRODUCTS];
+  if(category !== 'Semua') list = list.filter(p => p.category === category);
+  if(sort === 'price-asc') list.sort((a,b)=> a.salePrice - b.salePrice);
+  else if(sort === 'price-desc') list.sort((a,b)=> b.salePrice - a.salePrice);
+  else if(sort === 'rating') list.sort((a,b)=> b.rating - a.rating);
+
+  const FilterList = () => h('div',{ className:'space-y-1' },
+    ['Semua', ...CATEGORIES.map(c=>c.name)].map(c => h('button',{ key:c, type:'button', onClick:()=>{ setCategory(c); setFilterOpen(false); },
+      className: cx('w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors', category===c ? 'bg-[var(--trs-red)]/10 text-[var(--trs-red)]' : 'text-gray-600 hover:bg-gray-50') }, c))
+  );
+
+  return h('div',{ className:'max-w-7xl mx-auto px-4 py-8' },
+    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:'Shop'}] }),
+    h('div',{ className:'flex items-center justify-between mb-6 gap-3' },
+      h('h1',{ className:'font-display font-extrabold text-2xl text-[var(--trs-dark)]' }, 'Shop'),
+      h('div',{ className:'flex items-center gap-2' },
+        h('button',{ type:'button', onClick:()=>setFilterOpen(true), className:'lg:hidden flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-600' }, h(Icon,{name:'settings',size:14}), 'Filter'),
+        h('select',{ value:sort, onChange:e=>setSort(e.target.value), className:'border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-600 bg-white' },
+          h('option',{value:'popular'},'Paling Populer'), h('option',{value:'rating'},'Rating Tertinggi'),
+          h('option',{value:'price-asc'},'Harga Terendah'), h('option',{value:'price-desc'},'Harga Tertinggi')
+        )
+      )
+    ),
+    h('div',{ className:'grid lg:grid-cols-[220px_1fr] gap-8' },
+      h('aside',{ className:'hidden lg:block' },
+        h('h3',{ className:'font-semibold text-sm text-gray-800 mb-3' }, 'Kategori'),
+        h(FilterList)
+      ),
+      h('div',null,
+        h('p',{ className:'text-sm text-gray-400 mb-4' }, list.length + ' produk ditemukan'),
+        list.length === 0
+          ? h('div',{ className:'text-center py-20 text-gray-400 text-sm' }, 'Tidak ada produk pada kategori ini.')
+          : h('div',{ className:'grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5' }, list.map(p => h(ProductCard,{ key:p.id, product:p })))
+      )
+    ),
+    filterOpen && h('div',{ className:'fixed inset-0 z-[70] lg:hidden' },
+      h('div',{ className:'absolute inset-0 bg-black/40', onClick:()=>setFilterOpen(false) }),
+      h('div',{ className:'absolute right-0 top-0 bottom-0 w-72 bg-white shadow-2xl p-4', style:{paddingTop:'calc(var(--safe-t) + 16px)'} },
+        h('div',{ className:'flex items-center justify-between mb-4' }, h('h3',{className:'font-semibold text-sm'},'Filter Kategori'), h('button',{type:'button', onClick:()=>setFilterOpen(false)}, h(Icon,{name:'x',size:20}))),
+        h(FilterList)
+      )
+    )
+  );
+}
+
+// ==================== PRODUCT DETAIL PAGE ====================
+const TABS = ['Description','Specifications','Compatibility','Reviews'];
+const DUMMY_REVIEWS = [
+  { name:'Andi W.', rating:5, text:'Kualitas mantap, pengiriman cepat. Pas banget di motor saya.' },
+  { name:'Sinta R.', rating:4.5, text:'Sesuai deskripsi, harga worth it dibanding merek lain.' },
+  { name:'Galih P.', rating:5, text:'Sudah kedua kalinya order, selalu puas dengan hasilnya.' },
+];
+
+function ProductDetailPage({ params }){
+  const product = getProductBySlug(params.slug);
+  const { navigate } = useRouter();
+  const { addToCart } = useAppState();
+  const [variant, setVariant] = useState(()=> product ? defaultVariant(product) : {});
+  const [qty, setQty] = useState(1);
+  const [tab, setTab] = useState('Description');
+  const [added, setAdded] = useState(false);
+  const [wish, setWish] = useState(false);
+  const [galleryIdx, setGalleryIdx] = useState(0);
+
+  useEffect(()=>{ if(product){ setVariant(defaultVariant(product)); setQty(1); setTab('Description'); setGalleryIdx(0); window.scrollTo(0,0); } }, [params.slug]);
+
+  if(!product){
+    return h('div',{ className:'max-w-7xl mx-auto px-4 py-24 text-center' },
+      h('p',{ className:'text-gray-500 mb-4' }, 'Produk tidak ditemukan.'),
+      h(Link,{ to:'/shop', className:'text-[var(--trs-red)] font-semibold' }, 'Kembali ke Shop')
+    );
+  }
+
+  const pct = discountPct(product);
+  const related = PRODUCTS.filter(p => p.category === product.category && p.id !== product.id).slice(0,4);
+  const relatedFallback = related.length ? related : PRODUCTS.filter(p=>p.id!==product.id).slice(0,4);
+
+  function handleAdd(){ addToCart(product, variant, qty); setAdded(true); setTimeout(()=>setAdded(false), 1800); }
+  function handleBuyNow(){ addToCart(product, variant, qty); navigate('/checkout'); }
+
+  return h('div',{ className:'max-w-7xl mx-auto px-4 py-8' },
+    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:product.category, to:'/shop'},{label:product.name}] }),
+    h('div',{ className:'grid md:grid-cols-2 gap-8 lg:gap-12' },
+      // GALLERY
+      h('div',null,
+        h('div',{ className:'aspect-square rounded-2xl overflow-hidden border border-gray-100' }, h(ProductThumb,{ product })),
+        h('div',{ className:'grid grid-cols-4 gap-2.5 mt-3' },
+          [0,1,2,3].map(i => h('button',{ key:i, type:'button', onClick:()=>setGalleryIdx(i),
+            className: cx('aspect-square rounded-lg overflow-hidden border-2 transition-colors', galleryIdx===i ? 'border-[var(--trs-red)]' : 'border-transparent') },
+            h(ProductThumb,{ product })))
+        )
+      ),
+      // INFO
+      h('div',null,
+        h('span',{ className:'text-xs font-bold text-[var(--trs-red)] tracking-wide' }, product.brand),
+        h('h1',{ className:'font-display font-extrabold text-2xl sm:text-3xl text-[var(--trs-dark)] mt-1 mb-2' }, product.name),
+        h('div',{ className:'flex items-center gap-3 mb-4' },
+          h(StarRating,{ rating:product.rating }), h('span',{ className:'text-sm font-semibold text-gray-700' }, product.rating), h('span',{ className:'text-sm text-gray-400' }, '('+product.reviewCount+' Reviews)')
+        ),
+        h('div',{ className:'flex items-baseline gap-3 mb-1' },
+          h('span',{ className:'font-display font-extrabold text-3xl text-[var(--trs-dark)]' }, formatIDR(product.salePrice)),
+          pct>0 && h('span',{ className:'text-lg text-gray-400 line-through' }, formatIDR(product.price)),
+          pct>0 && h(Badge,null, pct+'% OFF')
+        ),
+        h('p',{ className:'text-sm mb-5' }, h('span',{className:'inline-flex items-center gap-1.5 text-emerald-600 font-semibold'}, h(Icon,{name:'check-circle',size:14}), 'In Stock'), h('span',{className:'text-gray-400'}, ' · '+product.stock+' tersedia')),
+        h('p',{ className:'text-sm text-gray-600 leading-relaxed mb-6' }, product.description.split('\n\n')[0]),
+
+        Object.keys(product.variants).map(key => (product.variants[key][0]==='-' ? null : h('div',{ key, className:'mb-4' },
+          h('p',{ className:'text-sm font-semibold text-gray-700 mb-2' }, key+': ', h('span',{className:'font-normal text-gray-500'}, variant[key])),
+          h('div',{ className:'flex flex-wrap gap-2' },
+            product.variants[key].map(val => h('button',{ key:val, type:'button', onClick:()=>setVariant(v=>({...v,[key]:val})),
+              className: cx('px-4 py-2 rounded-lg text-sm font-medium border transition-colors', variant[key]===val ? 'border-[var(--trs-red)] bg-[var(--trs-red)]/10 text-[var(--trs-red)]' : 'border-gray-200 text-gray-600 hover:border-gray-300') }, val))
+          )
+        ))),
+
+        h('div',{ className:'flex items-center gap-4 mb-6' },
+          h('span',{ className:'text-sm font-semibold text-gray-700' }, 'Jumlah:'),
+          h(QuantitySelector,{ value:qty, onChange:setQty })
+        ),
+
+        h('div',{ className:'flex flex-col sm:flex-row gap-3 mb-4' },
+          h('button',{ type:'button', onClick:handleAdd, className:'trs-btn-primary flex-1 py-3.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2' },
+            h(Icon,{name:'cart',size:16}), added ? 'Ditambahkan ✓' : 'ADD TO CART'),
+          h('button',{ type:'button', onClick:handleBuyNow, className:'flex-1 py-3.5 rounded-lg font-bold text-sm border-2 border-[var(--trs-dark)] text-[var(--trs-dark)] hover:bg-[var(--trs-dark)] hover:text-white transition-colors' }, 'BUY NOW')
+        ),
+        h('button',{ type:'button', onClick:()=>setWish(w=>!w), className:'flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[var(--trs-red)] transition-colors mb-6' },
+          h(Icon,{ name: wish?'heart-fill':'heart', size:16, className: wish?'text-[var(--trs-red)]':'' }), wish?'Ditambahkan ke Wishlist':'ADD TO WISHLIST'),
+
+        h('div',{ className:'border-t border-gray-100 pt-4 grid grid-cols-2 gap-y-2 text-sm' },
+          h('span',{className:'text-gray-400'},'SKU'), h('span',{className:'text-gray-700 font-medium'}, product.sku),
+          h('span',{className:'text-gray-400'},'Category'), h('span',{className:'text-gray-700 font-medium'}, product.category),
+          h('span',{className:'text-gray-400'},'Brand'), h('span',{className:'text-gray-700 font-medium'}, product.brand),
+          h('span',{className:'text-gray-400'},'Stock'), h('span',{className:'text-gray-700 font-medium'}, product.stock+' unit')
+        )
+      )
+    ),
+
+    // TABS
+    h('div',{ className:'mt-14' },
+      h('div',{ className:'flex gap-6 border-b border-gray-200 overflow-x-auto no-scrollbar' },
+        TABS.map(t => h('button',{ key:t, type:'button', onClick:()=>setTab(t),
+          className: cx('pb-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors', tab===t ? 'border-[var(--trs-red)] text-[var(--trs-red)]' : 'border-transparent text-gray-400 hover:text-gray-600') }, t))
+      ),
+      h('div',{ className:'py-6 max-w-3xl' },
+        tab==='Description' && h('div',{ className:'text-sm text-gray-600 leading-relaxed space-y-3' }, product.description.split('\n\n').map((p,i)=> h('p',{key:i}, p))),
+        tab==='Specifications' && h('table',{ className:'w-full text-sm' }, h('tbody',null,
+          Object.entries(product.specs).map(([k,v]) => h('tr',{ key:k, className:'border-b border-gray-100' },
+            h('td',{ className:'py-2.5 text-gray-400 w-1/3' }, k), h('td',{ className:'py-2.5 text-gray-700 font-medium' }, v))))),
+        tab==='Compatibility' && h('ul',{ className:'grid sm:grid-cols-2 gap-2' }, product.compatibility.map((c,i) => h('li',{ key:i, className:'flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2.5' }, h(Icon,{name:'check',size:14,className:'text-emerald-500'}), c))),
+        tab==='Reviews' && h('div',{ className:'space-y-4' }, DUMMY_REVIEWS.map((r,i) => h('div',{ key:i, className:'border-b border-gray-100 pb-4' },
+          h('div',{ className:'flex items-center gap-2 mb-1' }, h('span',{ className:'font-semibold text-sm text-gray-800' }, r.name), h(StarRating,{ rating:r.rating, size:12 })),
+          h('p',{ className:'text-sm text-gray-600' }, r.text))))
+      )
+    ),
+
+    // RELATED
+    h('div',{ className:'mt-10' },
+      h(SectionHeading,{ title:'Related Products' }),
+      h('div',{ className:'grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5' }, relatedFallback.map(p => h(ProductCard,{ key:p.id, product:p })))
+    )
+  );
+}
+
+// ==================== CART PAGE ====================
+function CartPage(){
+  const { items, updateQty, removeItem, clearCart, coupon, applyCoupon, subtotal, discount } = useAppState();
+  const { navigate } = useRouter();
+  const [couponInput, setCouponInput] = useState('');
+  const [couponMsg, setCouponMsg] = useState(null);
+  const shipping = items.length ? 20000 : 0;
+  const total = subtotal - discount + shipping;
+
+  function handleApply(e){
+    e.preventDefault();
+    const res = applyCoupon(couponInput);
+    setCouponMsg(res);
+  }
+
+  if(items.length === 0){
+    return h('div',{ className:'max-w-3xl mx-auto px-4 py-20 text-center' },
+      h(Icon,{ name:'cart', size:56, className:'text-gray-200 mx-auto mb-4' }),
+      h('h1',{ className:'font-display font-bold text-xl text-gray-800 mb-2' }, 'Keranjang Anda kosong'),
+      h('p',{ className:'text-sm text-gray-400 mb-6' }, 'Yuk mulai belanja sparepart favorit Anda.'),
+      h(Link,{ to:'/shop', className:'trs-btn-primary inline-block px-6 py-3 rounded-lg text-sm font-bold' }, 'MULAI BELANJA')
+    );
+  }
+
+  return h('div',{ className:'max-w-7xl mx-auto px-4 py-8' },
+    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:'Shopping Cart'}] }),
+    h('h1',{ className:'font-display font-extrabold text-2xl text-[var(--trs-dark)] mb-6' }, 'Shopping Cart'),
+    h('div',{ className:'grid lg:grid-cols-[1fr_360px] gap-8' },
+      h('div',null,
+        h('div',{ className:'hidden sm:grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 pb-3 border-b border-gray-200 text-xs font-semibold text-gray-400 uppercase tracking-wide' },
+          h('span',null,'Product'), h('span',null,'Price'), h('span',null,'Quantity'), h('span',null,'Subtotal'), h('span',null)
+        ),
+        items.map(it => h('div',{ key:it.index, className:'grid sm:grid-cols-[2fr_1fr_1fr_1fr_auto] grid-cols-1 gap-3 sm:gap-4 items-center py-4 border-b border-gray-100' },
+          h('div',{ className:'flex items-center gap-3' },
+            h('div',{ className:'w-16 h-16 rounded-lg overflow-hidden flex-shrink-0' }, h(ProductThumb,{ product: it.product })),
+            h('div',{ className:'min-w-0' },
+              h(Link,{ to:'/product/'+it.product.slug, className:'font-semibold text-sm text-gray-800 hover:text-[var(--trs-red)] transition-colors trs-line-clamp-2' }, it.product.name),
+              h('p',{ className:'text-xs text-gray-400 mt-0.5' }, Object.values(it.variant||{}).filter(v=>v!=='-').join(' / '))
+            )
+          ),
+          h('span',{ className:'text-sm text-gray-600 sm:block flex justify-between'}, h('span',{className:'sm:hidden text-gray-400'},'Price: '), formatIDR(it.product.salePrice)),
+          h('div',{ className:'sm:block flex items-center justify-between' }, h('span',{className:'sm:hidden text-gray-400 text-sm'},'Quantity'), h(QuantitySelector,{ value:it.qty, onChange:(v)=>updateQty(it.index, v), size:'sm' })),
+          h('span',{ className:'text-sm font-semibold text-gray-800 sm:block flex justify-between'}, h('span',{className:'sm:hidden text-gray-400 font-normal'},'Subtotal: '), formatIDR(it.product.salePrice*it.qty)),
+          h('button',{ type:'button', onClick:()=>removeItem(it.index), 'aria-label':'Hapus item', className:'text-gray-300 hover:text-[var(--trs-red)] transition-colors justify-self-end' }, h(Icon,{name:'x',size:18}))
+        )),
+        h('div',{ className:'flex items-center justify-between mt-5' },
+          h(Link,{ to:'/shop', className:'text-sm font-semibold text-gray-600 hover:text-[var(--trs-red)] flex items-center gap-1.5' }, h(Icon,{name:'chevron-left',size:14}), 'Continue Shopping'),
+          h('button',{ type:'button', onClick:clearCart, className:'text-sm font-semibold text-gray-400 hover:text-[var(--trs-red)]' }, 'Clear Cart')
+        )
+      ),
+      h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5 h-fit sticky top-24' },
+        h('h3',{ className:'font-display font-bold text-base mb-4' }, 'Order Summary'),
+        h('div',{ className:'space-y-2.5 text-sm' },
+          h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Subtotal'), h('span',{className:'text-gray-800 font-medium'}, formatIDR(subtotal))),
+          h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Estimated Shipping'), h('span',{className:'text-gray-800 font-medium'}, formatIDR(shipping))),
+          coupon && h('div',{ className:'flex justify-between text-emerald-600' }, h('span',null,'Discount ('+coupon.code+')'), h('span',{className:'font-medium'}, '-'+formatIDR(discount)))
+        ),
+        h('form',{ onSubmit:handleApply, className:'flex gap-2 my-4' },
+          h('input',{ type:'text', value:couponInput, onChange:e=>setCouponInput(e.target.value), placeholder:'Enter coupon code', className:'flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm min-w-0' }),
+          h('button',{ type:'submit', className:'px-3.5 py-2 rounded-lg text-xs font-bold bg-[var(--trs-dark)] text-white whitespace-nowrap' }, 'APPLY')
+        ),
+        couponMsg && h('p',{ className: cx('text-xs mb-3 -mt-2', couponMsg.ok ? 'text-emerald-600' : 'text-[var(--trs-red)]') }, couponMsg.message),
+        h('p',{ className:'text-xs text-gray-400 mb-4' }, 'Coba kode: TRASTAR10'),
+        h('div',{ className:'border-t border-gray-100 pt-3 flex justify-between items-baseline mb-5' },
+          h('span',{ className:'font-semibold text-gray-700' }, 'TOTAL'), h('span',{ className:'font-display font-extrabold text-xl text-[var(--trs-dark)]' }, formatIDR(total))
+        ),
+        h('button',{ type:'button', onClick:()=>navigate('/checkout'), className:'trs-btn-primary w-full py-3.5 rounded-lg font-bold text-sm' }, 'PROCEED TO CHECKOUT')
+      )
+    )
+  );
+}
+
+// ==================== CHECKOUT PAGE ====================
+function Field({ label, children }){
+  return h('label',{ className:'block' }, h('span',{ className:'block text-xs font-semibold text-gray-500 mb-1.5' }, label), children);
+}
+const inputCls = 'w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-[var(--trs-red)]/30';
+
+function CheckoutPage(){
+  const { items, subtotal, discount, coupon } = useAppState();
+  const { navigate } = useRouter();
+  const [form, setForm] = useState(()=> loadLS('trastar_checkout', defaultCheckout()));
+  const [paymentGroup, setPaymentGroup] = useState('va');
+
+  useEffect(()=>{ if(items.length===0) navigate('/shop'); },[]);
+  useEffect(()=>{ saveLS('trastar_checkout', form); }, [form]);
+
+  const shippingMethod = SHIPPING_METHODS.find(s=>s.id===form.shippingMethod) || SHIPPING_METHODS[0];
+  const total = subtotal - discount + shippingMethod.cost;
+
+  function set(field){ return (e)=> setForm(f=>({ ...f, [field]: e.target.value })); }
+
+  function handleContinue(e){
+    e.preventDefault();
+    saveLS('trastar_checkout_payment_group', paymentGroup);
+    navigate('/payment');
+  }
+
+  if(items.length===0) return null;
+
+  return h('div',{ className:'max-w-7xl mx-auto px-4 py-8' },
+    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:'Cart', to:'/cart'},{label:'Checkout'}] }),
+    h('h1',{ className:'font-display font-extrabold text-2xl text-[var(--trs-dark)] mb-6' }, 'Checkout'),
+    h('form',{ onSubmit:handleContinue, className:'grid lg:grid-cols-[1fr_360px] gap-8' },
+      h('div',{ className:'space-y-8' },
+        h('section',null,
+          h('h3',{ className:'font-display font-bold text-base mb-4 flex items-center gap-2' }, h(Icon,{name:'user',size:16,className:'text-[var(--trs-red)]'}), 'Contact Information'),
+          h('div',{ className:'grid sm:grid-cols-2 gap-4' },
+            h(Field,{ label:'Full Name' }, h('input',{ className:inputCls, required:true, value:form.fullName, onChange:set('fullName') })),
+            h(Field,{ label:'Email' }, h('input',{ type:'email', className:inputCls, required:true, value:form.email, onChange:set('email') })),
+            h(Field,{ label:'Phone Number' }, h('input',{ className:inputCls, required:true, value:form.phone, onChange:set('phone') }))
+          )
+        ),
+        h('section',null,
+          h('h3',{ className:'font-display font-bold text-base mb-4 flex items-center gap-2' }, h(Icon,{name:'map-pin',size:16,className:'text-[var(--trs-red)]'}), 'Shipping Address'),
+          h('div',{ className:'grid sm:grid-cols-2 gap-4' },
+            h(Field,{ label:'Province' }, h('input',{ className:inputCls, required:true, value:form.province, onChange:set('province') })),
+            h(Field,{ label:'City' }, h('input',{ className:inputCls, required:true, value:form.city, onChange:set('city') })),
+            h(Field,{ label:'District' }, h('input',{ className:inputCls, required:true, value:form.district, onChange:set('district') })),
+            h(Field,{ label:'Postal Code' }, h('input',{ className:inputCls, required:true, value:form.postalCode, onChange:set('postalCode') })),
+            h('div',{ className:'sm:col-span-2' }, h(Field,{ label:'Full Address' }, h('textarea',{ className:inputCls, rows:2, required:true, value:form.address, onChange:set('address') })))
+          )
+        ),
+        h('section',null,
+          h('h3',{ className:'font-display font-bold text-base mb-4 flex items-center gap-2' }, h(Icon,{name:'truck',size:16,className:'text-[var(--trs-red)]'}), 'Shipping Method'),
+          h('div',{ className:'space-y-2.5' },
+            SHIPPING_METHODS.map(m => h('label',{ key:m.id, className: cx('flex items-center justify-between border rounded-lg px-4 py-3 cursor-pointer transition-colors', form.shippingMethod===m.id ? 'border-[var(--trs-red)] bg-[var(--trs-red)]/5' : 'border-gray-200 hover:border-gray-300') },
+              h('div',{ className:'flex items-center gap-3' },
+                h('input',{ type:'radio', name:'shipping', checked:form.shippingMethod===m.id, onChange:()=>setForm(f=>({...f, shippingMethod:m.id})), className:'accent-[var(--trs-red)]' }),
+                h('div',null, h('p',{ className:'text-sm font-semibold text-gray-800' }, m.name), h('p',{ className:'text-xs text-gray-400' }, m.eta))
+              ),
+              h('span',{ className:'text-sm font-semibold text-gray-700' }, formatIDR(m.cost))
+            ))
+          )
+        ),
+        h('section',null,
+          h('h3',{ className:'font-display font-bold text-base mb-4 flex items-center gap-2' }, h(Icon,{name:'wallet',size:16,className:'text-[var(--trs-red)]'}), 'Payment Method'),
+          h('div',{ className:'grid grid-cols-2 sm:grid-cols-4 gap-2.5' },
+            [ {id:'bank', label:'Bank Transfer', icon:'building'}, {id:'va', label:'Virtual Account', icon:'wallet'}, {id:'qris', label:'QRIS', icon:'qr'}, {id:'ewallet', label:'E-Wallet', icon:'phone'} ]
+            .map(g => h('button',{ key:g.id, type:'button', onClick:()=>setPaymentGroup(g.id),
+              className: cx('flex flex-col items-center gap-2 border rounded-lg py-4 text-xs font-semibold transition-colors', paymentGroup===g.id ? 'border-[var(--trs-red)] text-[var(--trs-red)] bg-[var(--trs-red)]/5' : 'border-gray-200 text-gray-600 hover:border-gray-300') },
+              h(Icon,{ name:g.icon, size:20 }), g.label))
+          )
+        ),
+        h('button',{ type:'submit', className:'trs-btn-primary w-full sm:w-auto px-8 py-3.5 rounded-lg font-bold text-sm' }, 'CONTINUE TO PAYMENT')
+      ),
+      h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5 h-fit sticky top-24' },
+        h('h3',{ className:'font-display font-bold text-base mb-4' }, 'Order Summary'),
+        h('div',{ className:'space-y-3 mb-4 max-h-64 overflow-y-auto pr-1' },
+          items.map(it => h('div',{ key:it.index, className:'flex items-center gap-3' },
+            h('div',{ className:'w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 relative' }, h(ProductThumb,{ product: it.product }),
+              h('span',{ className:'absolute -top-1.5 -right-1.5 bg-[var(--trs-dark)] text-white text-[10px] w-4.5 h-4.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center' }, it.qty)),
+            h('div',{ className:'flex-1 min-w-0' }, h('p',{ className:'text-xs font-semibold text-gray-700 trs-line-clamp-2' }, it.product.name)),
+            h('span',{ className:'text-xs font-semibold text-gray-600 flex-shrink-0' }, formatIDR(it.product.salePrice*it.qty))
+          ))
+        ),
+        h('div',{ className:'space-y-2 text-sm border-t border-gray-100 pt-3' },
+          h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Subtotal'), h('span',{className:'text-gray-800 font-medium'}, formatIDR(subtotal))),
+          h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Shipping'), h('span',{className:'text-gray-800 font-medium'}, formatIDR(shippingMethod.cost))),
+          coupon && h('div',{ className:'flex justify-between text-emerald-600' }, h('span',null,'Discount'), h('span',{className:'font-medium'}, '-'+formatIDR(discount)))
+        ),
+        h('div',{ className:'border-t border-gray-100 mt-3 pt-3 flex justify-between items-baseline' },
+          h('span',{ className:'font-semibold text-gray-700' }, 'Total'), h('span',{ className:'font-display font-extrabold text-xl text-[var(--trs-dark)]' }, formatIDR(total))
+        )
+      )
+    )
+  );
+}
+
+// ==================== PAYMENT PAGE ====================
+const PAYMENT_OPTIONS = {
+  bank: { title:'Bank Transfer', icon:'building', options:[
+    { id:'bca', name:'BCA', account:'8808 1234 5678 90', holder:'PT TRASTAR INDONESIA' },
+    { id:'mandiri', name:'Bank Mandiri', account:'137 00 1234567 8', holder:'PT TRASTAR INDONESIA' },
+    { id:'bni', name:'BNI', account:'0123456789', holder:'PT TRASTAR INDONESIA' },
+    { id:'bri', name:'BRI', account:'0021 0123 4567 890', holder:'PT TRASTAR INDONESIA' },
+  ]},
+  va: { title:'Virtual Account', icon:'wallet', options:[
+    { id:'bca-va', name:'BCA Virtual Account', account:'88081234567890' },
+    { id:'mandiri-va', name:'Mandiri Virtual Account', account:'88091234567890' },
+    { id:'bni-va', name:'BNI Virtual Account', account:'8810123456789' },
+    { id:'bri-va', name:'BRI Virtual Account', account:'8812345678901' },
+    { id:'permata-va', name:'Permata Virtual Account', account:'8823456789012' },
+  ]},
+  qris: { title:'QRIS', icon:'qr', options:[ { id:'qris', name:'QRIS' } ]},
+  ewallet: { title:'E-Wallet', icon:'phone', options:[
+    { id:'gopay', name:'GoPay' }, { id:'shopeepay', name:'ShopeePay' }, { id:'dana', name:'DANA' }, { id:'ovo', name:'OVO' }, { id:'linkaja', name:'LinkAja' },
+  ]},
+};
+
+function QRPlaceholder(){
+  const cells = useMemo(()=>{
+    const seed = 42; let s = seed; const arr = [];
+    for(let i=0;i<21*21;i++){ s = (s*9301+49297)%233280; arr.push(s/233280 > 0.52); }
+    return arr;
+  },[]);
+  const size = 21, cell = 8;
+  const finder = (x,y) => h('g',{ key:x+'-'+y },
+    h('rect',{x,y,width:cell*7,height:cell*7,fill:'#111'}), h('rect',{x:x+cell,y:y+cell,width:cell*5,height:cell*5,fill:'#fff'}), h('rect',{x:x+cell*2,y:y+cell*2,width:cell*3,height:cell*3,fill:'#111'})
+  );
+  return h('svg',{ viewBox:`0 0 ${size*cell} ${size*cell}`, className:'w-44 h-44 sm:w-52 sm:h-52' },
+    h('rect',{x:0,y:0,width:size*cell,height:size*cell,fill:'#fff'}),
+    cells.map((on,i)=>{
+      const x = i % size, y = Math.floor(i/size);
+      if((x<7&&y<7)||(x>=size-7&&y<7)||(x<7&&y>=size-7)) return null;
+      return on ? h('rect',{ key:i, x:x*cell, y:y*cell, width:cell, height:cell, fill:'#111' }) : null;
+    }),
+    finder(0,0), finder((size-7)*cell,0), finder(0,(size-7)*cell)
+  );
+}
+
+function PaymentPage(){
+  const { items, subtotal, discount, coupon, clearCart } = useAppState();
+  const { navigate } = useRouter();
+  const { generateOrderNumber, saveOrder } = useOrdersOnce();
+  const [checkout] = useState(()=> loadLS('trastar_checkout', defaultCheckout()));
+  const [openGroup, setOpenGroup] = useState(()=> loadLS('trastar_checkout_payment_group','va'));
+  const [selected, setSelected] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [orderNumber] = useState(()=>{
+    let pending = loadLS('trastar_pending_order_number', null);
+    if(!pending){ pending = generateOrderNumber(); saveLS('trastar_pending_order_number', pending); }
+    return pending;
+  });
+
+  useEffect(()=>{ if(items.length===0 && !processing) navigate('/shop'); },[]);
+
+  const shippingMethod = SHIPPING_METHODS.find(s=>s.id===checkout.shippingMethod) || SHIPPING_METHODS[0];
+  const total = subtotal - discount + shippingMethod.cost;
+
+  function handlePayNow(){
+    setProcessing(true);
+    setTimeout(()=>{
+      const order = {
+        orderNumber, createdAt: new Date().toISOString(),
+        items: items.map(it => ({ name: it.product.name, slug: it.product.slug, variant: it.variant, qty: it.qty, price: it.product.salePrice })),
+        customer: { fullName: checkout.fullName, email: checkout.email, phone: checkout.phone },
+        shippingAddress: { province: checkout.province, city: checkout.city, district: checkout.district, postalCode: checkout.postalCode, address: checkout.address },
+        shippingMethod: shippingMethod.name, shippingCost: shippingMethod.cost,
+        paymentMethod: selected ? selected.groupTitle + ' - ' + selected.name : 'Bank Transfer',
+        subtotal, discount, couponCode: coupon ? coupon.code : null, total,
+        paymentStatus:'PAID', orderStatus:'PROCESSING',
+      };
+      saveOrder(order);
+      saveLS('trastar_pending_order_number', null);
+      clearCart();
+      navigate('/thank-you');
+    }, 1600);
+  }
+
+  if(items.length===0 && !processing) return null;
+
+  return h('div',{ className:'max-w-4xl mx-auto px-4 py-8' },
+    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:'Checkout', to:'/checkout'},{label:'Payment'}] }),
+    h('div',{ className:'flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6' },
+      h('h1',{ className:'font-display font-extrabold text-2xl text-[var(--trs-dark)]' }, 'Choose Payment Method'),
+      h('div',{ className:'text-sm text-gray-500' }, 'Order: ', h('span',{className:'font-semibold text-gray-800'}, orderNumber))
+    ),
+    h('div',{ className:'bg-[var(--trs-dark)] rounded-xl px-5 py-4 flex items-center justify-between mb-6' },
+      h('span',{ className:'text-gray-300 text-sm' }, 'Total Payment'),
+      h('span',{ className:'font-display font-extrabold text-2xl text-white' }, formatIDR(total))
+    ),
+    h('div',{ className:'space-y-3' },
+      Object.entries(PAYMENT_OPTIONS).map(([key, group]) => h('div',{ key, className:'border border-gray-200 rounded-xl overflow-hidden bg-white' },
+        h('button',{ type:'button', onClick:()=>setOpenGroup(g=> g===key ? null : key),
+          className:'w-full flex items-center justify-between px-4 py-3.5' },
+          h('span',{ className:'flex items-center gap-2.5 font-semibold text-sm text-gray-800' }, h(Icon,{name:group.icon,size:18,className:'text-[var(--trs-red)]'}), group.title),
+          h(Icon,{ name:'chevron-down', size:16, className: cx('text-gray-400 transition-transform', openGroup===key && 'rotate-180') })
+        ),
+        openGroup===key && h('div',{ className:'border-t border-gray-100 px-4 pb-4' },
+          h('div',{ className:'space-y-2 pt-3' },
+            group.options.map(opt => {
+              const isSel = selected && selected.id===opt.id;
+              return h('div',{ key:opt.id },
+                h('button',{ type:'button', onClick:()=>setSelected({...opt, groupTitle:group.title}),
+                  className: cx('w-full flex items-center justify-between border rounded-lg px-3.5 py-3 text-left transition-colors', isSel ? 'border-[var(--trs-red)] bg-[var(--trs-red)]/5' : 'border-gray-200 hover:border-gray-300') },
+                  h('span',{ className:'text-sm font-medium text-gray-800' }, opt.name),
+                  h('span',{ className: cx('w-4 h-4 rounded-full border-2 flex-shrink-0', isSel ? 'border-[var(--trs-red)] bg-[var(--trs-red)]' : 'border-gray-300') })
+                ),
+                isSel && h('div',{ className:'mt-2 bg-gray-50 rounded-lg p-4' },
+                  key==='qris' ? h('div',{ className:'flex flex-col items-center text-center gap-3' },
+                    h(QRPlaceholder), h('p',{ className:'text-xs text-gray-500 max-w-xs' }, 'Scan QR menggunakan aplikasi bank atau e-wallet.')
+                  ) : key==='ewallet' ? h('p',{ className:'text-xs text-gray-500' }, 'Anda akan diarahkan ke aplikasi '+opt.name+' untuk menyelesaikan pembayaran (simulasi).')
+                  : h(React.Fragment,null,
+                      h('p',{ className:'text-xs text-gray-400 mb-1' }, key==='bank' ? 'No. Rekening ('+opt.holder+')' : 'Virtual Account Number'),
+                      h('div',{ className:'flex items-center justify-between gap-3' },
+                        h('span',{ className:'font-display font-bold text-base sm:text-lg text-gray-800 tracking-wide' }, opt.account),
+                        h(CopyButton,{ text: opt.account })
+                      )
+                    )
+                )
+              );
+            })
+          ),
+          h('p',{ className:'text-xs text-gray-400 mt-3' }, 'Bayar sebelum 28 September 2026, 23:59 WIB')
+        )
+      ))
+    ),
+    h('button',{ type:'button', disabled:processing, onClick:handlePayNow,
+      className: cx('trs-btn-primary w-full py-4 rounded-lg font-bold text-sm mt-6 flex items-center justify-center gap-2', processing && 'opacity-80 cursor-not-allowed') },
+      processing ? h(React.Fragment,null, h(Icon,{name:'loader', size:16}), 'Processing Payment...') : 'PAY NOW')
+  );
+}
+
+function CopyButton({ text }){
+  const [copied, setCopied] = useState(false);
+  return h('button',{ type:'button', onClick:()=>{
+      if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(()=>{}); }
+      setCopied(true); setTimeout(()=>setCopied(false), 1500);
+    }, className:'flex items-center gap-1.5 text-xs font-bold text-[var(--trs-red)] border border-[var(--trs-red)]/30 rounded-lg px-3 py-1.5 hover:bg-[var(--trs-red)]/5 flex-shrink-0' },
+    h(Icon,{ name: copied?'check':'copy', size:13 }), copied ? 'Copied' : 'COPY'
+  );
+}
+
+function useOrdersOnce(){
+  const ref = useRef(null);
+  if(!ref.current) ref.current = useOrdersLogic();
+  return ref.current;
+}
+
+// ==================== THANK YOU PAGE ====================
+function ThankYouPage(){
+  const { navigate } = useRouter();
+  const { getOrder, getLastOrderNumber } = useOrdersOnce();
+  const orderNumber = getLastOrderNumber();
+  const order = orderNumber ? getOrder(orderNumber) : null;
+
+  useEffect(()=>{ window.scrollTo(0,0); },[]);
+
+  if(!order){
+    return h('div',{ className:'max-w-lg mx-auto px-4 py-24 text-center' },
+      h('p',{ className:'text-gray-500 mb-4' }, 'Tidak ada pesanan yang bisa ditampilkan.'),
+      h(Link,{ to:'/', className:'text-[var(--trs-red)] font-semibold' }, 'Kembali ke Beranda')
+    );
+  }
+
+  return h('div',{ className:'max-w-2xl mx-auto px-4 py-12 sm:py-16' },
+    h('div',{ className:'text-center mb-10' },
+      h('div',{ className:'w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-5' },
+        h(Icon,{ name:'check-circle', size:44, className:'text-emerald-500' })),
+      h('h1',{ className:'font-display font-extrabold text-2xl sm:text-3xl text-[var(--trs-dark)] mb-2' }, 'Thank You For Your Order!'),
+      h('p',{ className:'text-gray-500 text-sm' }, 'Pesanan kamu berhasil dibuat.')
+    ),
+    h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5 sm:p-6 mb-6' },
+      h('div',{ className:'flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-gray-100 mb-4' },
+        h('div',null, h('p',{ className:'text-xs text-gray-400' }, 'Order Number'), h('p',{ className:'font-display font-bold text-lg text-gray-800' }, order.orderNumber)),
+        h('div',{ className:'flex gap-2' }, h(Badge,{tone:'green'}, 'PAID'), h(Badge,{tone:'dark'}, order.orderStatus))
+      ),
+      h('div',{ className:'space-y-3 mb-4' },
+        order.items.map((it,i) => h('div',{ key:i, className:'flex items-center justify-between text-sm' },
+          h('span',{ className:'text-gray-600' }, it.name+' × '+it.qty), h('span',{ className:'font-medium text-gray-800' }, formatIDR(it.price*it.qty))))
+      ),
+      h('div',{ className:'space-y-2 text-sm border-t border-gray-100 pt-3' },
+        h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Shipping'), h('span',{className:'text-gray-800'}, formatIDR(order.shippingCost))),
+        order.discount>0 && h('div',{ className:'flex justify-between text-emerald-600' }, h('span',null,'Discount'), h('span',null, '-'+formatIDR(order.discount))),
+        h('div',{ className:'flex justify-between items-baseline pt-2' }, h('span',{className:'font-semibold text-gray-700'},'Grand Total'), h('span',{ className:'font-display font-extrabold text-lg text-[var(--trs-dark)]' }, formatIDR(order.total)))
+      ),
+      h('div',{ className:'grid sm:grid-cols-2 gap-4 mt-5 pt-4 border-t border-gray-100 text-sm' },
+        h('div',null, h('p',{ className:'text-xs text-gray-400 mb-1' }, 'Payment Method'), h('p',{ className:'font-medium text-gray-700' }, order.paymentMethod)),
+        h('div',null, h('p',{ className:'text-xs text-gray-400 mb-1' }, 'Shipping Address'), h('p',{ className:'font-medium text-gray-700 leading-relaxed' },
+          order.customer.fullName+', '+order.shippingAddress.address+', '+order.shippingAddress.district+', '+order.shippingAddress.city+', '+order.shippingAddress.province+' '+order.shippingAddress.postalCode))
+      )
+    ),
+    h('p',{ className:'text-xs text-gray-400 text-center mb-8' }, 'Konfirmasi pesanan telah dikirim ke email Anda.'),
+    h('div',{ className:'flex flex-col sm:flex-row gap-3 mb-10' },
+      h(Link,{ to:'/orders/'+order.orderNumber, className:'trs-btn-primary flex-1 text-center py-3.5 rounded-lg font-bold text-sm' }, 'VIEW ORDER'),
+      h(Link,{ to:'/', className:'flex-1 text-center py-3.5 rounded-lg font-bold text-sm border-2 border-gray-200 text-gray-700 hover:border-gray-300' }, 'CONTINUE SHOPPING')
+    ),
+    h('div',{ className:'bg-gray-50 rounded-xl p-5' },
+      h('h4',{ className:'font-semibold text-sm text-gray-700 mb-3' }, "What's Next?"),
+      h('ol',{ className:'space-y-2' },
+        ['Payment confirmed','Order processing','Order shipped','Order delivered'].map((s,i) => h('li',{ key:i, className:'flex items-center gap-3 text-sm' },
+          h('span',{ className: cx('w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0', i<2 ? 'bg-[var(--trs-red)] text-white' : 'bg-gray-200 text-gray-500') }, i+1),
+          h('span',{ className: i<2 ? 'text-gray-700 font-medium':'text-gray-400' }, s)))
+      )
+    )
+  );
+}
+
+// ==================== ORDER DETAIL PAGE ====================
+const ORDER_STEPS = ['Order Placed','Payment Confirmed','Processing','Shipped','Delivered'];
+function OrderDetailPage({ params }){
+  const { getOrder } = useOrdersOnce();
+  const order = getOrder(params.orderId);
+  useEffect(()=>{ window.scrollTo(0,0); },[]);
+
+  if(!order){
+    return h('div',{ className:'max-w-lg mx-auto px-4 py-24 text-center' },
+      h('p',{ className:'text-gray-500 mb-4' }, 'Pesanan tidak ditemukan.'),
+      h(Link,{ to:'/', className:'text-[var(--trs-red)] font-semibold' }, 'Kembali ke Beranda')
+    );
+  }
+  const activeStepIdx = 2; // Processing
+
+  return h('div',{ className:'max-w-3xl mx-auto px-4 py-8' },
+    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:'My Order'}] }),
+    h('div',{ className:'flex flex-wrap items-center justify-between gap-3 mb-8' },
+      h('div',null, h('h1',{ className:'font-display font-extrabold text-2xl text-[var(--trs-dark)]' }, 'My Order'), h('p',{ className:'text-sm text-gray-400 mt-1' }, 'Order Number: '+order.orderNumber)),
+      h(Badge,{tone:'dark'}, order.orderStatus)
+    ),
+
+    h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5 sm:p-6 mb-6 overflow-x-auto' },
+      h('div',{ className:'flex items-center min-w-[560px]' },
+        ORDER_STEPS.map((s,i) => h(React.Fragment,{key:s},
+          h('div',{ className:'flex flex-col items-center gap-2 flex-1' },
+            h('div',{ className: cx('w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0', i<=activeStepIdx ? 'bg-[var(--trs-red)] text-white' : 'bg-gray-100 text-gray-400') },
+              i < activeStepIdx ? h(Icon,{name:'check',size:14}) : i+1),
+            h('span',{ className: cx('text-xs font-medium text-center', i<=activeStepIdx ? 'text-gray-700':'text-gray-400') }, s)
+          ),
+          i < ORDER_STEPS.length-1 && h('div',{ className: cx('h-0.5 flex-1 -mt-6', i<activeStepIdx ? 'bg-[var(--trs-red)]' : 'bg-gray-100') })
+        ))
+      )
+    ),
+
+    h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5 sm:p-6 mb-6' },
+      h('h3',{ className:'font-semibold text-sm text-gray-800 mb-4' }, 'Product Information'),
+      h('div',{ className:'space-y-3 mb-4' },
+        order.items.map((it,i) => h('div',{ key:i, className:'flex items-center justify-between text-sm' },
+          h('span',{ className:'text-gray-600' }, it.name+' ('+Object.values(it.variant||{}).filter(v=>v!=='-').join(' / ')+') × '+it.qty), h('span',{ className:'font-medium text-gray-800' }, formatIDR(it.price*it.qty))))
+      ),
+      h('div',{ className:'space-y-2 text-sm border-t border-gray-100 pt-3' },
+        h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Subtotal'), h('span',{className:'text-gray-800'}, formatIDR(order.subtotal))),
+        h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Shipping ('+order.shippingMethod+')'), h('span',{className:'text-gray-800'}, formatIDR(order.shippingCost))),
+        order.discount>0 && h('div',{ className:'flex justify-between text-emerald-600' }, h('span',null,'Discount'), h('span',null,'-'+formatIDR(order.discount))),
+        h('div',{ className:'flex justify-between items-baseline pt-2' }, h('span',{className:'font-semibold text-gray-700'},'Total'), h('span',{ className:'font-display font-extrabold text-lg text-[var(--trs-dark)]' }, formatIDR(order.total)))
+      )
+    ),
+
+    h('div',{ className:'grid sm:grid-cols-2 gap-4 mb-8' },
+      h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5' },
+        h('h3',{ className:'font-semibold text-sm text-gray-800 mb-2 flex items-center gap-2' }, h(Icon,{name:'map-pin',size:14,className:'text-[var(--trs-red)]'}), 'Shipping Address'),
+        h('p',{ className:'text-sm text-gray-600 leading-relaxed' }, order.customer.fullName, h('br'), order.shippingAddress.address, h('br'), order.shippingAddress.district+', '+order.shippingAddress.city, h('br'), order.shippingAddress.province+' '+order.shippingAddress.postalCode)
+      ),
+      h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5' },
+        h('h3',{ className:'font-semibold text-sm text-gray-800 mb-2 flex items-center gap-2' }, h(Icon,{name:'wallet',size:14,className:'text-[var(--trs-red)]'}), 'Payment Information'),
+        h('p',{ className:'text-sm text-gray-600' }, order.paymentMethod), h('p',{ className:'text-xs text-emerald-600 font-semibold mt-1' }, order.paymentStatus)
+      )
+    ),
+    h(Link,{ to:'/', className:'trs-btn-primary inline-block px-8 py-3.5 rounded-lg font-bold text-sm' }, 'CONTINUE SHOPPING')
+  );
+}
+
+// ==================== ABOUT / CONTACT / 404 ====================
+function AboutPage(){
+  return h('div',{ className:'max-w-3xl mx-auto px-4 py-16' },
+    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:'About'}] }),
+    h('h1',{ className:'font-display font-extrabold text-3xl text-[var(--trs-dark)] mb-4' }, 'Tentang TRASTAR'),
+    h('p',{ className:'text-gray-600 leading-relaxed mb-4' }, 'TRASTAR hadir untuk pengendara motor yang menginginkan performa maksimal dari kendaraannya. Kami menyediakan sparepart dan aksesoris berkualitas tinggi untuk kebutuhan harian, komunitas, hingga bengkel.'),
+    h('p',{ className:'text-gray-600 leading-relaxed' }, 'Setiap produk yang kami jual melalui proses quality control ketat sebelum sampai ke tangan pelanggan, karena performa terbaik dimulai dari komponen yang tepat.')
+  );
+}
+function ContactPage(){
+  return h('div',{ className:'max-w-3xl mx-auto px-4 py-16' },
+    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:'Contact'}] }),
+    h('h1',{ className:'font-display font-extrabold text-3xl text-[var(--trs-dark)] mb-6' }, 'Hubungi Kami'),
+    h('div',{ className:'space-y-4 text-sm text-gray-600' },
+      h('div',{ className:'flex items-center gap-3' }, h(Icon,{name:'map-pin',size:18,className:'text-[var(--trs-red)]'}), 'Jl. Kaliurang KM 7, Sleman, Yogyakarta'),
+      h('div',{ className:'flex items-center gap-3' }, h(Icon,{name:'phone',size:18,className:'text-[var(--trs-red)]'}), '+62 812-3456-7890'),
+      h('div',{ className:'flex items-center gap-3' }, h(Icon,{name:'mail',size:18,className:'text-[var(--trs-red)]'}), 'hello@trastar.id'),
+      h('div',{ className:'flex items-center gap-3' }, h(Icon,{name:'whatsapp',size:18,className:'text-[var(--trs-red)]'}), 'WhatsApp Customer Support')
+    )
+  );
+}
+function NotFoundPage(){
+  return h('div',{ className:'max-w-lg mx-auto px-4 py-24 text-center' },
+    h(Icon,{ name:'inbox', size:48, className:'text-gray-200 mx-auto mb-4' }),
+    h('h1',{ className:'font-display font-bold text-xl text-gray-800 mb-2' }, 'Halaman Tidak Ditemukan'),
+    h(Link,{ to:'/', className:'text-[var(--trs-red)] font-semibold text-sm' }, 'Kembali ke Beranda')
+  );
+}
+
+// ==================== ROUTES / APP ====================
+const ROUTES = [
+  { pattern:'/', component: HomePage },
+  { pattern:'/shop', component: ShopPage },
+  { pattern:'/product/:slug', component: ProductDetailPage },
+  { pattern:'/cart', component: CartPage },
+  { pattern:'/checkout', component: CheckoutPage },
+  { pattern:'/payment', component: PaymentPage },
+  { pattern:'/thank-you', component: ThankYouPage },
+  { pattern:'/orders/:orderId', component: OrderDetailPage },
+  { pattern:'/about', component: AboutPage },
+  { pattern:'/contact', component: ContactPage },
+];
+
+function resolveRoute(path){
+  for(const r of ROUTES){
+    const params = matchRoute(r.pattern, path);
+    if(params) return { component: r.component, params };
+  }
+  return { component: NotFoundPage, params:{} };
+}
+
+function App(){
+  const [path, setPath] = useState(getHashPath());
+
+  useEffect(()=>{
+    function onHashChange(){ setPath(getHashPath()); window.scrollTo(0,0); }
+    window.addEventListener('hashchange', onHashChange);
+    return ()=> window.removeEventListener('hashchange', onHashChange);
+  },[]);
+
+  const navigate = useCallback((to)=>{
+    if(('#'+to) === window.location.hash || (to==='/' && window.location.hash==='')){
+      setPath(to); window.scrollTo(0,0);
+    } else {
+      window.location.hash = to;
+    }
+  },[]);
+
+  const router = useMemo(()=>({ path, navigate }), [path, navigate]);
+  const cart = useCartLogic();
+  const appState = useMemo(()=> ({ ...cart }), [cart.items, cart.coupon, cart.subtotal, cart.discount, cart.itemCount]);
+
+  const { component: PageComponent, params } = resolveRoute(path);
+
+  return h(RouterContext.Provider, { value: router },
+    h(AppStateContext.Provider, { value: appState },
+      h('div',{ className:'min-h-screen flex flex-col bg-[var(--trs-bg)]' },
+        h(Header),
+        h('main',{ className:'flex-1' }, h(PageComponent, { params, key: path })),
+        h(Footer)
+      )
+    )
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(h(App));
+</script></body></html>
