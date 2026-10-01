@@ -1,0 +1,2193 @@
+<!DOCTYPE html>
+<html lang="id" style="color-scheme: light;">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>TRASTAR Commerce Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<style>
+  :root{
+    --trs-red:#E11D2E; --trs-red-dark:#B5121F; --trs-dark:#111111; --trs-dark-2:#1B1B1B;
+    --trs-white:#FFFFFF; --trs-bg:#F7F7F7; --trs-border:#E5E7EB; --trs-gray:#6B7280;
+    --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0; font-family:'Inter',system-ui,sans-serif; background:var(--trs-bg); color:var(--trs-dark);
+    padding-top:var(--safe-t); padding-bottom:var(--safe-b); -webkit-font-smoothing:antialiased; overflow-x:hidden;}
+  h1,h2,h3,h4,.font-display{font-family:'Manrope',system-ui,sans-serif;}
+  ::-webkit-scrollbar{width:8px;height:8px;} ::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:8px;}
+  .no-scrollbar::-webkit-scrollbar{display:none;} .no-scrollbar{-ms-overflow-style:none;scrollbar-width:none;}
+  .trs-btn-primary{background:var(--trs-red);color:#fff;transition:background .15s ease, transform .1s ease;}
+  .trs-btn-primary:hover{background:var(--trs-red-dark);} .trs-btn-primary:active{transform:scale(0.98);}
+  input:focus, select:focus, textarea:focus, button:focus-visible, a:focus-visible{outline:2px solid var(--trs-red); outline-offset:1px;}
+  @keyframes trs-fade-up{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+  .trs-animate-in{animation:trs-fade-up .25s ease both;}
+  @keyframes trs-spin{to{transform:rotate(360deg);}} .trs-spin{animation:trs-spin 1s linear infinite;}
+  @keyframes trs-toast-in{from{opacity:0; transform:translateY(8px) scale(.98);} to{opacity:1; transform:translateY(0) scale(1);}}
+  .trs-toast{animation:trs-toast-in .2s ease both;}
+  .trs-line-clamp-1{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;}
+  table{border-collapse:collapse;}
+  .trs-scrollbox::-webkit-scrollbar{height:6px;width:6px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>window.addEventListener('error', function(e){ console.error('TRASTAR ADMIN runtime error:', e.error || e.message); });</script>
+<script>
+// ==================== HELPERS ====================
+const h = React.createElement;
+const { useState, useEffect, useMemo, useRef, useCallback, createContext, useContext } = React;
+function cx(...a){ return a.filter(Boolean).join(' '); }
+function formatIDR(n){ return 'Rp' + Math.round(n).toLocaleString('id-ID'); }
+function formatDate(d){ const dt = typeof d==='string' ? new Date(d) : d; return dt.toLocaleDateString('id-ID',{ day:'numeric', month:'short', year:'numeric' }); }
+function formatDateTime(d){ const dt = typeof d==='string' ? new Date(d) : d; return dt.toLocaleDateString('id-ID',{ day:'numeric', month:'short', year:'numeric' }) + ' ' + dt.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }
+function loadLS(key, fallback){ try{ const raw = window.localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }catch(e){ return fallback; } }
+function saveLS(key, value){ try{ window.localStorage.setItem(key, JSON.stringify(value)); }catch(e){} }
+function daysAgoISO(n){ const d = new Date(); d.setDate(d.getDate()-n); return d.toISOString(); }
+function seededRand(seed){ let s = seed; return function(){ s = (s*9301+49297)%233280; return s/233280; }; }
+function downloadCSV(filename, rows){
+  const csv = rows.map(r => r.map(cell => {
+    const s = String(cell==null?'':cell);
+    return /[",\n]/.test(s) ? '"'+s.replace(/"/g,'""')+'"' : s;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+// ==================== ICONS ====================
+function Icon({ name, size = 18, className = '', strokeWidth = 1.8 }){
+  const c = { width:size, height:size, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth, strokeLinecap:'round', strokeLinejoin:'round', className };
+  switch(name){
+    case 'grid': return h('svg',c, h('rect',{x:3,y:3,width:7,height:7,rx:1.5}), h('rect',{x:14,y:3,width:7,height:7,rx:1.5}), h('rect',{x:3,y:14,width:7,height:7,rx:1.5}), h('rect',{x:14,y:14,width:7,height:7,rx:1.5}));
+    case 'box': return h('svg',c, h('path',{d:'M21 8l-9-5-9 5 9 5 9-5z'}), h('path',{d:'M3 8v8l9 5 9-5V8'}), h('line',{x1:12,y1:13,x2:12,y2:21}));
+    case 'bag': return h('svg',c, h('path',{d:'M6 8h12l-1 12H7z'}), h('path',{d:'M9 8V6a3 3 0 0 1 6 0v2'}));
+    case 'truck': return h('svg',c, h('rect',{x:1,y:6,width:14,height:11,rx:1.5}), h('path',{d:'M15 10h4l3 3.5V17h-7z'}), h('circle',{cx:6,cy:19,r:1.6}), h('circle',{cx:17.5,cy:19,r:1.6}));
+    case 'archive': return h('svg',c, h('rect',{x:3,y:4,width:18,height:4,rx:1}), h('path',{d:'M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8'}), h('line',{x1:10,y1:12,x2:14,y2:12}));
+    case 'users': return h('svg',c, h('circle',{cx:9,cy:8,r:3.2}), h('path',{d:'M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6'}), h('path',{d:'M16 4.2a3.2 3.2 0 0 1 0 6.2'}), h('path',{d:'M17.5 14.2c2.2.6 3.8 2.6 4 5.8'}));
+    case 'tag': return h('svg',c, h('path',{d:'M12 2h7a1 1 0 0 1 1 1v7a1 1 0 0 1-.3.7L11 20.4a1 1 0 0 1-1.4 0l-8-8a1 1 0 0 1 0-1.4L11.3 2.3A1 1 0 0 1 12 2z'}), h('circle',{cx:16.5,cy:7.5,r:1.3,fill:'currentColor',stroke:'none'}));
+    case 'rotate': return h('svg',c, h('path',{d:'M3 12a9 9 0 0 1 15.5-6.3L21 8'}), h('polyline',{points:'21 3 21 8 16 8'}), h('path',{d:'M21 12a9 9 0 0 1-15.5 6.3L3 16'}), h('polyline',{points:'3 21 3 16 8 16'}));
+    case 'factory': return h('svg',c, h('path',{d:'M3 21V10l6 4v-4l6 4V8l6 4v9z'}), h('line',{x1:3,y1:21,x2:21,y2:21}));
+    case 'card': return h('svg',c, h('rect',{x:2,y:5,width:20,height:14,rx:2}), h('line',{x1:2,y1:10,x2:22,y2:10}), h('line',{x1:6,y1:15,x2:10,y2:15}));
+    case 'bar-chart': return h('svg',c, h('line',{x1:4,y1:20,x2:4,y2:10}), h('line',{x1:11,y1:20,x2:11,y2:4}), h('line',{x1:18,y1:20,x2:18,y2:14}));
+    case 'user-cog': return h('svg',c, h('circle',{cx:9,cy:8,r:3.2}), h('path',{d:'M2.5 20c0-3.6 2.9-6 6.5-6'}), h('circle',{cx:18,cy:16,r:2.5}), h('line',{x1:18,y1:11.5,x2:18,y2:12.7}), h('line',{x1:18,y1:19.3,x2:18,y2:20.5}), h('line',{x1:14.7,y1:16,x2:15.9,y2:16}), h('line',{x1:20.1,y1:16,x2:21.3,y2:16}));
+    case 'settings': return h('svg',c, h('circle',{cx:12,cy:12,r:3}), h('path',{d:'M19 12a7 7 0 0 0-.2-1.6l2-1.6-2-3.4-2.4 1a7 7 0 0 0-2.8-1.6L13 2h-2l-.6 2.8a7 7 0 0 0-2.8 1.6l-2.4-1-2 3.4 2 1.6A7 7 0 0 0 5 12c0 .5 0 1.1.2 1.6l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 2.8 1.6L11 22h2l.6-2.8a7 7 0 0 0 2.8-1.6l2.4 1 2-3.4-2-1.6c.2-.5.2-1.1.2-1.6z'}));
+    case 'help-circle': return h('svg',c, h('circle',{cx:12,cy:12,r:9}), h('path',{d:'M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7v.3'}), h('line',{x1:12,y1:17,x2:12,y2:17}));
+    case 'log-out': return h('svg',c, h('path',{d:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4'}), h('polyline',{points:'16 17 21 12 16 7'}), h('line',{x1:21,y1:12,x2:9,y2:12}));
+    case 'bell': return h('svg',c, h('path',{d:'M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6'}), h('path',{d:'M10 20a2 2 0 0 0 4 0'}));
+    case 'search': return h('svg',c, h('circle',{cx:11,cy:11,r:7}), h('line',{x1:21,y1:21,x2:16.2,y2:16.2}));
+    case 'plus': return h('svg',c, h('line',{x1:12,y1:5,x2:12,y2:19}), h('line',{x1:5,y1:12,x2:19,y2:12}));
+    case 'minus': return h('svg',c, h('line',{x1:5,y1:12,x2:19,y2:12}));
+    case 'x': return h('svg',c, h('line',{x1:5,y1:5,x2:19,y2:19}), h('line',{x1:19,y1:5,x2:5,y2:19}));
+    case 'menu': return h('svg',c, h('line',{x1:3,y1:6,x2:21,y2:6}), h('line',{x1:3,y1:12,x2:21,y2:12}), h('line',{x1:3,y1:18,x2:21,y2:18}));
+    case 'chevron-down': return h('svg',c, h('polyline',{points:'6 9 12 15 18 9'}));
+    case 'chevron-right': return h('svg',c, h('polyline',{points:'9 6 15 12 9 18'}));
+    case 'chevron-left': return h('svg',c, h('polyline',{points:'15 6 9 12 15 18'}));
+    case 'chevrons-left': return h('svg',c, h('polyline',{points:'11 17 6 12 11 7'}), h('polyline',{points:'18 17 13 12 18 7'}));
+    case 'more': return h('svg',{...c, fill:'currentColor', stroke:'none'}, h('circle',{cx:5,cy:12,r:1.6}), h('circle',{cx:12,cy:12,r:1.6}), h('circle',{cx:19,cy:12,r:1.6}));
+    case 'check': return h('svg',c, h('polyline',{points:'20 6 9 17 4 12'}));
+    case 'check-circle': return h('svg',c, h('circle',{cx:12,cy:12,r:9}), h('polyline',{points:'8 12.5 11 15.5 16 9'}));
+    case 'alert-circle': return h('svg',c, h('circle',{cx:12,cy:12,r:9}), h('line',{x1:12,y1:8,x2:12,y2:13}), h('circle',{cx:12,cy:16.3,r:.3,fill:'currentColor'}));
+    case 'clock': return h('svg',c, h('circle',{cx:12,cy:12,r:9}), h('polyline',{points:'12 7 12 12 15.5 14'}));
+    case 'edit': return h('svg',c, h('path',{d:'M12 20h9'}), h('path',{d:'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'}));
+    case 'trash': return h('svg',c, h('polyline',{points:'3 6 5 6 21 6'}), h('path',{d:'M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2'}), h('path',{d:'M19 6l-1 14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1L5 6'}), h('line',{x1:10,y1:11,x2:10,y2:16}), h('line',{x1:14,y1:11,x2:14,y2:16}));
+    case 'copy': return h('svg',c, h('rect',{x:9,y:9,width:12,height:12,rx:2}), h('path',{d:'M5 15V5a2 2 0 0 1 2-2h10'}));
+    case 'download': return h('svg',c, h('path',{d:'M12 3v12'}), h('polyline',{points:'7 10 12 15 17 10'}), h('path',{d:'M4 19h16'}));
+    case 'upload': return h('svg',c, h('path',{d:'M12 21V9'}), h('polyline',{points:'7 14 12 9 17 14'}), h('path',{d:'M4 19h16'}));
+    case 'filter': return h('svg',c, h('path',{d:'M4 5h16l-6 8v6l-4 2v-8z'}));
+    case 'star': return h('svg',{...c, fill:'currentColor', stroke:'none'}, h('polygon',{points:'12 2.5 15.1 8.9 22.2 9.9 17.1 14.8 18.3 21.8 12 18.5 5.7 21.8 6.9 14.8 1.8 9.9 8.9 8.9'}));
+    case 'zap': return h('svg',{...c, fill:'currentColor', stroke:'none'}, h('polygon',{points:'13 2 4 14 11 14 10 22 20 9 13 9'}));
+    case 'disc': return h('svg',c, h('circle',{cx:12,cy:12,r:9}), h('circle',{cx:12,cy:12,r:3}));
+    case 'map-pin': return h('svg',c, h('path',{d:'M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z'}), h('circle',{cx:12,cy:9,r:2.4}));
+    case 'phone': return h('svg',c, h('path',{d:'M5 4h3l1.5 4.5L7 10.5a12 12 0 0 0 6.5 6.5l1.8-2.5L20 16v3a2 2 0 0 1-2.2 2A16 16 0 0 1 3 6.2 2 2 0 0 1 5 4z'}));
+    case 'mail': return h('svg',c, h('rect',{x:3,y:5,width:18,height:14,rx:2}), h('polyline',{points:'3 7 12 13 21 7'}));
+    case 'whatsapp': return h('svg',{...c, fill:'currentColor', stroke:'none'}, h('path',{d:'M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2zm0 18.2a8.1 8.1 0 0 1-4.2-1.1l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.8 1-.1.2-.3.2-.5.1-.7-.3-1.4-.7-2-1.3-.6-.5-1-1.2-1.2-1.4-.1-.2 0-.4.1-.5l.4-.5c.1-.1.1-.3.1-.4-.1-.1-.6-1.4-.8-1.9-.2-.5-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.6.6-.9 1.3-.9 2.1.1 1 .4 1.9 1.1 2.8 1.2 1.7 2.6 2.9 4.3 3.6.7.3 1.3.5 1.8.6.7.2 1.3.2 1.8.1.6-.1 1.4-.6 1.6-1.1.2-.6.2-1.1.1-1.2-.1-.1-.2-.2-.4-.3z'}));
+    case 'printer': return h('svg',c, h('polyline',{points:'6 9 6 2 18 2 18 9'}), h('path',{d:'M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2'}), h('rect',{x:6,y:14,width:12,height:8}));
+    case 'package': return h('svg',c, h('path',{d:'M21 8l-9-5-9 5 9 5 9-5z'}), h('path',{d:'M3 8v8l9 5 9-5V8'}), h('line',{x1:12,y1:13,x2:12,y2:21}));
+    case 'wallet': return h('svg',c, h('rect',{x:3,y:6,width:18,height:13,rx:2}), h('path',{d:'M17 12.5h2.5'}), h('path',{d:'M3 9h18'}));
+    case 'image': return h('svg',c, h('rect',{x:3,y:3,width:18,height:18,rx:2}), h('circle',{cx:8.5,cy:8.5,r:1.6}), h('path',{d:'M21 15l-5-5-9 9'}));
+    case 'refresh': return h('svg',c, h('path',{d:'M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3'}), h('polyline',{points:'18 3 18 7 14 7'}), h('polyline',{points:'6 21 6 17 10 17'}));
+    case 'layers': return h('svg',c, h('polygon',{points:'12 3 21 8 12 13 3 8'}), h('polyline',{points:'3 15 12 20 21 15'}), h('polyline',{points:'3 11.5 12 16.5 21 11.5'}));
+    case 'sliders': return h('svg',c, h('line',{x1:4,y1:6,x2:20,y2:6}), h('circle',{cx:9,cy:6,r:2}), h('line',{x1:4,y1:18,x2:20,y2:18}), h('circle',{cx:15,cy:18,r:2}), h('line',{x1:4,y1:12,x2:20,y2:12}), h('circle',{cx:12,cy:12,r:2}));
+    case 'file-text': return h('svg',c, h('path',{d:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'}), h('polyline',{points:'14 2 14 8 20 8'}), h('line',{x1:8,y1:13,x2:16,y2:13}), h('line',{x1:8,y1:17,x2:16,y2:17}));
+    case 'shield': return h('svg',c, h('path',{d:'M12 3l7 3v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9V6z'}));
+    case 'grip': return h('svg',{...c, fill:'currentColor', stroke:'none'}, [ [8,6],[16,6],[8,12],[16,12],[8,18],[16,18] ].map(([x,y],i)=>h('circle',{key:i,cx:x,cy:y,r:1.6})));
+    case 'inbox': return h('svg',c, h('polyline',{points:'22 12 16 12 14 15 10 15 8 12 2 12'}), h('path',{d:'M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z'}));
+    case 'loader': return h('svg', {...c, className: cx(className,'trs-spin')}, h('path',{d:'M12 3a9 9 0 1 0 9 9'}));
+    default: return null;
+  }
+}
+
+// ==================== SEED DATA ====================
+const CATEGORIES = ['Engine Parts','Brake System','Suspension','Electrical','Lighting','Transmission','Body Parts','Accessories'];
+const CATEGORY_ICON = { 'Engine Parts':'settings','Brake System':'disc','Suspension':'sliders','Electrical':'zap','Lighting':'zap','Transmission':'layers','Body Parts':'package','Accessories':'box' };
+const BRANDS_VEHICLE = { Honda:['Vario 125','Vario 150','Vario 160','PCX 160','Beat','CBR150R'], Yamaha:['NMAX','Aerox 155','Mio','XMAX','R15'], Kawasaki:['Ninja 250','KLX 150','W175'], Suzuki:['Satria F150','Nex II','GSX-R150'], Vespa:['Sprint 150','Primavera','LX 125'] };
+const CITIES = ['Yogyakarta','Sleman','Jakarta','Bandung','Surabaya','Semarang','Solo'];
+const COURIERS = ['JNE Regular','J&T Express','SiCepat','Instant Courier'];
+const CUSTOMER_NAMES = ['Budi Santoso','Dewi Pratiwi','Rizky Adhitya','Fajar Setiawan','Sinta Rahayu','Galih Prasetyo','Andi Wijaya','Lestari Putri','Bagas Saputra','Nurul Hidayah','Yoga Pratama','Mira Kartika'];
+
+function seedProducts(){
+  const raw = [
+    { name:'TRASTAR Racing Brake Disc 220MM', sku:'TRS-BRK-220', category:'Brake System', price:525000, salePrice:425000, stock:24, variants:3, hpp:280000 },
+    { name:'TRASTAR Performance Brake Pad', sku:'TRS-BRK-PAD', category:'Brake System', price:220000, salePrice:185000, stock:52, variants:2, hpp:110000 },
+    { name:'TRASTAR LED Headlight Pro', sku:'TRS-LGT-PRO', category:'Lighting', price:320000, salePrice:275000, stock:64, variants:2, hpp:150000 },
+    { name:'TRASTAR Premium Chain Kit', sku:'TRS-TRN-CHN', category:'Transmission', price:560000, salePrice:495000, stock:5, variants:2, hpp:320000 },
+    { name:'TRASTAR Adjustable Shock', sku:'TRS-SUS-ADJ', category:'Suspension', price:950000, salePrice:850000, stock:21, variants:3, hpp:520000 },
+    { name:'TRASTAR Racing Spark Plug', sku:'TRS-ENG-SPK', category:'Engine Parts', price:120000, salePrice:95000, stock:0, variants:2, hpp:48000 },
+    { name:'TRASTAR CNC Brake Lever', sku:'TRS-BRK-LVR', category:'Brake System', price:375000, salePrice:325000, stock:40, variants:4, hpp:190000 },
+    { name:'TRASTAR USB Fast Charger', sku:'TRS-ACC-USB', category:'Accessories', price:210000, salePrice:175000, stock:75, variants:1, hpp:90000 },
+    { name:'TRASTAR Air Filter Racing', sku:'TRS-ENG-AIR', category:'Engine Parts', price:165000, salePrice:139000, stock:8, variants:2, hpp:75000 },
+    { name:'TRASTAR Digital Speedometer', sku:'TRS-ELC-SPD', category:'Electrical', price:480000, salePrice:420000, stock:19, variants:2, hpp:260000 },
+    { name:'TRASTAR Body Fairing Set', sku:'TRS-BDY-FRG', category:'Body Parts', price:1250000, salePrice:1050000, stock:12, variants:2, hpp:680000 },
+    { name:'TRASTAR Racing Exhaust Slip-On', sku:'TRS-ENG-EXH', category:'Engine Parts', price:1450000, salePrice:1250000, stock:16, variants:2, hpp:820000 },
+  ];
+  return raw.map((p,i)=>{
+    let status = 'Active';
+    if(p.stock===0) status = 'Out of Stock';
+    else if(p.stock <= 8) status = 'Low Stock';
+    if(i===11) status = 'Draft';
+    return { id:i+1, slug: p.sku.toLowerCase(), name:p.name, sku:p.sku, brand:'TRASTAR', category:p.category, icon:CATEGORY_ICON[p.category],
+      price:p.price, salePrice:p.salePrice, hpp:p.hpp, stock:p.stock, reserved: Math.round(p.stock*0.1), incoming: i%4===0 ? 20 : 0,
+      minStock:10, variants:p.variants, status, updated: daysAgoISO(i%10), rating:(4.5+ (i%5)*0.1).toFixed(1), reviewCount: 40+i*11 };
+  });
+}
+const PRODUCTS = seedProducts();
+function getProductById(id){ return PRODUCTS.find(p=>p.id===Number(id)); }
+
+function seedOrders(){
+  const statuses = ['New Order','Awaiting Payment','Paid','Processing','Ready to Ship','Shipped','Delivered','Completed','Cancelled','Refunded'];
+  const rnd = seededRand(7);
+  const orders = [];
+  for(let i=0;i<26;i++){
+    const dayOffset = Math.floor(rnd()*30);
+    const itemCount = 1 + Math.floor(rnd()*3);
+    const items = [];
+    for(let j=0;j<itemCount;j++){
+      const p = PRODUCTS[Math.floor(rnd()*PRODUCTS.length)];
+      const qty = 1 + Math.floor(rnd()*2);
+      items.push({ productId:p.id, name:p.name, sku:p.sku, variant: p.variants>1 ? (rnd()>0.5?'Black':'Silver') : '-', qty, price:p.salePrice });
+    }
+    const subtotal = items.reduce((s,it)=> s+it.price*it.qty, 0);
+    const shippingCost = [20000,22000,18000,35000][Math.floor(rnd()*4)];
+    const discount = rnd()>0.7 ? Math.round(subtotal*0.1) : 0;
+    let orderStatus = statuses[Math.floor(rnd()*statuses.length)];
+    if(i===0) orderStatus = 'Processing';
+    if(i===1) orderStatus = 'Paid';
+    if(i===2) orderStatus = 'Ready to Ship';
+    const paymentStatus = ['New Order','Awaiting Payment'].includes(orderStatus) ? 'Unpaid' : (orderStatus==='Cancelled' ? 'Cancelled' : (orderStatus==='Refunded' ? 'Refunded' : 'Paid'));
+    const shippingStatus = ['Shipped','Delivered','Completed'].includes(orderStatus) ? (orderStatus==='Delivered'||orderStatus==='Completed'?'Delivered':'In Transit') : (orderStatus==='Ready to Ship' ? 'Waiting Pickup' : 'Not Shipped');
+    const customer = CUSTOMER_NAMES[Math.floor(rnd()*CUSTOMER_NAMES.length)];
+    const city = CITIES[Math.floor(rnd()*CITIES.length)];
+    const d = new Date(); d.setDate(d.getDate()-dayOffset);
+    const orderNumber = 'TRS' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + String(100+i);
+    orders.push({
+      orderNumber, customer, phone:'0812'+String(3000000+i*137).slice(0,8), email: customer.toLowerCase().replace(/[^a-z]/g,'')+'@email.com',
+      city, address: 'Jl. Contoh No. '+(i+1)+', '+city, items, subtotal, shippingCost, discount, total: subtotal+shippingCost-discount,
+      courier: COURIERS[Math.floor(rnd()*COURIERS.length)], trackingNumber: shippingStatus!=='Not Shipped' ? ('JX'+(1000000+i*731)) : null,
+      paymentStatus, paymentMethod: ['BCA Virtual Account','QRIS','GoPay','Bank Transfer BCA'][Math.floor(rnd()*4)],
+      orderStatus, shippingStatus, date: d.toISOString(), customerNote: i%5===0 ? 'Tolong dikemas rapi, mau buat hadiah.' : '',
+      internalNotes: [], timeline:[{ label:'Order Created', date: d.toISOString() }],
+    });
+  }
+  return orders.sort((a,b)=> new Date(b.date) - new Date(a.date));
+}
+
+function seedCustomers(orders){
+  const map = {};
+  orders.forEach(o => {
+    if(!map[o.customer]) map[o.customer] = { name:o.customer, phone:o.phone, email:o.email, city:o.city, orders:0, totalSpend:0, lastOrder:o.date, type: ['Retail','Bengkel','Reseller','VIP'][Math.floor(Math.random()*0)] || 'Retail' };
+    map[o.customer].orders += 1;
+    map[o.customer].totalSpend += o.total;
+    if(new Date(o.date) > new Date(map[o.customer].lastOrder)) map[o.customer].lastOrder = o.date;
+  });
+  const list = Object.values(map).map((c,i)=>({ id:i+1, ...c, type: c.orders>=4 ? 'VIP' : (c.orders>=2 ? 'Reseller' : (i%3===0 ? 'Bengkel' : 'Retail')), status:'Active', tags: c.orders>=4 ? ['VIP'] : [] }));
+  return list.sort((a,b)=> b.totalSpend - a.totalSpend);
+}
+
+function seedSuppliers(){
+  return [
+    { id:1, name:'CV Sinar Logam Jaya', contact:'Pak Hartono · 0813-2345-6789', products:14, openPO:2, outstanding:12500000, lastPurchase:daysAgoISO(6), status:'Active' },
+    { id:2, name:'UD Maju Bersama Parts', contact:'Bu Sri · 0821-9988-1122', products:9, openPO:1, outstanding:4800000, lastPurchase:daysAgoISO(14), status:'Active' },
+    { id:3, name:'PT Cahaya Otomotif', contact:'Pak Yusuf · 0812-7766-5544', products:22, openPO:0, outstanding:0, lastPurchase:daysAgoISO(2), status:'Active' },
+    { id:4, name:'Bintang Komponen', contact:'Bu Lina · 0857-1234-9090', products:6, openPO:1, outstanding:2100000, lastPurchase:daysAgoISO(21), status:'Inactive' },
+    { id:5, name:'Karya Presisi Mfg', contact:'Pak Dedi · 0878-4455-3322', products:11, openPO:0, outstanding:0, lastPurchase:daysAgoISO(40), status:'Active' },
+  ];
+}
+function seedPurchaseOrders(suppliers){
+  return [
+    { id:'PO-2609-01', supplierId:1, products:'Brake Disc, Brake Pad', qty:150, cost:35000000, expected:daysAgoISO(-4), status:'Ordered', payment:'Unpaid' },
+    { id:'PO-2609-02', supplierId:1, products:'CNC Brake Lever', qty:60, cost:11400000, expected:daysAgoISO(-1), status:'Ordered', payment:'Partial' },
+    { id:'PO-2608-11', supplierId:2, products:'LED Headlight Pro', qty:100, cost:15000000, expected:daysAgoISO(3), status:'Received', payment:'Paid' },
+    { id:'PO-2608-07', supplierId:3, products:'Spark Plug, Air Filter', qty:400, cost:22000000, expected:daysAgoISO(9), status:'Received', payment:'Paid' },
+    { id:'PO-2609-03', supplierId:4, products:'Adjustable Shock', qty:30, cost:15600000, expected:daysAgoISO(-7), status:'Ordered', payment:'Unpaid' },
+    { id:'PO-2607-19', supplierId:5, products:'Digital Speedometer', qty:40, cost:10400000, expected:daysAgoISO(20), status:'Received', payment:'Paid' },
+  ];
+}
+
+function seedPromotions(){
+  return [
+    { id:1, name:'Gear Up Sale', type:'Flash Sale', status:'Active', start:daysAgoISO(3), end:daysAgoISO(-4), usage:212, revenue:38400000 },
+    { id:2, name:'TRASTAR10', type:'Coupon', status:'Active', start:daysAgoISO(20), end:daysAgoISO(-40), usage:389, revenue:64200000 },
+    { id:3, name:'Diskon Kategori Brake System', type:'Category Discount', status:'Active', start:daysAgoISO(10), end:daysAgoISO(-10), usage:97, revenue:19800000 },
+    { id:4, name:'Gratis Ongkir Weekend', type:'Free Shipping', status:'Scheduled', start:daysAgoISO(-2), end:daysAgoISO(-9), usage:0, revenue:0 },
+    { id:5, name:'Bundle Rem Komplit', type:'Bundle', status:'Paused', start:daysAgoISO(30), end:daysAgoISO(-1), usage:44, revenue:9600000 },
+    { id:6, name:'Beli 2 Gratis 1 Busi', type:'Buy X Get Y', status:'Ended', start:daysAgoISO(60), end:daysAgoISO(15), usage:156, revenue:11200000 },
+  ];
+}
+
+function seedReturns(orders){
+  const reasons = ['Barang tidak sesuai deskripsi','Rusak saat pengiriman','Salah ukuran/variant','Berubah pikiran','Produk cacat produksi'];
+  const types = ['Return','Refund','Warranty Claim'];
+  return orders.slice(3,8).map((o,i)=>({
+    id:'RET-'+String(1001+i), orderNumber:o.orderNumber, customer:o.customer, product:o.items[0].name,
+    reason:reasons[i%reasons.length], type:types[i%types.length], requested:daysAgoISO(2+i*3),
+    status: i<2 ? 'Pending' : (i===2?'Approved':(i===3?'Rejected':'Refunded')),
+    customerNotes:'Mohon segera diproses ya min, terima kasih.', adminNotes:'', timeline:[{label:'Request Submitted', date:daysAgoISO(2+i*3)}],
+  }));
+}
+
+function seedStaff(){
+  return [
+    { id:1, name:'Andi Wibowo', role:'Owner', email:'andi@trastar.id', status:'Active', lastActive:daysAgoISO(0) },
+    { id:2, name:'Sari Kusuma', role:'Admin', email:'sari@trastar.id', status:'Active', lastActive:daysAgoISO(0) },
+    { id:3, name:'Budi Pranoto', role:'Warehouse', email:'budi@trastar.id', status:'Active', lastActive:daysAgoISO(1) },
+    { id:4, name:'Rina Amelia', role:'Finance', email:'rina@trastar.id', status:'Active', lastActive:daysAgoISO(2) },
+    { id:5, name:'Doni Saputra', role:'Customer Service', email:'doni@trastar.id', status:'Active', lastActive:daysAgoISO(0) },
+    { id:6, name:'Wulan Sari', role:'Marketing', email:'wulan@trastar.id', status:'Inactive', lastActive:daysAgoISO(18) },
+  ];
+}
+const ROLE_PERMISSIONS = {
+  'Owner': ['View Orders','Edit Orders','Refund Orders','Manage Products','Manage Stock','View Reports','Export Reports','Manage Payments','Manage Settings'],
+  'Admin': ['View Orders','Edit Orders','Manage Products','Manage Stock','View Reports','Export Reports'],
+  'Finance': ['View Orders','View Reports','Export Reports','Manage Payments','Refund Orders'],
+  'Warehouse': ['View Orders','Manage Stock'],
+  'Customer Service': ['View Orders','Edit Orders'],
+  'Marketing': ['View Reports','Manage Products'],
+  'Viewer': ['View Orders','View Reports'],
+};
+const ALL_PERMISSIONS = ['View Orders','Edit Orders','Refund Orders','Manage Products','Manage Stock','View Reports','Export Reports','Manage Payments','Manage Settings'];
+
+function seedStockHistory(){
+  const rnd = seededRand(15);
+  const reasons = ['Purchase','Sales Correction','Damaged','Return','Stock Opname'];
+  const rows = [];
+  for(let i=0;i<18;i++){
+    const p = PRODUCTS[Math.floor(rnd()*PRODUCTS.length)];
+    const before = 10+Math.floor(rnd()*60);
+    const change = (rnd()>0.4 ? 1 : -1) * (1+Math.floor(rnd()*20));
+    rows.push({ id:i+1, date: daysAgoISO(Math.floor(rnd()*25)), product:p.name, sku:p.sku, type: change>0?'Add':'Reduce', qtyBefore:before, change, qtyAfter: before+change, reason: reasons[Math.floor(rnd()*reasons.length)], staff:['Budi Pranoto','Sari Kusuma','Andi Wibowo'][Math.floor(rnd()*3)] });
+  }
+  return rows.sort((a,b)=> new Date(b.date)-new Date(a.date));
+}
+
+function seedSalesTrend(){
+  const rnd = seededRand(99);
+  const days = [];
+  for(let i=29;i>=0;i--){
+    const base = 4500000 + Math.sin(i/4)*1200000;
+    const sales = Math.max(500000, Math.round(base + (rnd()-0.5)*2500000));
+    const ordersCount = Math.max(3, Math.round(sales/230000));
+    const d = new Date(); d.setDate(d.getDate()-i);
+    days.push({ date:d.toISOString(), sales, orders: ordersCount });
+  }
+  return days;
+}
+const SALES_TREND = seedSalesTrend();
+
+function seedAuditLog(){
+  return [
+    { id:1, staff:'Sari Kusuma', action:'mengubah status Order TRS20260928001 menjadi Processing', time:daysAgoISO(0) },
+    { id:2, staff:'Budi Pranoto', action:'menyesuaikan stok TRS-BRK-220 +20 (Purchase)', time:daysAgoISO(0) },
+    { id:3, staff:'Rina Amelia', action:'mengkonfirmasi pembayaran Order TRS20260927098', time:daysAgoISO(1) },
+    { id:4, staff:'Andi Wibowo', action:'menerbitkan promosi "Gear Up Sale"', time:daysAgoISO(3) },
+    { id:5, staff:'Doni Saputra', action:'menyetujui permintaan retur RET-1001', time:daysAgoISO(4) },
+    { id:6, staff:'Sari Kusuma', action:'menambahkan produk baru "TRASTAR CNC Brake Lever"', time:daysAgoISO(7) },
+  ];
+}
+
+// ==================== ROUTER ====================
+function getHashPath(){ const raw = window.location.hash.replace(/^#/, ''); return raw === '' ? '/admin' : raw; }
+function matchRoute(pattern, path){
+  const pParts = pattern.split('/').filter(Boolean); const uParts = path.split('/').filter(Boolean);
+  if(pParts.length !== uParts.length) return null;
+  const params = {};
+  for(let i=0;i<pParts.length;i++){
+    if(pParts[i].startsWith(':')) params[pParts[i].slice(1)] = decodeURIComponent(uParts[i]);
+    else if(pParts[i] !== uParts[i]) return null;
+  }
+  return params;
+}
+const RouterContext = createContext(null);
+function useRouter(){ return useContext(RouterContext); }
+function Link({ to, className, children, onClick, ariaLabel }){
+  const { navigate } = useRouter();
+  return h('a', { href:'#'+to, className, 'aria-label':ariaLabel, onClick:(e)=>{ e.preventDefault(); if(onClick) onClick(); navigate(to); } }, children);
+}
+
+// ==================== TOASTS ====================
+const ToastContext = createContext(null);
+function useToast(){ return useContext(ToastContext); }
+function ToastHost({ toasts }){
+  return h('div',{ className:'fixed z-[200] bottom-4 right-4 flex flex-col gap-2 w-[calc(100%-2rem)] sm:w-80', style:{ marginBottom:'var(--safe-b)' } },
+    toasts.map(t => h('div',{ key:t.id, className: cx('trs-toast rounded-lg shadow-lg px-4 py-3 text-sm font-medium flex items-center gap-2.5',
+        t.type==='error' ? 'bg-red-600 text-white' : t.type==='warn' ? 'bg-amber-500 text-white' : 'bg-[var(--trs-dark)] text-white') },
+      h(Icon,{ name: t.type==='error'?'alert-circle':'check-circle', size:16, className:'flex-shrink-0' }), t.message))
+  );
+}
+function useToastState(){
+  const [toasts, setToasts] = useState([]);
+  const show = useCallback((message, type='ok')=>{
+    const id = Date.now()+Math.random();
+    setToasts(ts => [...ts, { id, message, type }]);
+    setTimeout(()=> setToasts(ts => ts.filter(t=>t.id!==id)), 3200);
+  },[]);
+  return { toasts, show };
+}
+
+// ==================== ADMIN DATA STATE ====================
+const AdminContext = createContext(null);
+function useAdmin(){ return useContext(AdminContext); }
+
+function seedAdminState(){
+  const orders = seedOrders();
+  return {
+    products: PRODUCTS.map(p=>({...p})),
+    orders,
+    customers: seedCustomers(orders),
+    suppliers: seedSuppliers(),
+    purchaseOrders: seedPurchaseOrders(),
+    promotions: seedPromotions(),
+    returns: seedReturns(orders),
+    staff: seedStaff(),
+    stockHistory: seedStockHistory(),
+    auditLog: seedAuditLog(),
+  };
+}
+function loadAdminState(){
+  const saved = loadLS('trastar_admin_state', null);
+  if(saved && saved.orders && saved.orders.length) return saved;
+  const fresh = seedAdminState();
+  saveLS('trastar_admin_state', fresh);
+  return fresh;
+}
+
+const ORDER_STATUS_FLOW = ['New Order','Awaiting Payment','Paid','Processing','Ready to Ship','Shipped','Delivered','Completed'];
+const CURRENT_STAFF = 'Sari Kusuma';
+
+function useAdminLogic(showToast){
+  const [data, setData] = useState(loadAdminState);
+  useEffect(()=>{ saveLS('trastar_admin_state', data); }, [data]);
+
+  function pushAudit(action){
+    setData(d => ({ ...d, auditLog: [{ id: Date.now(), staff: CURRENT_STAFF, action, time: new Date().toISOString() }, ...d.auditLog] }));
+  }
+
+  function updateOrderStatus(orderNumber, newStatus, extra){
+    setData(d => ({ ...d, orders: d.orders.map(o => o.orderNumber===orderNumber ? {
+      ...o, orderStatus: newStatus,
+      paymentStatus: newStatus==='Paid' || ORDER_STATUS_FLOW.indexOf(newStatus) > ORDER_STATUS_FLOW.indexOf('Paid') ? 'Paid' : o.paymentStatus,
+      shippingStatus: newStatus==='Shipped' ? 'In Transit' : newStatus==='Delivered'||newStatus==='Completed' ? 'Delivered' : newStatus==='Ready to Ship' ? 'Waiting Pickup' : o.shippingStatus,
+      timeline: [...o.timeline, { label: newStatus, date: new Date().toISOString() }],
+      ...(extra||{}),
+    } : o) }));
+    pushAudit(`mengubah status Order ${orderNumber} menjadi ${newStatus}`);
+    showToast(`Order ${orderNumber} diubah ke "${newStatus}"`);
+  }
+  function addTracking(orderNumber, courier, trackingNumber){
+    setData(d => ({ ...d, orders: d.orders.map(o => o.orderNumber===orderNumber ? { ...o, courier, trackingNumber, shippingStatus: o.shippingStatus==='Not Shipped' ? 'Waiting Pickup' : o.shippingStatus, timeline:[...o.timeline, { label:'Tracking Number Added: '+trackingNumber, date:new Date().toISOString() }] } : o) }));
+    pushAudit(`menambahkan nomor resi ${trackingNumber} pada Order ${orderNumber}`);
+    showToast('Nomor resi berhasil ditambahkan');
+  }
+  function markShipped(orderNumber){
+    updateOrderStatus(orderNumber, 'Shipped');
+  }
+  function addOrderNote(orderNumber, note){
+    setData(d => ({ ...d, orders: d.orders.map(o => o.orderNumber===orderNumber ? { ...o, internalNotes:[...o.internalNotes, { text:note, staff:CURRENT_STAFF, date:new Date().toISOString() }] } : o) }));
+    showToast('Catatan internal disimpan');
+  }
+  function cancelOrder(orderNumber){ updateOrderStatus(orderNumber, 'Cancelled'); }
+  function refundOrder(orderNumber){ updateOrderStatus(orderNumber, 'Refunded'); }
+
+  function adjustStock(productId, type, qty, reason, notes){
+    setData(d => {
+      const p = d.products.find(pp=>pp.id===productId);
+      if(!p) return d;
+      const before = p.stock;
+      let after = before;
+      if(type==='Add') after = before + qty;
+      else if(type==='Reduce') after = Math.max(0, before - qty);
+      else if(type==='Set') after = qty;
+      const change = after - before;
+      const newStatus = after===0 ? 'Out of Stock' : after<=p.minStock ? 'Low Stock' : (p.status==='Draft' ? 'Draft' : 'Active');
+      const products = d.products.map(pp => pp.id===productId ? { ...pp, stock:after, status:newStatus, updated:new Date().toISOString() } : pp);
+      const historyRow = { id: Date.now(), date:new Date().toISOString(), product:p.name, sku:p.sku, type: change>=0?'Add':'Reduce', qtyBefore:before, change, qtyAfter:after, reason, notes, staff:CURRENT_STAFF };
+      return { ...d, products, stockHistory:[historyRow, ...d.stockHistory] };
+    });
+    pushAudit(`menyesuaikan stok produk (${reason})`);
+    showToast('Stok berhasil diperbarui');
+  }
+
+  function addProduct(product){
+    setData(d => ({ ...d, products:[{ ...product, id: Math.max(0,...d.products.map(p=>p.id))+1, updated:new Date().toISOString() }, ...d.products] }));
+    pushAudit(`menambahkan produk baru "${product.name}"`);
+  }
+  function updateProductStatus(productId, status){
+    setData(d => ({ ...d, products: d.products.map(p => p.id===productId ? { ...p, status, updated:new Date().toISOString() } : p) }));
+    showToast('Status produk diperbarui');
+  }
+  function duplicateProduct(productId){
+    setData(d => {
+      const p = d.products.find(pp=>pp.id===productId); if(!p) return d;
+      const copy = { ...p, id: Math.max(0,...d.products.map(x=>x.id))+1, name: p.name+' (Copy)', sku: p.sku+'-CP', status:'Draft', updated:new Date().toISOString() };
+      return { ...d, products:[copy, ...d.products] };
+    });
+    showToast('Produk berhasil diduplikasi sebagai draft');
+  }
+  function deleteProduct(productId){
+    setData(d => ({ ...d, products: d.products.filter(p=>p.id!==productId) }));
+    showToast('Produk dihapus');
+  }
+
+  function approveReturn(id, action){
+    const statusMap = { approve:'Approved', reject:'Rejected', refund:'Refunded', replace:'Replaced' };
+    setData(d => ({ ...d, returns: d.returns.map(r => r.id===id ? { ...r, status: statusMap[action], timeline:[...r.timeline, { label: statusMap[action], date:new Date().toISOString() }] } : r) }));
+    pushAudit(`memproses permintaan retur ${id} (${statusMap[action]})`);
+    showToast(`Retur ${id} ditandai "${statusMap[action]}"`);
+  }
+  function addReturnNote(id, note){
+    setData(d => ({ ...d, returns: d.returns.map(r => r.id===id ? { ...r, adminNotes: note } : r) }));
+    showToast('Catatan admin disimpan');
+  }
+
+  function togglePromotion(id){
+    setData(d => ({ ...d, promotions: d.promotions.map(p => p.id===id ? { ...p, status: p.status==='Active' ? 'Paused' : 'Active' } : p) }));
+    pushAudit(`mengubah status promosi #${id}`);
+    showToast('Status promosi diperbarui');
+  }
+  function addPromotion(promo){
+    setData(d => ({ ...d, promotions:[{ ...promo, id: Math.max(0,...d.promotions.map(p=>p.id))+1, usage:0, revenue:0, status:'Active' }, ...d.promotions] }));
+    pushAudit(`membuat promosi baru "${promo.name}"`);
+    showToast('Promosi baru berhasil dibuat');
+  }
+
+  function addCustomerNote(id, note){
+    setData(d => ({ ...d, customers: d.customers.map(c => c.id===id ? { ...c, notes: note } : c) }));
+    showToast('Catatan pelanggan disimpan');
+  }
+  function toggleCustomerTag(id, tag){
+    setData(d => ({ ...d, customers: d.customers.map(c => {
+      if(c.id!==id) return c;
+      const has = (c.tags||[]).includes(tag);
+      return { ...c, tags: has ? c.tags.filter(t=>t!==tag) : [...(c.tags||[]), tag] };
+    }) }));
+  }
+
+  function receivePO(id){
+    setData(d => ({ ...d, purchaseOrders: d.purchaseOrders.map(po => po.id===id ? { ...po, status:'Received', payment: po.payment==='Unpaid' ? 'Partial' : po.payment } : po) }));
+    pushAudit(`menerima barang untuk PO ${id}`);
+    showToast('Barang PO ditandai diterima');
+  }
+  function cancelPO(id){
+    setData(d => ({ ...d, purchaseOrders: d.purchaseOrders.map(po => po.id===id ? { ...po, status:'Cancelled' } : po) }));
+    showToast('PO dibatalkan');
+  }
+
+  function updateStaffRole(id, role){
+    setData(d => ({ ...d, staff: d.staff.map(s => s.id===id ? { ...s, role } : s) }));
+    pushAudit(`mengubah role staff menjadi ${role}`);
+    showToast('Role staff diperbarui');
+  }
+
+  return { data, updateOrderStatus, addTracking, markShipped, addOrderNote, cancelOrder, refundOrder,
+    adjustStock, addProduct, updateProductStatus, duplicateProduct, deleteProduct,
+    approveReturn, addReturnNote, togglePromotion, addPromotion, addCustomerNote, toggleCustomerTag,
+    receivePO, cancelPO, updateStaffRole, pushAudit };
+}
+
+// ==================== SHARED UI ====================
+const STATUS_COLORS = {
+  'Active':'bg-emerald-50 text-emerald-700 border-emerald-200','Paid':'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'Completed':'bg-emerald-50 text-emerald-700 border-emerald-200','Delivered':'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'Approved':'bg-emerald-50 text-emerald-700 border-emerald-200','Received':'bg-emerald-50 text-emerald-700 border-emerald-200',
+  'Refunded':'bg-sky-50 text-sky-700 border-sky-200','Replaced':'bg-sky-50 text-sky-700 border-sky-200',
+  'Pending':'bg-amber-50 text-amber-700 border-amber-200','Processing':'bg-amber-50 text-amber-700 border-amber-200',
+  'Awaiting Payment':'bg-amber-50 text-amber-700 border-amber-200','Low Stock':'bg-amber-50 text-amber-700 border-amber-200',
+  'Partial':'bg-amber-50 text-amber-700 border-amber-200','Ordered':'bg-amber-50 text-amber-700 border-amber-200',
+  'Scheduled':'bg-amber-50 text-amber-700 border-amber-200','New Order':'bg-amber-50 text-amber-700 border-amber-200',
+  'Shipped':'bg-blue-50 text-blue-700 border-blue-200','In Transit':'bg-blue-50 text-blue-700 border-blue-200',
+  'Ready to Ship':'bg-blue-50 text-blue-700 border-blue-200','Waiting Pickup':'bg-blue-50 text-blue-700 border-blue-200',
+  'Cancelled':'bg-red-50 text-red-700 border-red-200','Rejected':'bg-red-50 text-red-700 border-red-200',
+  'Out of Stock':'bg-red-50 text-red-700 border-red-200','Failed':'bg-red-50 text-red-700 border-red-200',
+  'Delayed':'bg-red-50 text-red-700 border-red-200','Unpaid':'bg-red-50 text-red-700 border-red-200',
+  'Draft':'bg-gray-100 text-gray-600 border-gray-200','Archived':'bg-gray-100 text-gray-600 border-gray-200',
+  'Inactive':'bg-gray-100 text-gray-600 border-gray-200','Paused':'bg-gray-100 text-gray-600 border-gray-200',
+  'Ended':'bg-gray-100 text-gray-600 border-gray-200','Not Shipped':'bg-gray-100 text-gray-600 border-gray-200',
+  'Returned':'bg-gray-100 text-gray-600 border-gray-200',
+};
+function StatusBadge({ status, size='md' }){
+  const cls = STATUS_COLORS[status] || 'bg-gray-100 text-gray-600 border-gray-200';
+  return h('span',{ className: cx('inline-flex items-center border rounded-md font-semibold whitespace-nowrap', size==='sm' ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1', cls) }, status);
+}
+
+function KpiCard({ label, value, delta, icon, tone='default', onClick }){
+  const positive = delta!=null && delta>=0;
+  return h('button',{ type:'button', onClick, disabled:!onClick, className: cx('bg-white rounded-xl border border-[var(--trs-border)] p-4 text-left w-full', onClick && 'hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer') },
+    h('div',{ className:'flex items-center justify-between mb-2' },
+      h('span',{ className:'text-xs font-medium text-[var(--trs-gray)]' }, label),
+      icon && h('div',{ className:cx('w-8 h-8 rounded-lg flex items-center justify-center', tone==='alert' ? 'bg-red-50 text-[var(--trs-red)]' : 'bg-[var(--trs-bg)] text-[var(--trs-dark)]') }, h(Icon,{ name:icon, size:15 }))
+    ),
+    h('div',{ className:'font-display font-extrabold text-xl sm:text-2xl text-[var(--trs-dark)]' }, value),
+    delta!=null && h('div',{ className: cx('text-xs font-semibold mt-1 flex items-center gap-1', positive?'text-emerald-600':'text-[var(--trs-red)]') },
+      h(Icon,{ name: positive?'chevron-right':'chevron-right', size:11, className: cx(positive ? '-rotate-90' : 'rotate-90') }), (positive?'+':'')+delta+'% vs kemarin')
+  );
+}
+
+// ---- simple SVG charts (no external deps) ----
+function LineChartSVG({ data, width=600, height=200, color='#E11D2E', valueKey='sales' }){
+  const w = width, hgt = height, pad = 28;
+  const values = data.map(d=>d[valueKey]);
+  const max = Math.max(...values, 1), min = Math.min(...values, 0);
+  const range = (max-min) || 1;
+  const stepX = (w - pad*2) / (data.length-1);
+  const pts = data.map((d,i)=> [ pad + i*stepX, hgt - pad - ((d[valueKey]-min)/range)*(hgt-pad*2) ]);
+  const pathD = pts.map((p,i)=> (i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const areaD = pathD + ` L${pts[pts.length-1][0].toFixed(1)},${hgt-pad} L${pts[0][0].toFixed(1)},${hgt-pad} Z`;
+  const gid = 'lg'+valueKey;
+  return h('svg',{ viewBox:`0 0 ${w} ${hgt}`, className:'w-full h-auto', preserveAspectRatio:'none' },
+    h('defs',null, h('linearGradient',{ id:gid, x1:'0',y1:'0',x2:'0',y2:'1' }, h('stop',{ offset:'0%', stopColor:color, stopOpacity:0.25 }), h('stop',{ offset:'100%', stopColor:color, stopOpacity:0 }))),
+    [0.25,0.5,0.75].map(f => h('line',{ key:f, x1:pad, x2:w-pad, y1: pad+(hgt-pad*2)*f, y2: pad+(hgt-pad*2)*f, stroke:'#F1F1F1', strokeWidth:1 })),
+    h('path',{ d:areaD, fill:`url(#${gid})`, stroke:'none' }),
+    h('path',{ d:pathD, fill:'none', stroke:color, strokeWidth:2.2, strokeLinecap:'round', strokeLinejoin:'round' }),
+    pts.length<=31 && pts.filter((_,i)=> i===pts.length-1).map((p,i)=> h('circle',{ key:i, cx:p[0], cy:p[1], r:3.5, fill:color }))
+  );
+}
+function BarChartSVG({ data, width=600, height=220, color='#E11D2E', labelKey='label', valueKey='value' }){
+  const w=width, hgt=height, pad=30, gap=10;
+  const max = Math.max(...data.map(d=>d[valueKey]), 1);
+  const barW = (w - pad*2 - gap*(data.length-1)) / data.length;
+  return h('svg',{ viewBox:`0 0 ${w} ${hgt}`, className:'w-full h-auto', preserveAspectRatio:'none' },
+    data.map((d,i)=>{
+      const bh = (d[valueKey]/max) * (hgt-pad*2);
+      const x = pad + i*(barW+gap), y = hgt-pad-bh;
+      return h('g',{ key:i },
+        h('rect',{ x, y, width:barW, height:bh, rx:4, fill:color, opacity: 0.55 + 0.45*(d[valueKey]/max) }),
+        h('text',{ x:x+barW/2, y:hgt-pad+14, textAnchor:'middle', fontSize:10, fill:'#6B7280' }, d[labelKey])
+      );
+    })
+  );
+}
+function DonutChartSVG({ data, size=160, colors }){
+  const total = data.reduce((s,d)=>s+d.value,0) || 1;
+  const palette = colors || ['#E11D2E','#111111','#6B7280','#F59E0B','#3B82F6'];
+  let angle = -90;
+  const r = size/2 - 10, cx0 = size/2, cy0 = size/2;
+  const arcs = data.map((d,i)=>{
+    const frac = d.value/total, sweep = frac*360;
+    const x1 = cx0 + r*Math.cos(angle*Math.PI/180), y1 = cy0 + r*Math.sin(angle*Math.PI/180);
+    const endAngle = angle+sweep;
+    const x2 = cx0 + r*Math.cos(endAngle*Math.PI/180), y2 = cy0 + r*Math.sin(endAngle*Math.PI/180);
+    const large = sweep>180?1:0;
+    const path = `M${cx0},${cy0} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${large} 1 ${x2.toFixed(2)},${y2.toFixed(2)} Z`;
+    angle = endAngle;
+    return h('path',{ key:i, d:path, fill:palette[i%palette.length] });
+  });
+  return h('svg',{ viewBox:`0 0 ${size} ${size}`, className:'w-full h-auto' }, arcs, h('circle',{ cx:cx0, cy:cy0, r:r*0.55, fill:'#fff' }));
+}
+
+// ---- Modal / Drawer ----
+function Modal({ open, onClose, title, children, wide }){
+  if(!open) return null;
+  return h('div',{ className:'fixed inset-0 z-[150] flex items-center justify-center p-4' },
+    h('div',{ className:'absolute inset-0 bg-black/40', onClick:onClose }),
+    h('div',{ className: cx('relative bg-white rounded-2xl shadow-2xl w-full max-h-[90vh] overflow-y-auto trs-animate-in', wide ? 'max-w-2xl' : 'max-w-md') },
+      h('div',{ className:'flex items-center justify-between px-5 py-4 border-b border-[var(--trs-border)] sticky top-0 bg-white' },
+        h('h3',{ className:'font-display font-bold text-base text-[var(--trs-dark)]' }, title),
+        h('button',{ type:'button', onClick:onClose, 'aria-label':'Tutup' }, h(Icon,{ name:'x', size:18, className:'text-gray-400' }))
+      ),
+      h('div',{ className:'p-5' }, children)
+    )
+  );
+}
+function Drawer({ open, onClose, title, children, wide }){
+  if(!open) return null;
+  return h('div',{ className:'fixed inset-0 z-[150]' },
+    h('div',{ className:'absolute inset-0 bg-black/40', onClick:onClose }),
+    h('div',{ className: cx('absolute right-0 top-0 bottom-0 bg-white shadow-2xl flex flex-col w-full', wide ? 'sm:w-[520px]' : 'sm:w-96') },
+      h('div',{ className:'flex items-center justify-between px-5 py-4 border-b border-[var(--trs-border)]', style:{paddingTop:'calc(var(--safe-t) + 16px)'} },
+        h('h3',{ className:'font-display font-bold text-base text-[var(--trs-dark)]' }, title),
+        h('button',{ type:'button', onClick:onClose, 'aria-label':'Tutup' }, h(Icon,{ name:'x', size:18, className:'text-gray-400' }))
+      ),
+      h('div',{ className:'p-5 overflow-y-auto flex-1' }, children)
+    )
+  );
+}
+function ConfirmDialog({ open, onClose, onConfirm, title, message, danger }){
+  if(!open) return null;
+  return h(Modal,{ open, onClose, title },
+    h('p',{ className:'text-sm text-gray-500 mb-5' }, message),
+    h('div',{ className:'flex justify-end gap-2' },
+      h('button',{ type:'button', onClick:onClose, className:'px-4 py-2 rounded-lg text-sm font-semibold text-gray-600 border border-gray-200' }, 'Batal'),
+      h('button',{ type:'button', onClick:()=>{ onConfirm(); onClose(); }, className: cx('px-4 py-2 rounded-lg text-sm font-bold text-white', danger?'bg-[var(--trs-red)]':'bg-[var(--trs-dark)]') }, 'Konfirmasi')
+    )
+  );
+}
+
+// ---- generic table helpers ----
+function Th({ children, className }){ return h('th',{ className: cx('text-left text-xs font-semibold text-[var(--trs-gray)] uppercase tracking-wide px-3 py-2.5 whitespace-nowrap', className) }, children); }
+function Td({ children, className }){ return h('td',{ className: cx('px-3 py-3 text-sm text-gray-700 align-middle', className) }, children); }
+function EmptyState({ icon='inbox', title, subtitle }){
+  return h('div',{ className:'flex flex-col items-center justify-center py-16 text-center' },
+    h(Icon,{ name:icon, size:40, className:'text-gray-200 mb-3' }),
+    h('p',{ className:'text-sm font-semibold text-gray-600' }, title),
+    subtitle && h('p',{ className:'text-xs text-gray-400 mt-1' }, subtitle)
+  );
+}
+function SearchInput({ value, onChange, placeholder }){
+  return h('div',{ className:'relative' },
+    h(Icon,{ name:'search', size:15, className:'absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' }),
+    h('input',{ type:'text', value, onChange:e=>onChange(e.target.value), placeholder, className:'pl-9 pr-3 py-2 rounded-lg border border-[var(--trs-border)] text-sm w-full focus:ring-2 focus:ring-[var(--trs-red)]/20' })
+  );
+}
+function Select({ value, onChange, options, className }){
+  return h('select',{ value, onChange:e=>onChange(e.target.value), className: cx('border border-[var(--trs-border)] rounded-lg px-3 py-2 text-sm bg-white', className) },
+    options.map(o => h('option',{ key: typeof o==='string'?o:o.value, value: typeof o==='string'?o:o.value }, typeof o==='string'?o:o.label)));
+}
+function Checkbox({ checked, onChange }){
+  return h('button',{ type:'button', onClick:()=>onChange(!checked), className: cx('w-4.5 h-4.5 w-[18px] h-[18px] rounded border flex items-center justify-center flex-shrink-0 transition-colors', checked ? 'bg-[var(--trs-red)] border-[var(--trs-red)]' : 'border-gray-300 bg-white') },
+    checked && h(Icon,{ name:'check', size:11, className:'text-white' }));
+}
+
+// ==================== SIDEBAR / TOPBAR / SHELL ====================
+const SIDEBAR_ITEMS = [
+  { label:'Dashboard', to:'/admin', icon:'grid' },
+  { label:'Products', to:'/admin/products', icon:'box' },
+  { label:'Orders', to:'/admin/orders', icon:'bag' },
+  { label:'Shipping', to:'/admin/shipping', icon:'truck' },
+  { label:'Inventory', to:'/admin/inventory', icon:'archive' },
+  { label:'Customers', to:'/admin/customers', icon:'users' },
+  { label:'Promotions', to:'/admin/promotions', icon:'tag' },
+  { label:'Returns & Warranty', to:'/admin/returns', icon:'rotate' },
+  { label:'Suppliers', to:'/admin/suppliers', icon:'factory' },
+  { label:'Payments', to:'/admin/payments', icon:'card' },
+  { label:'Reports', to:'/admin/reports', icon:'bar-chart' },
+  { label:'Staff & Roles', to:'/admin/staff', icon:'user-cog' },
+  { label:'Settings', to:'/admin/settings', icon:'settings' },
+];
+
+function isActivePath(itemTo, path){
+  if(itemTo==='/admin') return path==='/admin';
+  return path===itemTo || path.startsWith(itemTo+'/');
+}
+
+function SidebarContent({ collapsed, path, onNavigateMobile }){
+  return h('div',{ className:'flex flex-col h-full' },
+    h('div',{ className:cx('flex items-center gap-2 px-4 h-16 flex-shrink-0 border-b border-white/10', collapsed && 'justify-center px-0') },
+      h('span',{ className:'font-display font-extrabold text-xl text-white flex-shrink-0' }, collapsed ? h('span',{className:'text-[var(--trs-red)]'},'T') : h(React.Fragment,null,'TRA',h('span',{className:'text-[var(--trs-red)]'},'STAR'))),
+      !collapsed && h('span',{ className:'text-[9px] font-bold text-white/40 tracking-widest uppercase mt-1' }, 'Admin')
+    ),
+    h('nav',{ className:'flex-1 overflow-y-auto py-3 px-2 space-y-0.5' },
+      SIDEBAR_ITEMS.map(item => h(Link,{ key:item.to, to:item.to, onClick:onNavigateMobile,
+        className: cx('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group relative',
+          isActivePath(item.to, path) ? 'bg-[var(--trs-red)] text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white', collapsed && 'justify-center px-0') },
+        h(Icon,{ name:item.icon, size:18, className:'flex-shrink-0' }),
+        !collapsed && h('span',{ className:'trs-line-clamp-1' }, item.label),
+        collapsed && h('span',{ className:'absolute left-full ml-2 whitespace-nowrap bg-[var(--trs-dark)] text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50' }, item.label)
+      ))
+    ),
+    h('div',{ className:'border-t border-white/10 px-2 py-3 space-y-0.5' },
+      h('button',{ type:'button', className: cx('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/10 hover:text-white w-full', collapsed && 'justify-center px-0') },
+        h(Icon,{ name:'help-circle', size:18 }), !collapsed && 'Help'),
+      h(Link,{ to:'/admin/logout', className: cx('flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-white/10 hover:text-white w-full', collapsed && 'justify-center px-0') },
+        h(Icon,{ name:'log-out', size:18 }), !collapsed && 'Logout')
+    )
+  );
+}
+
+function GlobalSearch(){
+  const { data } = useAdmin();
+  const { navigate } = useRouter();
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(()=>{ function onDoc(e){ if(ref.current && !ref.current.contains(e.target)) setOpen(false); } document.addEventListener('mousedown', onDoc); return ()=>document.removeEventListener('mousedown', onDoc); },[]);
+
+  const results = useMemo(()=>{
+    if(q.trim().length<2) return [];
+    const query = q.toLowerCase();
+    const out = [];
+    data.orders.filter(o=>o.orderNumber.toLowerCase().includes(query)).slice(0,3).forEach(o=> out.push({ type:'Order', label:o.orderNumber, sub:o.customer, to:'/admin/orders/'+o.orderNumber, icon:'bag' }));
+    data.customers.filter(c=>c.name.toLowerCase().includes(query)).slice(0,3).forEach(c=> out.push({ type:'Customer', label:c.name, sub:c.phone, to:'/admin/customers/'+c.id, icon:'users' }));
+    data.products.filter(p=>p.name.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query)).slice(0,4).forEach(p=> out.push({ type:'Product', label:p.name, sub:p.sku, to:'/admin/products/'+p.id, icon:'box' }));
+    return out.slice(0,8);
+  },[q, data]);
+
+  return h('div',{ ref, className:'relative flex-1 max-w-md' },
+    h('div',{ className:'relative' },
+      h(Icon,{ name:'search', size:15, className:'absolute left-3 top-1/2 -translate-y-1/2 text-gray-400' }),
+      h('input',{ type:'text', value:q, onFocus:()=>setOpen(true), onChange:e=>{ setQ(e.target.value); setOpen(true); },
+        placeholder:'Search order, customer, SKU, product...', className:'w-full pl-9 pr-3 py-2 rounded-lg bg-gray-100 text-sm focus:bg-white focus:ring-2 focus:ring-[var(--trs-red)]/20 border border-transparent' })
+    ),
+    open && results.length>0 && h('div',{ className:'absolute z-40 mt-2 w-full bg-white rounded-xl shadow-xl border border-[var(--trs-border)] overflow-hidden' },
+      results.map((r,i) => h('button',{ key:i, type:'button', onClick:()=>{ setOpen(false); setQ(''); navigate(r.to); },
+          className:'w-full flex items-center gap-3 px-3 py-2.5 hover:bg-gray-50 text-left' },
+        h('div',{ className:'w-8 h-8 rounded-lg bg-[var(--trs-bg)] flex items-center justify-center flex-shrink-0' }, h(Icon,{ name:r.icon, size:14 })),
+        h('div',{ className:'flex-1 min-w-0' }, h('p',{ className:'text-sm font-medium text-gray-800 truncate' }, r.label), h('p',{ className:'text-xs text-gray-400' }, r.type+' · '+r.sub))
+      ))
+    ),
+    open && q.trim().length>=2 && results.length===0 && h('div',{ className:'absolute z-40 mt-2 w-full bg-white rounded-xl shadow-xl border border-[var(--trs-border)] p-4 text-sm text-gray-400 text-center' }, 'Tidak ada hasil untuk "'+q+'"')
+  );
+}
+
+function NotificationsDropdown(){
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(()=>{ function onDoc(e){ if(ref.current && !ref.current.contains(e.target)) setOpen(false); } document.addEventListener('mousedown', onDoc); return ()=>document.removeEventListener('mousedown', onDoc); },[]);
+  const notifs = [
+    { icon:'bag', text:'Order baru TRS20260930118 diterima', time:'5 menit lalu' },
+    { icon:'wallet', text:'Pembayaran Order TRS20260929104 dikonfirmasi', time:'22 menit lalu' },
+    { icon:'archive', text:'Stok TRASTAR Racing Spark Plug habis', time:'1 jam lalu' },
+    { icon:'truck', text:'Pengiriman TRS20260927098 tertunda', time:'3 jam lalu' },
+    { icon:'rotate', text:'Permintaan retur baru RET-1001', time:'Kemarin' },
+  ];
+  return h('div',{ ref, className:'relative' },
+    h('button',{ type:'button', onClick:()=>setOpen(o=>!o), className:'relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500', 'aria-label':'Notifikasi' },
+      h(Icon,{ name:'bell', size:19 }), h('span',{ className:'absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[var(--trs-red)]' })),
+    open && h('div',{ className:'absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-[var(--trs-border)] overflow-hidden z-40' },
+      h('div',{ className:'px-4 py-3 border-b border-[var(--trs-border)] font-semibold text-sm' }, 'Notifikasi'),
+      h('div',{ className:'max-h-80 overflow-y-auto' }, notifs.map((n,i) => h('div',{ key:i, className:'flex items-start gap-3 px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0' },
+        h('div',{ className:'w-8 h-8 rounded-full bg-[var(--trs-red)]/10 text-[var(--trs-red)] flex items-center justify-center flex-shrink-0' }, h(Icon,{ name:n.icon, size:14 })),
+        h('div',{ className:'min-w-0' }, h('p',{ className:'text-xs text-gray-700 leading-snug' }, n.text), h('p',{ className:'text-[10px] text-gray-400 mt-0.5' }, n.time))
+      )))
+    )
+  );
+}
+
+function QuickAddDropdown(){
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const { navigate } = useRouter();
+  useEffect(()=>{ function onDoc(e){ if(ref.current && !ref.current.contains(e.target)) setOpen(false); } document.addEventListener('mousedown', onDoc); return ()=>document.removeEventListener('mousedown', onDoc); },[]);
+  const items = [
+    { label:'Add Product', icon:'box', to:'/admin/products/new' },
+    { label:'Create Order', icon:'bag', to:'/admin/orders' },
+    { label:'Add Stock', icon:'archive', to:'/admin/inventory' },
+  ];
+  return h('div',{ ref, className:'relative' },
+    h('button',{ type:'button', onClick:()=>setOpen(o=>!o), className:'hidden sm:flex items-center gap-1.5 bg-[var(--trs-dark)] text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-black' },
+      h(Icon,{ name:'plus', size:14 }), 'Quick Add'),
+    open && h('div',{ className:'absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-[var(--trs-border)] overflow-hidden z-40' },
+      items.map(it => h('button',{ key:it.label, type:'button', onClick:()=>{ setOpen(false); navigate(it.to); }, className:'w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50' },
+        h(Icon,{ name:it.icon, size:14, className:'text-[var(--trs-red)]' }), it.label))
+    )
+  );
+}
+
+function AdminAvatarMenu(){
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const { navigate } = useRouter();
+  useEffect(()=>{ function onDoc(e){ if(ref.current && !ref.current.contains(e.target)) setOpen(false); } document.addEventListener('mousedown', onDoc); return ()=>document.removeEventListener('mousedown', onDoc); },[]);
+  return h('div',{ ref, className:'relative' },
+    h('button',{ type:'button', onClick:()=>setOpen(o=>!o), className:'flex items-center gap-2 pl-1' },
+      h('div',{ className:'w-8 h-8 rounded-full bg-[var(--trs-dark)] text-white flex items-center justify-center text-xs font-bold' }, 'SK'),
+      h('span',{ className:'hidden md:block text-sm font-semibold text-gray-700' }, CURRENT_STAFF),
+      h(Icon,{ name:'chevron-down', size:14, className:'hidden md:block text-gray-400' })
+    ),
+    open && h('div',{ className:'absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-[var(--trs-border)] overflow-hidden z-40' },
+      h('div',{ className:'px-4 py-3 border-b border-[var(--trs-border)]' }, h('p',{className:'text-sm font-semibold text-gray-800'},CURRENT_STAFF), h('p',{className:'text-xs text-gray-400'},'Admin')),
+      h('button',{ type:'button', onClick:()=>{ setOpen(false); navigate('/admin/settings'); }, className:'w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50' }, 'Settings'),
+      h('button',{ type:'button', onClick:()=>{ setOpen(false); navigate('/admin/logout'); }, className:'w-full text-left px-4 py-2.5 text-sm text-[var(--trs-red)] hover:bg-red-50' }, 'Logout')
+    )
+  );
+}
+
+function Topbar({ onOpenMobileSidebar, onToggleCollapse }){
+  return h('header',{ className:'h-16 bg-white border-b border-[var(--trs-border)] flex items-center gap-3 px-4 sticky top-0 z-30', style:{ top:'var(--safe-t)' } },
+    h('button',{ type:'button', onClick:onOpenMobileSidebar, className:'lg:hidden text-gray-600', 'aria-label':'Buka menu' }, h(Icon,{ name:'menu', size:22 })),
+    h('button',{ type:'button', onClick:onToggleCollapse, className:'hidden lg:flex text-gray-400 hover:text-gray-700', 'aria-label':'Collapse sidebar' }, h(Icon,{ name:'chevrons-left', size:18 })),
+    h(GlobalSearch),
+    h('div',{ className:'flex items-center gap-1.5 sm:gap-3 ml-auto' },
+      h(QuickAddDropdown), h(NotificationsDropdown),
+      h('button',{ type:'button', className:'hidden sm:flex w-9 h-9 items-center justify-center rounded-lg hover:bg-gray-100 text-gray-500', 'aria-label':'Help' }, h(Icon,{ name:'help-circle', size:19 })),
+      h(AdminAvatarMenu)
+    )
+  );
+}
+
+function AdminShell({ children, path }){
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  return h('div',{ className:'min-h-screen flex bg-[var(--trs-bg)]' },
+    h('aside',{ className: cx('hidden lg:flex flex-col bg-[var(--trs-dark)] flex-shrink-0 transition-all duration-200 sticky top-0 h-screen', collapsed ? 'w-[72px]' : 'w-64') },
+      h(SidebarContent,{ collapsed, path })
+    ),
+    mobileOpen && h('div',{ className:'fixed inset-0 z-[100] lg:hidden' },
+      h('div',{ className:'absolute inset-0 bg-black/40', onClick:()=>setMobileOpen(false) }),
+      h('div',{ className:'absolute left-0 top-0 bottom-0 w-72 bg-[var(--trs-dark)] shadow-2xl', style:{paddingTop:'var(--safe-t)'} },
+        h(SidebarContent,{ collapsed:false, path, onNavigateMobile:()=>setMobileOpen(false) }))
+    ),
+    h('div',{ className:'flex-1 min-w-0 flex flex-col' },
+      h(Topbar,{ onOpenMobileSidebar:()=>setMobileOpen(true), onToggleCollapse:()=>setCollapsed(c=>!c) }),
+      h('main',{ className:'flex-1 p-4 sm:p-6 max-w-[1600px] w-full mx-auto' }, children)
+    )
+  );
+}
+
+// ==================== PAGE: DASHBOARD HOME ====================
+function PageHeader({ title, subtitle, action }){
+  return h('div',{ className:'flex flex-wrap items-start justify-between gap-3 mb-6' },
+    h('div',null, h('h1',{ className:'font-display font-extrabold text-2xl text-[var(--trs-dark)]' }, title), subtitle && h('p',{ className:'text-sm text-[var(--trs-gray)] mt-1' }, subtitle)),
+    action
+  );
+}
+function Card({ title, action, children, className }){
+  return h('div',{ className: cx('bg-white rounded-xl border border-[var(--trs-border)] p-4 sm:p-5', className) },
+    (title || action) && h('div',{ className:'flex items-center justify-between mb-4' }, h('h3',{ className:'font-display font-bold text-sm text-[var(--trs-dark)]' }, title), action),
+    children
+  );
+}
+
+function DashboardPage(){
+  const { data } = useAdmin();
+  const { navigate } = useRouter();
+  const { orders, products, returns } = data;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const ordersToday = orders.filter(o => new Date(o.date) >= today).length || 6;
+  const salesToday = 8450000;
+  const revenueMonth = orders.filter(o=>o.paymentStatus==='Paid').reduce((s,o)=>s+o.total,0);
+  const pendingPayments = orders.filter(o=>o.paymentStatus==='Unpaid').length;
+  const readyToShip = orders.filter(o=>o.orderStatus==='Ready to Ship').length;
+  const lowStock = products.filter(p=>p.status==='Low Stock').length;
+  const outOfStock = products.filter(p=>p.status==='Out of Stock').length;
+  const delayedShipments = orders.filter(o=>o.shippingStatus==='In Transit').length > 0 ? 3 : 0;
+  const pendingReturns = returns.filter(r=>r.status==='Pending').length;
+
+  const revenueByCategory = CATEGORIES.map(cat => ({ label: cat.split(' ')[0], value: products.filter(p=>p.category===cat).reduce((s,p)=>s+p.salePrice*7,0) }));
+  const topProducts = [...products].sort((a,b)=> (b.reviewCount) - (a.reviewCount)).slice(0,5);
+  const paymentDist = [
+    { name:'Virtual Account', value: orders.filter(o=>o.paymentMethod.includes('Virtual')).length || 1 },
+    { name:'QRIS', value: orders.filter(o=>o.paymentMethod==='QRIS').length || 1 },
+    { name:'E-Wallet', value: orders.filter(o=>o.paymentMethod==='GoPay').length || 1 },
+    { name:'Bank Transfer', value: orders.filter(o=>o.paymentMethod.includes('Bank Transfer')).length || 1 },
+  ];
+
+  const actionItems = [
+    { label: pendingPayments+' payments awaiting confirmation', icon:'wallet', to:'/admin/payments' },
+    { label: readyToShip+' orders ready to ship', icon:'truck', to:'/admin/shipping' },
+    { label: (lowStock+outOfStock)+' products low stock', icon:'archive', to:'/admin/inventory' },
+    { label: delayedShipments+' shipments delayed', icon:'clock', to:'/admin/shipping' },
+    { label: pendingReturns+' return requests pending', icon:'rotate', to:'/admin/returns' },
+  ];
+
+  return h('div',null,
+    h(PageHeader,{ title:'Dashboard', subtitle:'Ringkasan performa toko TRASTAR hari ini.' }),
+    h('div',{ className:'grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 mb-6' },
+      h(KpiCard,{ label:'Sales Today', value:formatIDR(salesToday), delta:12.4, icon:'card' }),
+      h(KpiCard,{ label:'Orders Today', value:ordersToday, delta:8.1, icon:'bag' }),
+      h(KpiCard,{ label:'Revenue This Month', value:formatIDR(revenueMonth), delta:15.2, icon:'bar-chart' }),
+      h(KpiCard,{ label:'Pending Payments', value:pendingPayments, icon:'wallet', tone:'alert', onClick:()=>navigate('/admin/payments') }),
+      h(KpiCard,{ label:'Ready to Ship', value:readyToShip, icon:'truck', tone:'alert', onClick:()=>navigate('/admin/shipping') }),
+      h(KpiCard,{ label:'Low Stock', value:lowStock+outOfStock, icon:'archive', tone:'alert', onClick:()=>navigate('/admin/inventory') })
+    ),
+    h('div',{ className:'grid lg:grid-cols-3 gap-4 mb-6' },
+      h(Card,{ title:'Sales Trend (30 Hari)', className:'lg:col-span-2' }, h(LineChartSVG,{ data:SALES_TREND, valueKey:'sales' }),
+        h('div',{ className:'flex justify-between text-xs text-gray-400 mt-2' }, h('span',null, formatDate(SALES_TREND[0].date)), h('span',null, formatDate(SALES_TREND[SALES_TREND.length-1].date)))),
+      h(Card,{ title:'Needs Attention' },
+        h('div',{ className:'space-y-1' }, actionItems.map((a,i) => h('button',{ key:i, type:'button', onClick:()=>navigate(a.to), className:'w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg hover:bg-gray-50 text-left' },
+          h('div',{ className:'w-8 h-8 rounded-lg bg-red-50 text-[var(--trs-red)] flex items-center justify-center flex-shrink-0' }, h(Icon,{ name:a.icon, size:14 })),
+          h('span',{ className:'text-sm text-gray-700 flex-1' }, a.label),
+          h(Icon,{ name:'chevron-right', size:14, className:'text-gray-300' })
+        )))
+      )
+    ),
+    h('div',{ className:'grid lg:grid-cols-3 gap-4 mb-6' },
+      h(Card,{ title:'Revenue by Category' }, h(BarChartSVG,{ data:revenueByCategory })),
+      h(Card,{ title:'Top Products' }, h('div',{ className:'space-y-3' }, topProducts.map((p,i) => h('div',{ key:p.id, className:'flex items-center gap-3' },
+        h('span',{ className:'w-5 text-xs font-bold text-gray-300' }, i+1),
+        h('div',{ className:'flex-1 min-w-0' }, h('p',{ className:'text-xs font-semibold text-gray-700 trs-line-clamp-1' }, p.name), h('p',{ className:'text-[10px] text-gray-400' }, p.reviewCount+' terjual')),
+        h('span',{ className:'text-xs font-bold text-gray-800' }, formatIDR(p.salePrice))
+      )))),
+      h(Card,{ title:'Payment Method Distribution' }, h('div',{ className:'flex items-center gap-4' },
+        h('div',{ className:'w-28 flex-shrink-0' }, h(DonutChartSVG,{ data:paymentDist })),
+        h('div',{ className:'flex-1 space-y-1.5' }, paymentDist.map((p,i) => h('div',{ key:i, className:'flex items-center gap-2 text-xs' },
+          h('span',{ className:'w-2.5 h-2.5 rounded-full flex-shrink-0', style:{ background:['#E11D2E','#111111','#6B7280','#F59E0B'][i] } }),
+          h('span',{ className:'text-gray-600 flex-1 trs-line-clamp-1' }, p.name), h('span',{ className:'font-semibold text-gray-800' }, p.value))))
+      ))
+    ),
+    h(Card,{ title:'Recent Orders', action: h(Link,{ to:'/admin/orders', className:'text-xs font-semibold text-[var(--trs-red)]' }, 'Lihat Semua') },
+      h(OrdersMiniTable,{ orders: orders.slice(0,8) })
+    )
+  );
+}
+
+function OrdersMiniTable({ orders }){
+  const { navigate } = useRouter();
+  return h('div',{ className:'overflow-x-auto trs-scrollbox' },
+    h('table',{ className:'w-full' },
+      h('thead',null, h('tr',{ className:'border-b border-[var(--trs-border)]' }, ['Order ID','Customer','Products','Total','Payment','Shipping','Status','Date'].map(c=>h(Th,{key:c},c)))),
+      h('tbody',null, orders.map(o => h('tr',{ key:o.orderNumber, onClick:()=>navigate('/admin/orders/'+o.orderNumber), className:'border-b border-gray-50 hover:bg-gray-50 cursor-pointer last:border-0' },
+        h(Td,null, h('span',{className:'font-semibold text-gray-800'}, o.orderNumber)),
+        h(Td,null, o.customer),
+        h(Td,null, h('span',{className:'trs-line-clamp-1 block max-w-[160px]'}, o.items.map(it=>it.name).join(', '))),
+        h(Td,null, formatIDR(o.total)),
+        h(Td,null, h(StatusBadge,{status:o.paymentStatus, size:'sm'})),
+        h(Td,null, o.courier.split(' ')[0]),
+        h(Td,null, h(StatusBadge,{status:o.orderStatus, size:'sm'})),
+        h(Td,null, formatDate(o.date))
+      )))
+    )
+  );
+}
+
+// ==================== PAGE: PRODUCT LIST ====================
+function ProductListPage(){
+  const { data, updateProductStatus, duplicateProduct, deleteProduct } = useAdmin();
+  const { navigate } = useRouter();
+  const showToast = useToast();
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('Semua');
+  const [status, setStatus] = useState('Semua');
+  const [stockFilter, setStockFilter] = useState('Semua');
+  const [selected, setSelected] = useState([]);
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [openActionId, setOpenActionId] = useState(null);
+
+  let list = data.products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase()));
+  if(category!=='Semua') list = list.filter(p=>p.category===category);
+  if(status!=='Semua') list = list.filter(p=>p.status===status);
+  if(stockFilter==='Low/Out') list = list.filter(p=>p.status==='Low Stock'||p.status==='Out of Stock');
+  if(stockFilter==='In Stock') list = list.filter(p=>p.stock>0);
+
+  function toggleSelect(id){ setSelected(s => s.includes(id) ? s.filter(x=>x!==id) : [...s, id]); }
+  function toggleAll(){ setSelected(s => s.length===list.length ? [] : list.map(p=>p.id)); }
+  function bulkArchive(){ selected.forEach(id=>updateProductStatus(id,'Archived')); showToast(selected.length+' produk diarsipkan'); setSelected([]); }
+
+  return h('div',null,
+    h(PageHeader,{ title:'Products', subtitle: data.products.length+' produk total', action: h(Link,{ to:'/admin/products/new', className:'trs-btn-primary flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-bold' }, h(Icon,{name:'plus',size:15}), 'Add Product') }),
+    h('div',{ className:'flex flex-wrap gap-2 mb-4' },
+      h('div',{ className:'flex-1 min-w-[200px]' }, h(SearchInput,{ value:search, onChange:setSearch, placeholder:'Cari nama produk atau SKU...' })),
+      h(Select,{ value:category, onChange:setCategory, options:['Semua', ...CATEGORIES] }),
+      h(Select,{ value:status, onChange:setStatus, options:['Semua','Active','Draft','Archived','Low Stock','Out of Stock'] }),
+      h(Select,{ value:stockFilter, onChange:setStockFilter, options:['Semua','In Stock','Low/Out'] })
+    ),
+    selected.length>0 && h('div',{ className:'flex items-center gap-3 bg-[var(--trs-dark)] text-white rounded-lg px-4 py-2.5 mb-3 text-sm' },
+      h('span',null, selected.length+' dipilih'),
+      h('button',{ type:'button', onClick:bulkArchive, className:'ml-auto font-semibold hover:underline' }, 'Archive'),
+      h('button',{ type:'button', onClick:()=>setSelected([]), className:'font-semibold hover:underline' }, 'Batal')
+    ),
+    h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+      list.length===0 ? h(EmptyState,{ title:'Tidak ada produk ditemukan', subtitle:'Coba ubah filter atau kata kunci pencarian.' }) :
+      h('div',{ className:'overflow-x-auto trs-scrollbox' },
+        h('table',{ className:'w-full' },
+          h('thead',null, h('tr',{ className:'border-b border-[var(--trs-border)]' },
+            h(Th,null, h(Checkbox,{ checked: selected.length===list.length && list.length>0, onChange:toggleAll })),
+            ['Product','SKU','Category','Price','Stock','Variants','Status','Updated',''].map(c=>h(Th,{key:c},c)))),
+          h('tbody',null, list.map(p => h('tr',{ key:p.id, className:'border-b border-gray-50 hover:bg-gray-50 last:border-0' },
+            h(Td,null, h(Checkbox,{ checked:selected.includes(p.id), onChange:()=>toggleSelect(p.id) })),
+            h(Td,null, h('button',{ type:'button', onClick:()=>navigate('/admin/products/'+p.id), className:'flex items-center gap-2.5 text-left' },
+              h('div',{ className:'w-9 h-9 rounded-lg bg-[var(--trs-dark)] flex items-center justify-center flex-shrink-0 text-white' }, h(Icon,{name:p.icon,size:15})),
+              h('span',{ className:'font-semibold text-gray-800 trs-line-clamp-1 max-w-[200px] hover:text-[var(--trs-red)]' }, p.name))),
+            h(Td,null, p.sku), h(Td,null, p.category),
+            h(Td,null, h('div',null, h('div',{className:'font-semibold text-gray-800'},formatIDR(p.salePrice)), p.salePrice<p.price && h('div',{className:'text-xs text-gray-400 line-through'},formatIDR(p.price)))),
+            h(Td,null, h('span',{ className: p.stock<=p.minStock ? 'text-[var(--trs-red)] font-semibold' : '' }, p.stock)),
+            h(Td,null, p.variants+' Variants'),
+            h(Td,null, h(StatusBadge,{ status:p.status })),
+            h(Td,null, formatDate(p.updated)),
+            h(Td,{ className:'relative' },
+              h('button',{ type:'button', onClick:()=>setOpenActionId(id=> id===p.id?null:p.id), className:'w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100 text-gray-400' }, h(Icon,{name:'more',size:15})),
+              openActionId===p.id && h('div',{ className:'absolute right-3 top-9 bg-white rounded-lg shadow-xl border border-[var(--trs-border)] z-20 w-44 overflow-hidden' },
+                [ ['View', ()=>navigate('/admin/products/'+p.id)], ['Edit', ()=>{ navigate('/admin/products/'+p.id); }],
+                  ['Duplicate', ()=>duplicateProduct(p.id)], ['Archive', ()=>updateProductStatus(p.id,'Archived')],
+                  ['Update Stock', ()=>navigate('/admin/inventory')], ['Delete', ()=>setConfirmDelete(p.id)] ]
+                .map(([label,fn]) => h('button',{ key:label, type:'button', onClick:()=>{ setOpenActionId(null); fn(); }, className: cx('w-full text-left px-3.5 py-2 text-xs font-medium hover:bg-gray-50', label==='Delete'?'text-[var(--trs-red)]':'text-gray-600') }, label))
+              )
+            )
+          )))
+        )
+      )
+    ),
+    h(ConfirmDialog,{ open: !!confirmDelete, onClose:()=>setConfirmDelete(null), title:'Hapus Produk?', message:'Produk yang dihapus tidak dapat dikembalikan dalam prototype ini.', danger:true,
+      onConfirm:()=>{ deleteProduct(confirmDelete); } })
+  );
+}
+
+// ==================== PAGE: ADD PRODUCT WIZARD ====================
+const WIZARD_STEPS = ['Basic Info','Images','Pricing & Stock','Variants & Compatibility','Shipping & Publish'];
+
+function useWizardState(){
+  return useState(()=> loadLS('trastar_wizard_draft', {
+    name:'', sku:'', brand:'TRASTAR', category:CATEGORIES[0], subcategory:'', productType:'Simple',
+    shortDesc:'', fullDesc:'', specs:'', features:'', installation:'', warranty:'6 Bulan', packageContents:'',
+    images: [], video:'',
+    costPrice:0, regularPrice:0, salePrice:0, saleStart:'', saleEnd:'', stockQty:0, minStock:5, allowBackorder:false, lowStockAlert:5,
+    variantAxes: { Color:['Black'] }, variantRows:[],
+    compatibility:[],
+    weight:500, length:20, width:15, height:8, shippingClass:'Regular', fragile:false, dangerous:false, shippingNotes:'',
+  }));
+}
+
+function WizardProgress({ step }){
+  return h('div',{ className:'flex items-center mb-8 overflow-x-auto no-scrollbar' },
+    WIZARD_STEPS.map((s,i) => h(React.Fragment,{ key:s },
+      h('div',{ className:'flex flex-col items-center gap-1.5 flex-shrink-0 px-1' },
+        h('div',{ className: cx('w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0', i<step ? 'bg-emerald-500 text-white' : i===step ? 'bg-[var(--trs-red)] text-white' : 'bg-gray-100 text-gray-400') },
+          i<step ? h(Icon,{name:'check',size:13}) : i+1),
+        h('span',{ className: cx('text-[10px] sm:text-xs font-medium whitespace-nowrap', i===step ? 'text-gray-800' : 'text-gray-400') }, s)
+      ),
+      i<WIZARD_STEPS.length-1 && h('div',{ className: cx('h-0.5 flex-1 min-w-[16px] -mt-4', i<step ? 'bg-emerald-400' : 'bg-gray-100') })
+    ))
+  );
+}
+function WField({ label, children, hint }){
+  return h('label',{ className:'block' }, h('span',{ className:'block text-xs font-semibold text-gray-500 mb-1.5' }, label),
+    children, hint && h('span',{ className:'block text-[11px] text-gray-400 mt-1' }, hint));
+}
+const wInputCls = 'w-full border border-[var(--trs-border)] rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-[var(--trs-red)]/20';
+
+function ProductWizardPage(){
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useWizardState();
+  const { addProduct } = useAdmin();
+  const { navigate } = useRouter();
+  const showToast = useToast();
+
+  useEffect(()=>{ saveLS('trastar_wizard_draft', form); }, [form]);
+  function set(field){ return (val)=> setForm(f=>({ ...f, [field]: val })); }
+  function setEv(field){ return (e)=> set(field)(e.target.value); }
+
+  function saveDraft(){ showToast('Draft produk disimpan'); }
+  function generateVariants(){
+    const axes = Object.entries(form.variantAxes).filter(([k,v])=>v.length>0);
+    if(axes.length===0){ setForm(f=>({...f, variantRows:[]})); return; }
+    let combos = [{}];
+    axes.forEach(([key, values]) => {
+      const next = [];
+      combos.forEach(c => values.forEach(v => next.push({ ...c, [key]: v })));
+      combos = next;
+    });
+    const rows = combos.map((c,i) => ({ id:i+1, combo:c, sku: form.sku+'-'+Object.values(c).map(v=>v.slice(0,3).toUpperCase()).join(''), price: form.salePrice||form.regularPrice, stock: form.stockQty||0, status:'Active' }));
+    setForm(f=>({ ...f, variantRows: rows }));
+    showToast(rows.length+' kombinasi varian dibuat');
+  }
+  function toggleCompat(brand, model){
+    const key = brand+' '+model;
+    setForm(f => ({ ...f, compatibility: f.compatibility.includes(key) ? f.compatibility.filter(x=>x!==key) : [...f.compatibility, key] }));
+  }
+  function publish(){
+    if(!form.name || !form.sku){ showToast('Nama produk dan SKU wajib diisi', 'error'); setStep(0); return; }
+    addProduct({
+      name: form.name, sku: form.sku, brand:'TRASTAR', category: form.category, icon: CATEGORY_ICON[form.category]||'box',
+      price: Number(form.regularPrice)||0, salePrice: Number(form.salePrice)||Number(form.regularPrice)||0, hpp:Number(form.costPrice)||0,
+      stock: Number(form.stockQty)||0, reserved:0, incoming:0, minStock:Number(form.minStock)||5,
+      variants: form.variantRows.length||1, status:'Active', rating:'5.0', reviewCount:0,
+    });
+    saveLS('trastar_wizard_draft', null);
+    showToast('Produk "'+form.name+'" berhasil dipublish!');
+    navigate('/admin/products');
+  }
+
+  const margin = form.salePrice && form.costPrice ? Math.round(((form.salePrice-form.costPrice)/form.salePrice)*100) : 0;
+  const profitPerUnit = (form.salePrice||0) - (form.costPrice||0);
+
+  return h('div',{ className:'max-w-4xl mx-auto' },
+    h(PageHeader,{ title:'Add Product', subtitle:'Lengkapi 5 langkah berikut untuk menambahkan produk baru.' }),
+    h(WizardProgress,{ step }),
+    h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] p-5 sm:p-7' },
+
+      step===0 && h('div',{ className:'space-y-5' },
+        h('div',{ className:'grid sm:grid-cols-2 gap-5' },
+          h(WField,{ label:'Product Name' }, h('input',{ className:wInputCls, value:form.name, onChange:setEv('name'), placeholder:'TRASTAR Racing Brake Disc 220MM' })),
+          h(WField,{ label:'SKU' }, h('input',{ className:wInputCls, value:form.sku, onChange:setEv('sku'), placeholder:'TRS-BRK-220' })),
+          h(WField,{ label:'Brand' }, h('input',{ className:wInputCls, value:form.brand, onChange:setEv('brand') })),
+          h(WField,{ label:'Category' }, h(Select,{ value:form.category, onChange:set('category'), options:CATEGORIES, className:'w-full' })),
+          h(WField,{ label:'Subcategory' }, h('input',{ className:wInputCls, value:form.subcategory, onChange:setEv('subcategory'), placeholder:'opsional' })),
+          h(WField,{ label:'Product Type' }, h('div',{ className:'flex gap-2' },
+            ['Simple','Variable'].map(t => h('button',{ key:t, type:'button', onClick:()=>set('productType')(t), className: cx('flex-1 py-2.5 rounded-lg text-sm font-semibold border', form.productType===t ? 'border-[var(--trs-red)] bg-red-50 text-[var(--trs-red)]' : 'border-[var(--trs-border)] text-gray-500') }, t+' Product')))
+          )
+        ),
+        h(WField,{ label:'Short Description' }, h('textarea',{ className:wInputCls, rows:2, value:form.shortDesc, onChange:setEv('shortDesc') })),
+        h(WField,{ label:'Full Description' }, h('textarea',{ className:wInputCls, rows:4, value:form.fullDesc, onChange:setEv('fullDesc') })),
+        h('div',{ className:'grid sm:grid-cols-2 gap-5' },
+          h(WField,{ label:'Specifications' }, h('textarea',{ className:wInputCls, rows:3, value:form.specs, onChange:setEv('specs'), placeholder:'Material: Stainless Steel\nDiameter: 220MM' })),
+          h(WField,{ label:'Features' }, h('textarea',{ className:wInputCls, rows:3, value:form.features, onChange:setEv('features') })),
+          h(WField,{ label:'Installation Instructions' }, h('textarea',{ className:wInputCls, rows:2, value:form.installation, onChange:setEv('installation') })),
+          h(WField,{ label:'Warranty' }, h('input',{ className:wInputCls, value:form.warranty, onChange:setEv('warranty') })),
+          h(WField,{ label:'Package Contents' }, h('input',{ className:wInputCls, value:form.packageContents, onChange:setEv('packageContents'), placeholder:'1x Brake Disc, 1x Manual' }))
+        )
+      ),
+
+      step===1 && h('div',{ className:'space-y-5' },
+        h(WField,{ label:'Main Image & Gallery', hint:'Prototype — klik untuk menambah gambar dummy bernomor (tidak ada upload file sungguhan).' },
+          h('div',{ className:'grid grid-cols-3 sm:grid-cols-5 gap-3' },
+            form.images.map((img,i) => h('div',{ key:i, className:'relative aspect-square rounded-lg overflow-hidden border-2', style:{ borderColor: i===0 ? 'var(--trs-red)' : 'transparent' } },
+              h('div',{ className:'w-full h-full bg-gradient-to-br from-[var(--trs-dark)] to-[var(--trs-dark-2)] flex items-center justify-center text-white' }, h(Icon,{name:'image',size:22})),
+              i===0 && h('span',{ className:'absolute top-1 left-1 bg-[var(--trs-red)] text-white text-[9px] px-1.5 py-0.5 rounded font-bold' }, 'MAIN'),
+              h('button',{ type:'button', onClick:()=> setForm(f=>({...f, images:f.images.filter((_,x)=>x!==i)})), className:'absolute top-1 right-1 w-5 h-5 rounded-full bg-black/60 text-white flex items-center justify-center' }, h(Icon,{name:'x',size:10})),
+              i!==0 && h('button',{ type:'button', onClick:()=> setForm(f=>{ const imgs=[...f.images]; const [it]=imgs.splice(i,1); imgs.unshift(it); return {...f, images:imgs}; }), className:'absolute bottom-1 left-1 right-1 bg-black/60 text-white text-[9px] py-1 rounded' }, 'Set Main')
+            )),
+            h('button',{ type:'button', onClick:()=> setForm(f=>({...f, images:[...f.images, f.images.length+1]})), className:'aspect-square rounded-lg border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 hover:border-[var(--trs-red)]/40 hover:text-[var(--trs-red)]' },
+              h(Icon,{name:'upload',size:18}), h('span',{className:'text-[10px] mt-1 font-medium'},'Add Image'))
+          )
+        ),
+        h(WField,{ label:'Product Video URL (opsional)' }, h('input',{ className:wInputCls, value:form.video, onChange:setEv('video'), placeholder:'https://...' }))
+      ),
+
+      step===2 && h('div',{ className:'space-y-5' },
+        h('div',{ className:'grid sm:grid-cols-2 gap-5' },
+          h(WField,{ label:'Cost Price / HPP' }, h('input',{ type:'number', className:wInputCls, value:form.costPrice, onChange:e=>set('costPrice')(Number(e.target.value)) })),
+          h(WField,{ label:'Regular Price' }, h('input',{ type:'number', className:wInputCls, value:form.regularPrice, onChange:e=>set('regularPrice')(Number(e.target.value)) })),
+          h(WField,{ label:'Sale Price' }, h('input',{ type:'number', className:wInputCls, value:form.salePrice, onChange:e=>set('salePrice')(Number(e.target.value)) })),
+          h(WField,{ label:'Discount %' }, h('input',{ className: cx(wInputCls,'bg-gray-50'), readOnly:true, value: form.regularPrice ? Math.round((1-form.salePrice/form.regularPrice)*100)+'%' : '0%' })),
+          h(WField,{ label:'Sale Start Date' }, h('input',{ type:'date', className:wInputCls, value:form.saleStart, onChange:setEv('saleStart') })),
+          h(WField,{ label:'Sale End Date' }, h('input',{ type:'date', className:wInputCls, value:form.saleEnd, onChange:setEv('saleEnd') })),
+          h(WField,{ label:'Stock Quantity' }, h('input',{ type:'number', className:wInputCls, value:form.stockQty, onChange:e=>set('stockQty')(Number(e.target.value)) })),
+          h(WField,{ label:'Minimum Stock' }, h('input',{ type:'number', className:wInputCls, value:form.minStock, onChange:e=>set('minStock')(Number(e.target.value)) })),
+          h(WField,{ label:'Low Stock Alert Threshold' }, h('input',{ type:'number', className:wInputCls, value:form.lowStockAlert, onChange:e=>set('lowStockAlert')(Number(e.target.value)) })),
+          h(WField,{ label:'Allow Backorder' }, h('button',{ type:'button', onClick:()=>set('allowBackorder')(!form.allowBackorder), className: cx('w-full py-2.5 rounded-lg text-sm font-semibold border', form.allowBackorder?'border-[var(--trs-red)] bg-red-50 text-[var(--trs-red)]':'border-[var(--trs-border)] text-gray-500') }, form.allowBackorder?'Diizinkan':'Tidak Diizinkan'))
+        ),
+        h('div',{ className:'grid grid-cols-2 gap-4 bg-[var(--trs-bg)] rounded-lg p-4' },
+          h('div',null, h('p',{className:'text-xs text-gray-400'},'Gross Margin'), h('p',{className:'font-display font-bold text-lg text-[var(--trs-dark)]'}, margin+'%')),
+          h('div',null, h('p',{className:'text-xs text-gray-400'},'Profit per Unit'), h('p',{className:'font-display font-bold text-lg text-emerald-600'}, formatIDR(profitPerUnit)))
+        )
+      ),
+
+      step===3 && h('div',{ className:'space-y-7' },
+        h('div',null,
+          h('h4',{ className:'font-semibold text-sm text-gray-800 mb-3' }, 'Variants'),
+          h('div',{ className:'grid sm:grid-cols-2 gap-4 mb-3' },
+            Object.entries(form.variantAxes).map(([axis, values]) => h('div',{ key:axis },
+              h(WField,{ label: axis+' options (pisahkan dengan koma)' },
+                h('input',{ className:wInputCls, value:values.join(', '), onChange:e=> setForm(f=>({ ...f, variantAxes:{ ...f.variantAxes, [axis]: e.target.value.split(',').map(s=>s.trim()).filter(Boolean) } })) }))
+            ))
+          ),
+          h('div',{ className:'flex gap-2 mb-4' },
+            h('button',{ type:'button', onClick:()=> setForm(f=>({ ...f, variantAxes:{ ...f.variantAxes, Diameter: f.variantAxes.Diameter || ['220MM','240MM'] } })), className:'text-xs font-semibold text-[var(--trs-red)] border border-[var(--trs-red)]/30 rounded-lg px-3 py-1.5' }, '+ Tambah Axis Diameter'),
+            h('button',{ type:'button', onClick:generateVariants, className:'trs-btn-primary text-xs font-bold rounded-lg px-4 py-1.5' }, 'Generate Combinations')
+          ),
+          form.variantRows.length>0 && h('div',{ className:'overflow-x-auto border border-[var(--trs-border)] rounded-lg' },
+            h('table',{ className:'w-full' }, h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Variant','SKU','Price','Stock','Status'].map(c=>h(Th,{key:c},c)))),
+              h('tbody',null, form.variantRows.map(r => h('tr',{ key:r.id, className:'border-b border-gray-50 last:border-0' },
+                h(Td,null, Object.values(r.combo).join(' / ')), h(Td,null, r.sku), h(Td,null, formatIDR(r.price)),
+                h(Td,null, h('input',{ type:'number', value:r.stock, onChange:e=> setForm(f=>({...f, variantRows: f.variantRows.map(x=>x.id===r.id?{...x,stock:Number(e.target.value)}:x)})), className:'w-16 border border-gray-200 rounded px-1.5 py-1 text-xs' })),
+                h(Td,null, h(StatusBadge,{status:r.status, size:'sm'}))
+              ))))
+          )
+        ),
+        h('div',null,
+          h('h4',{ className:'font-semibold text-sm text-gray-800 mb-3' }, 'Vehicle Compatibility'),
+          h('div',{ className:'space-y-3' }, Object.entries(BRANDS_VEHICLE).map(([brand, models]) => h('div',{ key:brand },
+            h('p',{ className:'text-xs font-semibold text-gray-500 mb-1.5' }, brand),
+            h('div',{ className:'flex flex-wrap gap-2' }, models.map(m => { const key=brand+' '+m; const active = form.compatibility.includes(key);
+              return h('button',{ key:m, type:'button', onClick:()=>toggleCompat(brand,m), className: cx('px-3 py-1.5 rounded-lg text-xs font-medium border', active?'border-[var(--trs-red)] bg-red-50 text-[var(--trs-red)]':'border-[var(--trs-border)] text-gray-500') }, m); })
+            )
+          ))),
+          form.compatibility.length>0 && h('p',{ className:'text-xs text-gray-400 mt-3' }, form.compatibility.length+' model dipilih: '+form.compatibility.join(', '))
+        )
+      ),
+
+      step===4 && h('div',{ className:'space-y-7' },
+        h('div',{ className:'grid sm:grid-cols-2 gap-5' },
+          h(WField,{ label:'Weight (gram)' }, h('input',{ type:'number', className:wInputCls, value:form.weight, onChange:e=>set('weight')(Number(e.target.value)) })),
+          h(WField,{ label:'Shipping Class' }, h(Select,{ value:form.shippingClass, onChange:set('shippingClass'), options:['Regular','Oversized','Fragile Handling'], className:'w-full' })),
+          h(WField,{ label:'Length (cm)' }, h('input',{ type:'number', className:wInputCls, value:form.length, onChange:e=>set('length')(Number(e.target.value)) })),
+          h(WField,{ label:'Width (cm)' }, h('input',{ type:'number', className:wInputCls, value:form.width, onChange:e=>set('width')(Number(e.target.value)) })),
+          h(WField,{ label:'Height (cm)' }, h('input',{ type:'number', className:wInputCls, value:form.height, onChange:e=>set('height')(Number(e.target.value)) }))
+        ),
+        h('div',{ className:'flex gap-4' },
+          h('label',{ className:'flex items-center gap-2 text-sm text-gray-600' }, h(Checkbox,{ checked:form.fragile, onChange:set('fragile') }), 'Fragile'),
+          h('label',{ className:'flex items-center gap-2 text-sm text-gray-600' }, h(Checkbox,{ checked:form.dangerous, onChange:set('dangerous') }), 'Dangerous Goods')
+        ),
+        h(WField,{ label:'Shipping Notes' }, h('textarea',{ className:wInputCls, rows:2, value:form.shippingNotes, onChange:setEv('shippingNotes') })),
+
+        h('div',{ className:'border-t border-[var(--trs-border)] pt-6' },
+          h('h4',{ className:'font-semibold text-sm text-gray-800 mb-3' }, 'Review Sebelum Publish'),
+          h('div',{ className:'grid sm:grid-cols-2 gap-4 text-sm' },
+            h('div',{ className:'bg-[var(--trs-bg)] rounded-lg p-3.5' }, h('p',{className:'text-xs text-gray-400 mb-1'},'Product'), h('p',{className:'font-semibold'}, form.name||'(belum diisi)'), h('p',{className:'text-xs text-gray-500'}, form.sku+' · '+form.category)),
+            h('div',{ className:'bg-[var(--trs-bg)] rounded-lg p-3.5' }, h('p',{className:'text-xs text-gray-400 mb-1'},'Pricing'), h('p',{className:'font-semibold'}, formatIDR(form.salePrice||form.regularPrice)), h('p',{className:'text-xs text-gray-500'},'Margin '+margin+'%')),
+            h('div',{ className:'bg-[var(--trs-bg)] rounded-lg p-3.5' }, h('p',{className:'text-xs text-gray-400 mb-1'},'Stock'), h('p',{className:'font-semibold'}, form.stockQty+' unit')),
+            h('div',{ className:'bg-[var(--trs-bg)] rounded-lg p-3.5' }, h('p',{className:'text-xs text-gray-400 mb-1'},'Variants & Compatibility'), h('p',{className:'font-semibold'}, (form.variantRows.length||'0')+' varian · '+form.compatibility.length+' model cocok'))
+          )
+        )
+      ),
+
+      h('div',{ className:'flex items-center justify-between mt-8 pt-5 border-t border-[var(--trs-border)]' },
+        h('button',{ type:'button', disabled:step===0, onClick:()=>setStep(s=>s-1), className: cx('px-5 py-2.5 rounded-lg text-sm font-semibold border border-[var(--trs-border)] text-gray-600', step===0 && 'opacity-40 cursor-not-allowed') }, 'Back'),
+        h('div',{ className:'flex gap-2' },
+          h('button',{ type:'button', onClick:saveDraft, className:'px-5 py-2.5 rounded-lg text-sm font-semibold text-gray-600 border border-[var(--trs-border)]' }, 'Save Draft'),
+          step<WIZARD_STEPS.length-1
+            ? h('button',{ type:'button', onClick:()=>setStep(s=>s+1), className:'trs-btn-primary px-6 py-2.5 rounded-lg text-sm font-bold' }, 'Next')
+            : h('button',{ type:'button', onClick:publish, className:'trs-btn-primary px-6 py-2.5 rounded-lg text-sm font-bold' }, 'Publish Product')
+        )
+      )
+    )
+  );
+}
+
+// ==================== PAGE: PRODUCT DETAIL ADMIN ====================
+function ProductDetailAdminPage({ params }){
+  const { data, updateProductStatus, duplicateProduct } = useAdmin();
+  const { navigate } = useRouter();
+  const showToast = useToast();
+  const product = getProductById(params.id) || data.products.find(p=>p.id===Number(params.id));
+  const [stockDrawer, setStockDrawer] = useState(false);
+
+  if(!product) return h(EmptyState,{ title:'Produk tidak ditemukan' });
+
+  const relatedOrders = data.orders.filter(o => o.items.some(it=>it.productId===product.id)).slice(0,5);
+  const movements = data.stockHistory.filter(s => s.sku===product.sku).slice(0,6);
+  const unitsSold = relatedOrders.reduce((s,o)=> s + o.items.filter(it=>it.productId===product.id).reduce((s2,it)=>s2+it.qty,0), 0);
+  const revenue = unitsSold * product.salePrice;
+
+  return h('div',null,
+    h('button',{ type:'button', onClick:()=>navigate('/admin/products'), className:'flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4' }, h(Icon,{name:'chevron-left',size:15}), 'Kembali ke Products'),
+    h('div',{ className:'flex flex-wrap items-start justify-between gap-3 mb-6' },
+      h('div',{ className:'flex items-center gap-4' },
+        h('div',{ className:'w-16 h-16 rounded-xl bg-[var(--trs-dark)] text-white flex items-center justify-center flex-shrink-0' }, h(Icon,{name:product.icon,size:26})),
+        h('div',null, h('h1',{ className:'font-display font-extrabold text-xl text-[var(--trs-dark)]' }, product.name),
+          h('div',{ className:'flex items-center gap-2 mt-1' }, h('span',{className:'text-sm text-gray-400'},product.sku), h(StatusBadge,{status:product.status, size:'sm'})))
+      ),
+      h('div',{ className:'flex gap-2' },
+        h('button',{ type:'button', onClick:()=>showToast('Membuka form edit produk (prototype)'), className:'px-4 py-2 rounded-lg text-sm font-semibold border border-[var(--trs-border)] text-gray-600 flex items-center gap-1.5' }, h(Icon,{name:'edit',size:14}), 'Edit'),
+        h('button',{ type:'button', onClick:()=>setStockDrawer(true), className:'px-4 py-2 rounded-lg text-sm font-semibold border border-[var(--trs-border)] text-gray-600 flex items-center gap-1.5' }, h(Icon,{name:'archive',size:14}), 'Update Stock'),
+        h('button',{ type:'button', onClick:()=>duplicateProduct(product.id), className:'px-4 py-2 rounded-lg text-sm font-semibold border border-[var(--trs-border)] text-gray-600 flex items-center gap-1.5' }, h(Icon,{name:'copy',size:14}), 'Duplicate'),
+        h('button',{ type:'button', onClick:()=>updateProductStatus(product.id,'Archived'), className:'px-4 py-2 rounded-lg text-sm font-semibold border border-[var(--trs-red)]/30 text-[var(--trs-red)] flex items-center gap-1.5' }, h(Icon,{name:'archive',size:14}), 'Archive')
+      )
+    ),
+    h('div',{ className:'grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6' },
+      h(KpiCard,{ label:'Current Stock', value:product.stock, icon:'archive' }),
+      h(KpiCard,{ label:'Units Sold', value:unitsSold, icon:'bag' }),
+      h(KpiCard,{ label:'Revenue', value:formatIDR(revenue), icon:'bar-chart' }),
+      h(KpiCard,{ label:'Rating', value:product.rating+' ★', icon:'star' })
+    ),
+    h('div',{ className:'grid lg:grid-cols-3 gap-4' },
+      h('div',{ className:'lg:col-span-2 space-y-4' },
+        h(Card,{ title:'Pricing & Stock' }, h('div',{ className:'grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm' },
+          h('div',null, h('p',{className:'text-xs text-gray-400'},'Regular Price'), h('p',{className:'font-semibold'},formatIDR(product.price))),
+          h('div',null, h('p',{className:'text-xs text-gray-400'},'Sale Price'), h('p',{className:'font-semibold text-[var(--trs-red)]'},formatIDR(product.salePrice))),
+          h('div',null, h('p',{className:'text-xs text-gray-400'},'HPP'), h('p',{className:'font-semibold'},formatIDR(product.hpp))),
+          h('div',null, h('p',{className:'text-xs text-gray-400'},'Min Stock'), h('p',{className:'font-semibold'},product.minStock)),
+          h('div',null, h('p',{className:'text-xs text-gray-400'},'Reserved'), h('p',{className:'font-semibold'},product.reserved)),
+          h('div',null, h('p',{className:'text-xs text-gray-400'},'Incoming'), h('p',{className:'font-semibold'},product.incoming)),
+          h('div',null, h('p',{className:'text-xs text-gray-400'},'Category'), h('p',{className:'font-semibold'},product.category)),
+          h('div',null, h('p',{className:'text-xs text-gray-400'},'Variants'), h('p',{className:'font-semibold'},product.variants))
+        )),
+        h(Card,{ title:'Recent Stock Movement' },
+          movements.length===0 ? h('p',{className:'text-sm text-gray-400'},'Belum ada riwayat pergerakan stok.') :
+          h('div',{ className:'space-y-2.5' }, movements.map(m => h('div',{ key:m.id, className:'flex items-center justify-between text-sm border-b border-gray-50 pb-2.5 last:border-0 last:pb-0' },
+            h('div',null, h('p',{className:'text-gray-700'}, m.reason+' · '+m.staff), h('p',{className:'text-xs text-gray-400'}, formatDateTime(m.date))),
+            h('span',{ className: cx('font-bold', m.change>0?'text-emerald-600':'text-[var(--trs-red)]') }, (m.change>0?'+':'')+m.change)
+          )))
+        ),
+        h(Card,{ title:'Recent Orders' },
+          relatedOrders.length===0 ? h('p',{className:'text-sm text-gray-400'},'Belum ada order untuk produk ini.') :
+          h(OrdersMiniTable,{ orders: relatedOrders })
+        )
+      ),
+      h('div',{ className:'space-y-4' },
+        h(Card,{ title:'Vehicle Compatibility' }, h('div',{ className:'flex flex-wrap gap-1.5' },
+          (BRANDS_VEHICLE.Honda.slice(0,2).concat(BRANDS_VEHICLE.Yamaha.slice(0,2))).map((m,i)=> h(Badge2,{key:i}, m)))),
+        h(Card,{ title:'Product Info' }, h('div',{ className:'space-y-2 text-sm' },
+          h('div',{ className:'flex justify-between' }, h('span',{className:'text-gray-400'},'Brand'), h('span',{className:'font-medium'},product.brand)),
+          h('div',{ className:'flex justify-between' }, h('span',{className:'text-gray-400'},'SKU'), h('span',{className:'font-medium'},product.sku)),
+          h('div',{ className:'flex justify-between' }, h('span',{className:'text-gray-400'},'Updated'), h('span',{className:'font-medium'},formatDate(product.updated))),
+          h('div',{ className:'flex justify-between' }, h('span',{className:'text-gray-400'},'Status'), h(StatusBadge,{status:product.status,size:'sm'}))
+        ))
+      )
+    ),
+    h(StockAdjustDrawer,{ open:stockDrawer, onClose:()=>setStockDrawer(false), product })
+  );
+}
+function Badge2({ children }){ return h('span',{ className:'px-2.5 py-1 rounded-md bg-[var(--trs-bg)] text-xs font-medium text-gray-600' }, children); }
+
+function StockAdjustDrawer({ open, onClose, product, onDone }){
+  const { adjustStock, data } = useAdmin();
+  const [type, setType] = useState('Add');
+  const [qty, setQty] = useState(10);
+  const [reason, setReason] = useState('Purchase');
+  const [notes, setNotes] = useState('');
+  const [productId, setProductId] = useState(product ? product.id : (data.products[0] && data.products[0].id));
+  useEffect(()=>{ if(product) setProductId(product.id); }, [product, open]);
+  const p = data.products.find(x=>x.id===productId) || product;
+  if(!p) return null;
+  function submit(){
+    adjustStock(p.id, type, Number(qty), reason, notes);
+    if(onDone) onDone();
+    onClose();
+  }
+  return h(Drawer,{ open, onClose, title:'Stock Adjustment' },
+    h('div',{ className:'space-y-4' },
+      !product && h(WField,{ label:'Product' }, h(Select,{ value:productId, onChange:v=>setProductId(Number(v)), options: data.products.map(pp=>({ value:pp.id, label:pp.name })), className:'w-full' })),
+      h('div',{ className:'bg-[var(--trs-bg)] rounded-lg p-3 text-sm flex justify-between' }, h('span',{className:'text-gray-500'},'Current Stock'), h('span',{className:'font-bold'}, p.stock)),
+      h(WField,{ label:'Adjustment Type' }, h('div',{ className:'flex gap-2' },
+        ['Add','Reduce','Set'].map(t => h('button',{ key:t, type:'button', onClick:()=>setType(t), className: cx('flex-1 py-2 rounded-lg text-xs font-semibold border', type===t?'border-[var(--trs-red)] bg-red-50 text-[var(--trs-red)]':'border-[var(--trs-border)] text-gray-500') }, t)))),
+      h(WField,{ label: type==='Set' ? 'New Stock Quantity' : 'Quantity' }, h('input',{ type:'number', className:wInputCls, value:qty, onChange:e=>setQty(e.target.value) })),
+      h(WField,{ label:'Reason' }, h(Select,{ value:reason, onChange:setReason, options:['Purchase','Sales Correction','Damaged','Return','Stock Opname'], className:'w-full' })),
+      h(WField,{ label:'Notes' }, h('textarea',{ className:wInputCls, rows:2, value:notes, onChange:e=>setNotes(e.target.value) })),
+      h('button',{ type:'button', onClick:submit, className:'trs-btn-primary w-full py-3 rounded-lg font-bold text-sm' }, 'Save Adjustment')
+    )
+  );
+}
+
+// ==================== PAGE: ORDERS LIST / KANBAN ====================
+const ORDER_FILTER_STATUSES = ['Semua', ...ORDER_STATUS_FLOW, 'Cancelled','Refunded'];
+function OrdersListPage(){
+  const { data } = useAdmin();
+  const { navigate } = useRouter();
+  const [view, setView] = useState('list');
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('Semua');
+  const [payment, setPayment] = useState('Semua');
+  const [courier, setCourier] = useState('Semua');
+
+  let list = data.orders.filter(o => o.orderNumber.toLowerCase().includes(search.toLowerCase()) || o.customer.toLowerCase().includes(search.toLowerCase()));
+  if(status!=='Semua') list = list.filter(o=>o.orderStatus===status);
+  if(payment!=='Semua') list = list.filter(o=>o.paymentStatus===payment);
+  if(courier!=='Semua') list = list.filter(o=>o.courier===courier);
+
+  return h('div',null,
+    h(PageHeader,{ title:'Orders', subtitle: data.orders.length+' order total', action:
+      h('div',{ className:'flex items-center bg-gray-100 rounded-lg p-1' },
+        h('button',{ type:'button', onClick:()=>setView('list'), className: cx('px-3.5 py-1.5 rounded-md text-xs font-semibold', view==='list'?'bg-white shadow-sm text-gray-800':'text-gray-500') }, 'List'),
+        h('button',{ type:'button', onClick:()=>setView('kanban'), className: cx('px-3.5 py-1.5 rounded-md text-xs font-semibold', view==='kanban'?'bg-white shadow-sm text-gray-800':'text-gray-500') }, 'Kanban')
+      )
+    }),
+    h('div',{ className:'flex flex-wrap gap-2 mb-4' },
+      h('div',{ className:'flex-1 min-w-[200px]' }, h(SearchInput,{ value:search, onChange:setSearch, placeholder:'Cari order ID atau customer...' })),
+      h(Select,{ value:status, onChange:setStatus, options:ORDER_FILTER_STATUSES }),
+      h(Select,{ value:payment, onChange:setPayment, options:['Semua','Paid','Unpaid','Refunded','Cancelled'] }),
+      h(Select,{ value:courier, onChange:setCourier, options:['Semua', ...COURIERS] })
+    ),
+    view==='list' ? h(OrdersFullTable,{ orders:list }) : h(OrdersKanban,{ orders:list })
+  );
+}
+
+function OrdersFullTable({ orders }){
+  const { navigate } = useRouter();
+  const showToast = useToast();
+  return h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+    orders.length===0 ? h(EmptyState,{ title:'Tidak ada order ditemukan' }) :
+    h('div',{ className:'overflow-x-auto trs-scrollbox' },
+      h('table',{ className:'w-full' },
+        h('thead',null, h('tr',{ className:'border-b border-[var(--trs-border)]' }, ['Order ID','Customer','Products','Total','Payment','Order Status','Shipping','Courier','Date','Actions'].map(c=>h(Th,{key:c},c)))),
+        h('tbody',null, orders.map(o => h('tr',{ key:o.orderNumber, className:'border-b border-gray-50 hover:bg-gray-50 last:border-0' },
+          h(Td,null, h(Link,{ to:'/admin/orders/'+o.orderNumber, className:'font-semibold text-gray-800 hover:text-[var(--trs-red)]' }, o.orderNumber)),
+          h(Td,null, o.customer),
+          h(Td,null, h('span',{className:'trs-line-clamp-1 block max-w-[160px]'}, o.items.map(it=>it.name).join(', '))),
+          h(Td,null, formatIDR(o.total)),
+          h(Td,null, h(StatusBadge,{status:o.paymentStatus,size:'sm'})),
+          h(Td,null, h(StatusBadge,{status:o.orderStatus,size:'sm'})),
+          h(Td,null, h(StatusBadge,{status:o.shippingStatus,size:'sm'})),
+          h(Td,null, o.courier.split(' ')[0]),
+          h(Td,null, formatDate(o.date)),
+          h(Td,null, h('button',{ type:'button', onClick:()=>navigate('/admin/orders/'+o.orderNumber), className:'text-xs font-semibold text-[var(--trs-red)]' }, 'Detail'))
+        )))
+      )
+    )
+  );
+}
+
+const KANBAN_COLUMNS = ['New Order','Paid','Processing','Ready to Ship','Shipped','Completed'];
+function OrdersKanban({ orders }){
+  const { updateOrderStatus } = useAdmin();
+  const { navigate } = useRouter();
+  function nextStatus(s){ const i = KANBAN_COLUMNS.indexOf(s); return i>=0 && i<KANBAN_COLUMNS.length-1 ? KANBAN_COLUMNS[i+1] : null; }
+  return h('div',{ className:'flex gap-4 overflow-x-auto pb-4 trs-scrollbox' },
+    KANBAN_COLUMNS.map(col => {
+      const items = orders.filter(o=>o.orderStatus===col);
+      return h('div',{ key:col, className:'w-72 flex-shrink-0' },
+        h('div',{ className:'flex items-center justify-between mb-2.5 px-1' }, h('h4',{className:'font-semibold text-sm text-gray-700'},col), h('span',{className:'text-xs font-bold text-gray-400 bg-gray-100 rounded-full px-2 py-0.5'},items.length)),
+        h('div',{ className:'space-y-2.5 min-h-[80px]' }, items.length===0 ? h('div',{className:'text-xs text-gray-300 text-center py-6 border-2 border-dashed border-gray-100 rounded-lg'},'Kosong') :
+          items.map(o => h('div',{ key:o.orderNumber, className:'bg-white rounded-lg border border-[var(--trs-border)] p-3 hover:shadow-md transition-shadow' },
+            h('button',{ type:'button', onClick:()=>navigate('/admin/orders/'+o.orderNumber), className:'text-left w-full' },
+              h('div',{ className:'flex items-center justify-between mb-1' }, h('span',{className:'text-xs font-bold text-gray-800'},o.orderNumber), h(StatusBadge,{status:o.paymentStatus,size:'sm'})),
+              h('p',{ className:'text-xs text-gray-500 trs-line-clamp-1 mb-1' }, o.customer),
+              h('p',{ className:'text-xs text-gray-400 trs-line-clamp-1 mb-2' }, o.items.map(it=>it.name).join(', ')),
+              h('div',{ className:'flex items-center justify-between text-xs' }, h('span',{className:'font-bold text-gray-800'},formatIDR(o.total)), h('span',{className:'text-gray-400'},o.courier.split(' ')[0]))
+            ),
+            nextStatus(col) && h('button',{ type:'button', onClick:()=>updateOrderStatus(o.orderNumber, nextStatus(col)), className:'w-full mt-2.5 text-xs font-semibold text-[var(--trs-red)] border border-[var(--trs-red)]/30 rounded-lg py-1.5 flex items-center justify-center gap-1 hover:bg-red-50' },
+              nextStatus(col)+' →')
+          ))
+        )
+      );
+    })
+  );
+}
+
+// ==================== PAGE: ORDER DETAIL ====================
+const TIMELINE_ALL = ['Order Created','Payment Confirmed','Processing','Packed','Shipped','Delivered','Completed'];
+function OrderDetailPage({ params }){
+  const { data, updateOrderStatus, addTracking, addOrderNote, cancelOrder, refundOrder } = useAdmin();
+  const showToast = useToast();
+  const order = data.orders.find(o=>o.orderNumber===params.orderId);
+  const [trackingModal, setTrackingModal] = useState(false);
+  const [noteText, setNoteText] = useState('');
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [confirmRefund, setConfirmRefund] = useState(false);
+
+  if(!order) return h(EmptyState,{ title:'Order tidak ditemukan', subtitle: params.orderId });
+
+  const doneLabels = order.timeline.map(t=>t.label);
+  const activeIdx = Math.max(0, TIMELINE_ALL.findIndex(s => !doneLabels.some(l=>l.includes(s))) - 1);
+  const currentTimelineIdx = order.orderStatus==='Completed' ? 6 : order.orderStatus==='Delivered' ? 5 : order.orderStatus==='Shipped' ? 4 : order.orderStatus==='Ready to Ship' ? 3 : order.orderStatus==='Processing' ? 2 : order.orderStatus==='Paid' ? 1 : 0;
+
+  function printAction(label){ showToast(label+' disiapkan (simulasi print)'); }
+  function sendWA(){ window.open('https://wa.me/62'+order.phone.replace(/^0/,'')+'?text='+encodeURIComponent('Halo '+order.customer+', update pesanan '+order.orderNumber), '_blank'); }
+
+  return h('div',null,
+    h(Link,{ to:'/admin/orders', className:'flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4 w-fit' }, h(Icon,{name:'chevron-left',size:15}), 'Kembali ke Orders'),
+    h('div',{ className:'flex flex-wrap items-start justify-between gap-3 mb-6' },
+      h('div',null,
+        h('h1',{ className:'font-display font-extrabold text-2xl text-[var(--trs-dark)]' }, 'Order #'+order.orderNumber),
+        h('p',{ className:'text-sm text-gray-400 mt-1' }, formatDateTime(order.date)+' · '+order.customer)
+      ),
+      h('div',{ className:'flex gap-2' }, h(StatusBadge,{status:order.paymentStatus}), h(StatusBadge,{status:order.orderStatus}), h(StatusBadge,{status:order.shippingStatus}))
+    ),
+
+    h('div',{ className:'flex flex-wrap gap-2 mb-6' },
+      order.paymentStatus==='Unpaid' && h('button',{ type:'button', onClick:()=>updateOrderStatus(order.orderNumber,'Paid'), className:'trs-btn-primary px-3.5 py-2 rounded-lg text-xs font-bold' }, 'Confirm Payment'),
+      order.orderStatus==='Paid' && h('button',{ type:'button', onClick:()=>updateOrderStatus(order.orderNumber,'Processing'), className:'trs-btn-primary px-3.5 py-2 rounded-lg text-xs font-bold' }, 'Mark Processing'),
+      order.orderStatus==='Processing' && h('button',{ type:'button', onClick:()=>updateOrderStatus(order.orderNumber,'Ready to Ship'), className:'trs-btn-primary px-3.5 py-2 rounded-lg text-xs font-bold' }, 'Ready to Ship'),
+      h('button',{ type:'button', onClick:()=>printAction('Invoice'), className:'px-3.5 py-2 rounded-lg text-xs font-semibold border border-[var(--trs-border)] text-gray-600 flex items-center gap-1.5' }, h(Icon,{name:'printer',size:13}), 'Print Invoice'),
+      h('button',{ type:'button', onClick:()=>printAction('Packing Slip'), className:'px-3.5 py-2 rounded-lg text-xs font-semibold border border-[var(--trs-border)] text-gray-600 flex items-center gap-1.5' }, h(Icon,{name:'printer',size:13}), 'Packing Slip'),
+      h('button',{ type:'button', onClick:()=>printAction('Shipping Label'), className:'px-3.5 py-2 rounded-lg text-xs font-semibold border border-[var(--trs-border)] text-gray-600 flex items-center gap-1.5' }, h(Icon,{name:'printer',size:13}), 'Shipping Label'),
+      h('button',{ type:'button', onClick:()=>setTrackingModal(true), className:'px-3.5 py-2 rounded-lg text-xs font-semibold border border-[var(--trs-border)] text-gray-600 flex items-center gap-1.5' }, h(Icon,{name:'truck',size:13}), 'Input Tracking'),
+      h('button',{ type:'button', onClick:sendWA, className:'px-3.5 py-2 rounded-lg text-xs font-semibold border border-emerald-200 text-emerald-600 flex items-center gap-1.5' }, h(Icon,{name:'whatsapp',size:13}), 'Send WhatsApp'),
+      !['Cancelled','Refunded','Completed'].includes(order.orderStatus) && h('button',{ type:'button', onClick:()=>setConfirmCancel(true), className:'px-3.5 py-2 rounded-lg text-xs font-semibold border border-[var(--trs-red)]/30 text-[var(--trs-red)]' }, 'Cancel Order'),
+      order.paymentStatus==='Paid' && h('button',{ type:'button', onClick:()=>setConfirmRefund(true), className:'px-3.5 py-2 rounded-lg text-xs font-semibold border border-[var(--trs-red)]/30 text-[var(--trs-red)]' }, 'Refund')
+    ),
+
+    h('div',{ className:'grid lg:grid-cols-3 gap-4' },
+      h('div',{ className:'lg:col-span-2 space-y-4' },
+        h(Card,{ title:'Order Timeline' }, h('div',{ className:'flex items-center overflow-x-auto no-scrollbar' },
+          TIMELINE_ALL.map((s,i) => h(React.Fragment,{ key:s },
+            h('div',{ className:'flex flex-col items-center gap-1.5 flex-shrink-0 px-1' },
+              h('div',{ className: cx('w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0', i<=currentTimelineIdx ? 'bg-[var(--trs-red)] text-white' : 'bg-gray-100 text-gray-400') }, i<currentTimelineIdx ? h(Icon,{name:'check',size:11}) : i+1),
+              h('span',{ className: cx('text-[9px] sm:text-[10px] font-medium whitespace-nowrap', i<=currentTimelineIdx?'text-gray-700':'text-gray-300') }, s)
+            ),
+            i<TIMELINE_ALL.length-1 && h('div',{ className: cx('h-0.5 flex-1 min-w-[10px] -mt-4', i<currentTimelineIdx?'bg-[var(--trs-red)]':'bg-gray-100') })
+          ))
+        )),
+        h(Card,{ title:'Products' }, h('div',{ className:'overflow-x-auto' }, h('table',{ className:'w-full' },
+          h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Product','SKU','Variant','Qty','Price','Subtotal'].map(c=>h(Th,{key:c},c)))),
+          h('tbody',null, order.items.map((it,i) => h('tr',{ key:i, className:'border-b border-gray-50 last:border-0' },
+            h(Td,null, it.name), h(Td,null, it.sku), h(Td,null, it.variant), h(Td,null, it.qty), h(Td,null, formatIDR(it.price)), h(Td,null, formatIDR(it.price*it.qty))
+          )))
+        )),
+          h('div',{ className:'flex justify-end mt-4' }, h('div',{ className:'w-56 space-y-1.5 text-sm' },
+            h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Subtotal'), h('span',null,formatIDR(order.subtotal))),
+            h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Shipping'), h('span',null,formatIDR(order.shippingCost))),
+            order.discount>0 && h('div',{ className:'flex justify-between text-emerald-600' }, h('span',null,'Discount'), h('span',null,'-'+formatIDR(order.discount))),
+            h('div',{ className:'flex justify-between font-bold text-gray-800 border-t border-gray-100 pt-1.5' }, h('span',null,'Total'), h('span',null,formatIDR(order.total)))
+          ))
+        ),
+        h(Card,{ title:'Notes & Activity' },
+          order.customerNote && h('div',{ className:'bg-[var(--trs-bg)] rounded-lg p-3 mb-3' }, h('p',{className:'text-xs text-gray-400 mb-1'},'Customer Note'), h('p',{className:'text-sm text-gray-700'},order.customerNote)),
+          h('div',{ className:'space-y-2 mb-3' }, order.internalNotes.map((n,i) => h('div',{ key:i, className:'bg-amber-50 rounded-lg p-3' }, h('p',{className:'text-xs text-amber-600 font-semibold mb-0.5'},n.staff+' · '+formatDateTime(n.date)), h('p',{className:'text-sm text-gray-700'},n.text)))),
+          h('div',{ className:'flex gap-2 mb-4' },
+            h('input',{ type:'text', value:noteText, onChange:e=>setNoteText(e.target.value), placeholder:'Tambah catatan internal staff...', className:'flex-1 border border-[var(--trs-border)] rounded-lg px-3 py-2 text-sm' }),
+            h('button',{ type:'button', onClick:()=>{ if(noteText.trim()){ addOrderNote(order.orderNumber, noteText); setNoteText(''); } }, className:'px-4 py-2 rounded-lg bg-[var(--trs-dark)] text-white text-xs font-bold' }, 'Add')
+          ),
+          h('div',{ className:'border-t border-[var(--trs-border)] pt-3' }, h('p',{className:'text-xs font-semibold text-gray-500 mb-2'},'Activity Log'),
+            h('div',{ className:'space-y-1.5' }, order.timeline.slice().reverse().map((t,i) => h('p',{ key:i, className:'text-xs text-gray-400' }, '• '+t.label+' — '+formatDateTime(t.date))))
+          )
+        )
+      ),
+      h('div',{ className:'space-y-4' },
+        h(Card,{ title:'Customer' }, h('div',{ className:'space-y-1.5 text-sm' },
+          h('p',{className:'font-semibold text-gray-800'}, order.customer), h('p',{className:'text-gray-500'}, order.phone), h('p',{className:'text-gray-500'}, order.email))),
+        h(Card,{ title:'Shipping Address' }, h('p',{ className:'text-sm text-gray-600 leading-relaxed' }, order.address)),
+        h(Card,{ title:'Payment' }, h('div',{ className:'space-y-1.5 text-sm' },
+          h('div',{ className:'flex justify-between' }, h('span',{className:'text-gray-400'},'Method'), h('span',{className:'font-medium'},order.paymentMethod)),
+          h('div',{ className:'flex justify-between' }, h('span',{className:'text-gray-400'},'Transaction ID'), h('span',{className:'font-medium'},'TXN-'+order.orderNumber.slice(-8))),
+          h('div',{ className:'flex justify-between' }, h('span',{className:'text-gray-400'},'Status'), h(StatusBadge,{status:order.paymentStatus,size:'sm'}))
+        )),
+        h(Card,{ title:'Shipping' }, h('div',{ className:'space-y-1.5 text-sm' },
+          h('div',{ className:'flex justify-between' }, h('span',{className:'text-gray-400'},'Courier'), h('span',{className:'font-medium'},order.courier)),
+          h('div',{ className:'flex justify-between' }, h('span',{className:'text-gray-400'},'Tracking'), h('span',{className:'font-medium'},order.trackingNumber||'-')),
+          h('div',{ className:'flex justify-between' }, h('span',{className:'text-gray-400'},'Status'), h(StatusBadge,{status:order.shippingStatus,size:'sm'}))
+        ))
+      )
+    ),
+    h(Modal,{ open:trackingModal, onClose:()=>setTrackingModal(false), title:'Input Tracking Number' }, h(TrackingForm,{ order, onSubmit:(courier,num)=>{ addTracking(order.orderNumber, courier, num); setTrackingModal(false); } })),
+    h(ConfirmDialog,{ open:confirmCancel, onClose:()=>setConfirmCancel(false), title:'Batalkan Order?', message:'Order '+order.orderNumber+' akan ditandai sebagai Cancelled.', danger:true, onConfirm:()=>cancelOrder(order.orderNumber) }),
+    h(ConfirmDialog,{ open:confirmRefund, onClose:()=>setConfirmRefund(false), title:'Refund Order?', message:'Order '+order.orderNumber+' akan ditandai sebagai Refunded.', danger:true, onConfirm:()=>refundOrder(order.orderNumber) })
+  );
+}
+function TrackingForm({ order, onSubmit }){
+  const [courier, setCourier] = useState(order.courier || COURIERS[0]);
+  const [num, setNum] = useState(order.trackingNumber || '');
+  return h('div',{ className:'space-y-4' },
+    h(WField,{ label:'Courier' }, h(Select,{ value:courier, onChange:setCourier, options:COURIERS, className:'w-full' })),
+    h(WField,{ label:'Tracking Number' }, h('input',{ className:wInputCls, value:num, onChange:e=>setNum(e.target.value) })),
+    h('button',{ type:'button', onClick:()=>onSubmit(courier,num), className:'trs-btn-primary w-full py-3 rounded-lg font-bold text-sm' }, 'Save Tracking')
+  );
+}
+
+// ==================== PAGE: SHIPPING ====================
+function ShippingPage(){
+  const { data, addTracking, markShipped } = useAdmin();
+  const showToast = useToast();
+  const [trackingModal, setTrackingModal] = useState(null);
+  const [trackingDetail, setTrackingDetail] = useState(null);
+  const shippable = data.orders.filter(o => !['Cancelled','Refunded','New Order','Awaiting Payment'].includes(o.orderStatus));
+
+  const counts = {
+    'Waiting Pickup': shippable.filter(o=>o.shippingStatus==='Waiting Pickup').length,
+    'Ship Today': shippable.filter(o=>o.shippingStatus==='Waiting Pickup').length > 0 ? Math.min(4, shippable.length) : 0,
+    'In Transit': shippable.filter(o=>o.shippingStatus==='In Transit').length,
+    'Delayed': shippable.filter(o=>o.shippingStatus==='In Transit').length > 2 ? 3 : 0,
+    'Delivered': shippable.filter(o=>o.shippingStatus==='Delivered').length,
+    'Returned': 1,
+  };
+
+  return h('div',null,
+    h(PageHeader,{ title:'Shipping', subtitle:'Kelola pengiriman dan lacak status kurir.' }),
+    h('div',{ className:'grid grid-cols-2 lg:grid-cols-6 gap-3 mb-6' },
+      Object.entries(counts).map(([label,val]) => h(KpiCard,{ key:label, label, value:val, icon:'truck' }))
+    ),
+    h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+      h('div',{ className:'overflow-x-auto trs-scrollbox' }, h('table',{ className:'w-full' },
+        h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Order ID','Customer','Courier','Tracking','Shipping Status','Estimated Delivery','Actions'].map(c=>h(Th,{key:c},c)))),
+        h('tbody',null, shippable.map(o => h('tr',{ key:o.orderNumber, className:'border-b border-gray-50 hover:bg-gray-50 last:border-0' },
+          h(Td,null, h(Link,{ to:'/admin/orders/'+o.orderNumber, className:'font-semibold text-gray-800 hover:text-[var(--trs-red)]' }, o.orderNumber)),
+          h(Td,null, o.customer), h(Td,null, o.courier),
+          h(Td,null, o.trackingNumber ? h('div',{className:'flex items-center gap-1.5'}, h('span',null,o.trackingNumber), h(CopyIconBtn,{text:o.trackingNumber})) : h('span',{className:'text-gray-300'},'-')),
+          h(Td,null, h(StatusBadge,{status:o.shippingStatus,size:'sm'})),
+          h(Td,null, formatDate(daysAgoISO(-2))),
+          h(Td,{ className:'space-x-2 whitespace-nowrap' },
+            h('button',{ type:'button', onClick:()=>setTrackingModal(o), className:'text-xs font-semibold text-[var(--trs-red)]' }, o.trackingNumber?'Edit Resi':'Add Tracking'),
+            o.trackingNumber && h('button',{ type:'button', onClick:()=>setTrackingDetail(o), className:'text-xs font-semibold text-gray-500' }, 'Lacak'),
+            o.shippingStatus!=='Delivered' && o.orderStatus!=='Shipped' && o.orderStatus==='Ready to Ship' && h('button',{ type:'button', onClick:()=>markShipped(o.orderNumber), className:'text-xs font-semibold text-emerald-600' }, 'Mark Shipped'),
+            h('button',{ type:'button', onClick:()=>showToast('Laporan masalah pengiriman dikirim ke tim terkait', 'warn'), className:'text-xs font-semibold text-gray-400' }, 'Report')
+          )
+        )))
+      ))
+    ),
+    h(Modal,{ open:!!trackingModal, onClose:()=>setTrackingModal(null), title:'Tracking Number' }, trackingModal && h(TrackingForm,{ order:trackingModal, onSubmit:(courier,num)=>{ addTracking(trackingModal.orderNumber, courier, num); setTrackingModal(null); } })),
+    h(Modal,{ open:!!trackingDetail, onClose:()=>setTrackingDetail(null), title:'Tracking Detail' }, trackingDetail && h(TrackingTimeline,{ order:trackingDetail }))
+  );
+}
+function CopyIconBtn({ text }){
+  const [copied, setCopied] = useState(false);
+  return h('button',{ type:'button', onClick:()=>{ if(navigator.clipboard) navigator.clipboard.writeText(text).catch(()=>{}); setCopied(true); setTimeout(()=>setCopied(false),1200); }, className:'text-gray-400 hover:text-gray-600' }, h(Icon,{name: copied?'check':'copy', size:12}));
+}
+function TrackingTimeline({ order }){
+  const steps = ['Order Picked Up','Transit Yogyakarta Hub','Transit Jakarta','Out for Delivery', order.shippingStatus==='Delivered' ? 'Delivered' : null].filter(Boolean);
+  const activeIdx = order.shippingStatus==='Delivered' ? steps.length-1 : steps.length-2;
+  return h('div',null,
+    h('p',{ className:'text-xs text-gray-400 mb-4' }, order.orderNumber+' · '+order.trackingNumber+' · '+order.courier),
+    h('div',{ className:'space-y-4' }, steps.map((s,i) => h('div',{ key:i, className:'flex items-start gap-3' },
+      h('div',{ className: cx('w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold', i<=activeIdx?'bg-[var(--trs-red)] text-white':'bg-gray-100 text-gray-400') }, i<activeIdx? h(Icon,{name:'check',size:11}) : ''),
+      h('div',null, h('p',{className: cx('text-sm font-medium', i<=activeIdx?'text-gray-800':'text-gray-300')}, s), h('p',{className:'text-xs text-gray-400'}, formatDateTime(daysAgoISO(steps.length-i))))
+    )))
+  );
+}
+
+// ==================== PAGE: INVENTORY ====================
+function InventoryPage(){
+  const { data } = useAdmin();
+  const [tab, setTab] = useState('overview');
+  const [search, setSearch] = useState('');
+  const [adjustProduct, setAdjustProduct] = useState(null);
+  const [opnameRows, setOpnameRows] = useState(null);
+  const { adjustStock } = useAdmin();
+  const showToast = useToast();
+
+  const totalSkus = data.products.length;
+  const available = data.products.reduce((s,p)=>s+p.stock,0);
+  const lowStock = data.products.filter(p=>p.status==='Low Stock').length;
+  const outStock = data.products.filter(p=>p.status==='Out of Stock').length;
+  const reserved = data.products.reduce((s,p)=>s+p.reserved,0);
+
+  const list = data.products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase()));
+
+  function startOpname(){
+    setOpnameRows(data.products.map(p => ({ id:p.id, name:p.name, sku:p.sku, system:p.stock, physical:p.stock })));
+  }
+  function approveOpname(){
+    opnameRows.forEach(r => { if(r.physical !== r.system) adjustStock(r.id, 'Set', r.physical, 'Stock Opname', 'Penyesuaian dari stock opname'); });
+    showToast('Stock opname disetujui, stok disesuaikan');
+    setOpnameRows(null);
+  }
+
+  return h('div',null,
+    h(PageHeader,{ title:'Inventory', subtitle:'Pantau stok, riwayat pergerakan, dan lakukan stock opname.' }),
+    h('div',{ className:'grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6' },
+      h(KpiCard,{ label:'Total SKUs', value:totalSkus, icon:'box' }),
+      h(KpiCard,{ label:'Available Stock', value:available, icon:'archive' }),
+      h(KpiCard,{ label:'Low Stock', value:lowStock, icon:'alert-circle' }),
+      h(KpiCard,{ label:'Out of Stock', value:outStock, icon:'alert-circle' }),
+      h(KpiCard,{ label:'Reserved Stock', value:reserved, icon:'layers' })
+    ),
+    h('div',{ className:'flex gap-2 mb-4 border-b border-[var(--trs-border)]' },
+      [['overview','Overview'],['history','Stock History'],['opname','Stock Opname']].map(([k,l]) => h('button',{ key:k, type:'button', onClick:()=>setTab(k), className: cx('px-3 pb-3 text-sm font-semibold border-b-2 -mb-px', tab===k?'border-[var(--trs-red)] text-[var(--trs-red)]':'border-transparent text-gray-400') }, l))
+    ),
+
+    tab==='overview' && h('div',null,
+      h('div',{ className:'mb-4 max-w-sm' }, h(SearchInput,{ value:search, onChange:setSearch, placeholder:'Cari produk atau SKU...' })),
+      h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+        h('div',{ className:'overflow-x-auto trs-scrollbox' }, h('table',{ className:'w-full' },
+          h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Product','SKU','Available','Reserved','Incoming','Min Stock','Status','Actions'].map(c=>h(Th,{key:c},c)))),
+          h('tbody',null, list.map(p => h('tr',{ key:p.id, className:'border-b border-gray-50 hover:bg-gray-50 last:border-0' },
+            h(Td,null, h('span',{className:'font-medium text-gray-800'}, p.name)), h(Td,null, p.sku),
+            h(Td,null, h('span',{className: p.stock<=p.minStock?'text-[var(--trs-red)] font-semibold':''}, p.stock)),
+            h(Td,null, p.reserved), h(Td,null, p.incoming), h(Td,null, p.minStock),
+            h(Td,null, h(StatusBadge,{status:p.status,size:'sm'})),
+            h(Td,null, h('button',{ type:'button', onClick:()=>setAdjustProduct(p), className:'text-xs font-semibold text-[var(--trs-red)]' }, 'Adjust Stock'))
+          )))
+        ))
+      )
+    ),
+
+    tab==='history' && h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+      h('div',{ className:'overflow-x-auto trs-scrollbox' }, h('table',{ className:'w-full' },
+        h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Date','Product','SKU','Type','Before','Change','After','Reason','Staff'].map(c=>h(Th,{key:c},c)))),
+        h('tbody',null, data.stockHistory.map(r => h('tr',{ key:r.id, className:'border-b border-gray-50 hover:bg-gray-50 last:border-0' },
+          h(Td,null, formatDate(r.date)), h(Td,null, r.product), h(Td,null, r.sku),
+          h(Td,null, h(StatusBadge,{status: r.type==='Add'?'Active':'Cancelled', size:'sm'})), h(Td,null, r.qtyBefore),
+          h(Td,null, h('span',{className: r.change>0?'text-emerald-600 font-semibold':'text-[var(--trs-red)] font-semibold'}, (r.change>0?'+':'')+r.change)),
+          h(Td,null, r.qtyAfter), h(Td,null, r.reason), h(Td,null, r.staff)
+        )))
+      ))
+    ),
+
+    tab==='opname' && h('div',null,
+      !opnameRows ? h(Card,null, h('p',{className:'text-sm text-gray-500 mb-4'},'Mulai sesi stock opname untuk membandingkan stok sistem dengan stok fisik gudang.'),
+        h('button',{ type:'button', onClick:startOpname, className:'trs-btn-primary px-5 py-2.5 rounded-lg text-sm font-bold' }, 'Mulai Stock Opname'))
+      : h(Card,{ title:'Stock Opname Session' },
+          h('div',{ className:'overflow-x-auto mb-4' }, h('table',{ className:'w-full' },
+            h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Product','SKU','System Stock','Physical Count','Difference'].map(c=>h(Th,{key:c},c)))),
+            h('tbody',null, opnameRows.map(r => h('tr',{ key:r.id, className:'border-b border-gray-50 last:border-0' },
+              h(Td,null, r.name), h(Td,null, r.sku), h(Td,null, r.system),
+              h(Td,null, h('input',{ type:'number', value:r.physical, onChange:e=> setOpnameRows(rows=>rows.map(x=>x.id===r.id?{...x,physical:Number(e.target.value)}:x)), className:'w-20 border border-gray-200 rounded px-2 py-1 text-sm' })),
+              h(Td,null, h('span',{className: r.physical-r.system===0?'text-gray-400':r.physical-r.system>0?'text-emerald-600 font-semibold':'text-[var(--trs-red)] font-semibold'}, (r.physical-r.system>0?'+':'')+(r.physical-r.system)))
+            )))
+          )),
+          h('div',{ className:'flex gap-2' },
+            h('button',{ type:'button', onClick:approveOpname, className:'trs-btn-primary px-5 py-2.5 rounded-lg text-sm font-bold' }, 'Approve Adjustment'),
+            h('button',{ type:'button', onClick:()=>setOpnameRows(null), className:'px-5 py-2.5 rounded-lg text-sm font-semibold border border-[var(--trs-border)] text-gray-600' }, 'Batal')
+          )
+        )
+    ),
+
+    h(StockAdjustDrawer,{ open:!!adjustProduct, onClose:()=>setAdjustProduct(null), product:adjustProduct })
+  );
+}
+
+// ==================== PAGE: CUSTOMERS ====================
+function CustomersPage(){
+  const { data } = useAdmin();
+  const { navigate } = useRouter();
+  const [search, setSearch] = useState('');
+  const [type, setType] = useState('Semua');
+  let list = data.customers.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
+  if(type!=='Semua') list = list.filter(c=>c.type===type);
+
+  return h('div',null,
+    h(PageHeader,{ title:'Customers', subtitle: data.customers.length+' pelanggan terdaftar' }),
+    h('div',{ className:'flex flex-wrap gap-2 mb-4' },
+      h('div',{ className:'flex-1 min-w-[200px]' }, h(SearchInput,{ value:search, onChange:setSearch, placeholder:'Cari nama pelanggan...' })),
+      h(Select,{ value:type, onChange:setType, options:['Semua','Retail','Bengkel','Reseller','VIP'] })
+    ),
+    h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+      h('div',{ className:'overflow-x-auto trs-scrollbox' }, h('table',{ className:'w-full' },
+        h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Customer','Phone','Email','Orders','Total Spend','Last Order','Type','Status'].map(c=>h(Th,{key:c},c)))),
+        h('tbody',null, list.map(c => h('tr',{ key:c.id, onClick:()=>navigate('/admin/customers/'+c.id), className:'border-b border-gray-50 hover:bg-gray-50 cursor-pointer last:border-0' },
+          h(Td,null, h('span',{className:'font-semibold text-gray-800 hover:text-[var(--trs-red)]'}, c.name)),
+          h(Td,null, c.phone), h(Td,null, c.email), h(Td,null, c.orders), h(Td,null, formatIDR(c.totalSpend)),
+          h(Td,null, formatDate(c.lastOrder)), h(Td,null, h(Badge2,null,c.type)), h(Td,null, h(StatusBadge,{status:c.status,size:'sm'}))
+        )))
+      ))
+    )
+  );
+}
+
+function CustomerDetailPage({ params }){
+  const { data, addCustomerNote, toggleCustomerTag } = useAdmin();
+  const { navigate } = useRouter();
+  const customer = data.customers.find(c=>c.id===Number(params.id));
+  const [note, setNote] = useState(customer && customer.notes || '');
+  if(!customer) return h(EmptyState,{ title:'Pelanggan tidak ditemukan' });
+
+  const orders = data.orders.filter(o=>o.customer===customer.name);
+  const productsPurchased = [...new Set(orders.flatMap(o=>o.items.map(it=>it.name)))];
+  const aov = customer.orders ? Math.round(customer.totalSpend/customer.orders) : 0;
+  const allTags = ['Retail','Bengkel','Reseller','VIP'];
+
+  return h('div',null,
+    h('button',{ type:'button', onClick:()=>navigate('/admin/customers'), className:'flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4' }, h(Icon,{name:'chevron-left',size:15}), 'Kembali ke Customers'),
+    h('div',{ className:'flex flex-wrap items-center justify-between gap-3 mb-6' },
+      h('div',{ className:'flex items-center gap-4' },
+        h('div',{ className:'w-14 h-14 rounded-full bg-[var(--trs-dark)] text-white flex items-center justify-center font-bold text-lg flex-shrink-0' }, customer.name[0]),
+        h('div',null, h('h1',{ className:'font-display font-extrabold text-xl text-[var(--trs-dark)]' }, customer.name), h('p',{ className:'text-sm text-gray-400' }, customer.phone+' · '+customer.email))
+      ),
+      h('div',{ className:'flex gap-2' },
+        h('a',{ href:'https://wa.me/62'+customer.phone.replace(/^0/,''), target:'_blank', rel:'noopener', className:'px-4 py-2 rounded-lg text-sm font-semibold border border-emerald-200 text-emerald-600 flex items-center gap-1.5' }, h(Icon,{name:'whatsapp',size:14}), 'WhatsApp'),
+        h('a',{ href:'mailto:'+customer.email, className:'px-4 py-2 rounded-lg text-sm font-semibold border border-[var(--trs-border)] text-gray-600 flex items-center gap-1.5' }, h(Icon,{name:'mail',size:14}), 'Email'),
+        h('button',{ type:'button', onClick:()=>navigate('/admin/orders'), className:'trs-btn-primary px-4 py-2 rounded-lg text-sm font-bold' }, 'Create Order')
+      )
+    ),
+    h('div',{ className:'grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6' },
+      h(KpiCard,{ label:'Total Orders', value:customer.orders, icon:'bag' }),
+      h(KpiCard,{ label:'Lifetime Value', value:formatIDR(customer.totalSpend), icon:'bar-chart' }),
+      h(KpiCard,{ label:'Average Order Value', value:formatIDR(aov), icon:'card' }),
+      h(KpiCard,{ label:'Last Order', value:formatDate(customer.lastOrder), icon:'clock' })
+    ),
+    h('div',{ className:'grid lg:grid-cols-3 gap-4' },
+      h('div',{ className:'lg:col-span-2 space-y-4' },
+        h(Card,{ title:'Order History' }, h(OrdersMiniTable,{ orders })),
+        h(Card,{ title:'Products Purchased' }, h('div',{ className:'flex flex-wrap gap-1.5' }, productsPurchased.map((p,i)=>h(Badge2,{key:i},p))))
+      ),
+      h('div',{ className:'space-y-4' },
+        h(Card,{ title:'Addresses' }, h('p',{ className:'text-sm text-gray-600' }, orders[0] ? orders[0].address : '-')),
+        h(Card,{ title:'Tags' }, h('div',{ className:'flex flex-wrap gap-1.5' }, allTags.map(t => { const active=(customer.tags||[]).includes(t);
+          return h('button',{ key:t, type:'button', onClick:()=>toggleCustomerTag(customer.id, t), className: cx('px-2.5 py-1 rounded-md text-xs font-semibold border', active?'bg-[var(--trs-red)] text-white border-[var(--trs-red)]':'border-[var(--trs-border)] text-gray-500') }, t); }))),
+        h(Card,{ title:'Customer Notes' },
+          h('textarea',{ className:wInputCls, rows:3, value:note, onChange:e=>setNote(e.target.value) }),
+          h('button',{ type:'button', onClick:()=>addCustomerNote(customer.id, note), className:'trs-btn-primary w-full py-2 rounded-lg text-xs font-bold mt-2' }, 'Save Note')
+        )
+      )
+    )
+  );
+}
+
+// ==================== PAGE: PROMOTIONS ====================
+function PromotionsPage(){
+  const { data, togglePromotion, addPromotion } = useAdmin();
+  const [modal, setModal] = useState(false);
+  return h('div',null,
+    h(PageHeader,{ title:'Promotions', subtitle:'Kelola campaign diskon dan promosi.', action: h('button',{ type:'button', onClick:()=>setModal(true), className:'trs-btn-primary flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-bold' }, h(Icon,{name:'plus',size:15}), 'Add Promotion') }),
+    h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+      h('div',{ className:'overflow-x-auto trs-scrollbox' }, h('table',{ className:'w-full' },
+        h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Campaign','Type','Status','Start','End','Usage','Revenue','Actions'].map(c=>h(Th,{key:c},c)))),
+        h('tbody',null, data.promotions.map(p => h('tr',{ key:p.id, className:'border-b border-gray-50 hover:bg-gray-50 last:border-0' },
+          h(Td,null, h('span',{className:'font-semibold text-gray-800'},p.name)), h(Td,null, h(Badge2,null,p.type)),
+          h(Td,null, h(StatusBadge,{status:p.status,size:'sm'})), h(Td,null, formatDate(p.start)), h(Td,null, formatDate(p.end)),
+          h(Td,null, p.usage+'x'), h(Td,null, formatIDR(p.revenue)),
+          h(Td,null, (p.status==='Active'||p.status==='Paused') && h('button',{ type:'button', onClick:()=>togglePromotion(p.id), className:'text-xs font-semibold text-[var(--trs-red)]' }, p.status==='Active'?'Pause':'Activate'))
+        )))
+      ))
+    ),
+    h(Modal,{ open:modal, onClose:()=>setModal(false), title:'Add Promotion' }, h(PromotionForm,{ onSubmit:(p)=>{ addPromotion(p); setModal(false); } }))
+  );
+}
+function PromotionForm({ onSubmit }){
+  const [name, setName] = useState('');
+  const [type, setType] = useState('Coupon');
+  return h('div',{ className:'space-y-4' },
+    h(WField,{ label:'Campaign Name' }, h('input',{ className:wInputCls, value:name, onChange:e=>setName(e.target.value), placeholder:'Promo Akhir Tahun' })),
+    h(WField,{ label:'Type' }, h(Select,{ value:type, onChange:setType, options:['Coupon','Product Discount','Category Discount','Flash Sale','Free Shipping','Bundle','Buy X Get Y'], className:'w-full' })),
+    h('div',{ className:'grid grid-cols-2 gap-4' },
+      h(WField,{ label:'Start Date' }, h('input',{ type:'date', className:wInputCls })),
+      h(WField,{ label:'End Date' }, h('input',{ type:'date', className:wInputCls }))
+    ),
+    h('button',{ type:'button', disabled:!name, onClick:()=>onSubmit({ name, type, start:new Date().toISOString(), end:daysAgoISO(-14) }), className: cx('trs-btn-primary w-full py-3 rounded-lg font-bold text-sm', !name && 'opacity-50') }, 'Create Promotion')
+  );
+}
+
+// ==================== PAGE: RETURNS & WARRANTY ====================
+function ReturnsPage(){
+  const { data, approveReturn, addReturnNote } = useAdmin();
+  const [tab, setTab] = useState('Semua');
+  const [detail, setDetail] = useState(null);
+  const tabs = ['Semua','Return','Refund','Warranty Claim'];
+  const list = tab==='Semua' ? data.returns : data.returns.filter(r=>r.type===tab);
+
+  return h('div',null,
+    h(PageHeader,{ title:'Returns & Warranty' }),
+    h('div',{ className:'flex gap-2 mb-4 border-b border-[var(--trs-border)]' },
+      tabs.map(t => h('button',{ key:t, type:'button', onClick:()=>setTab(t), className: cx('px-3 pb-3 text-sm font-semibold border-b-2 -mb-px', tab===t?'border-[var(--trs-red)] text-[var(--trs-red)]':'border-transparent text-gray-400') }, t))
+    ),
+    h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+      list.length===0 ? h(EmptyState,{ title:'Tidak ada permintaan' }) :
+      h('div',{ className:'overflow-x-auto trs-scrollbox' }, h('table',{ className:'w-full' },
+        h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Request ID','Order','Customer','Product','Reason','Requested','Status','Actions'].map(c=>h(Th,{key:c},c)))),
+        h('tbody',null, list.map(r => h('tr',{ key:r.id, className:'border-b border-gray-50 hover:bg-gray-50 last:border-0' },
+          h(Td,null, h('span',{className:'font-semibold text-gray-800'}, r.id)), h(Td,null, r.orderNumber), h(Td,null, r.customer),
+          h(Td,null, h('span',{className:'trs-line-clamp-1 block max-w-[160px]'},r.product)), h(Td,null, r.reason),
+          h(Td,null, formatDate(r.requested)), h(Td,null, h(StatusBadge,{status:r.status,size:'sm'})),
+          h(Td,null, h('button',{ type:'button', onClick:()=>setDetail(r), className:'text-xs font-semibold text-[var(--trs-red)]' }, 'Detail'))
+        )))
+      ))
+    ),
+    h(Drawer,{ open:!!detail, onClose:()=>setDetail(null), title:detail ? detail.id : '', wide:true }, detail && h(ReturnDetailBody,{ ret:detail, onAction:approveReturn, onNote:addReturnNote, onClose:()=>setDetail(null) }))
+  );
+}
+function ReturnDetailBody({ ret, onAction, onNote, onClose }){
+  const [notes, setNotes] = useState(ret.adminNotes||'');
+  return h('div',{ className:'space-y-5' },
+    h('div',{ className:'flex items-center gap-2' }, h(StatusBadge,{status:ret.status}), h(Badge2,null, ret.type)),
+    h('div',{ className:'grid grid-cols-2 gap-3 text-sm' },
+      h('div',null, h('p',{className:'text-xs text-gray-400'},'Customer'), h('p',{className:'font-medium'},ret.customer)),
+      h('div',null, h('p',{className:'text-xs text-gray-400'},'Order'), h('p',{className:'font-medium'},ret.orderNumber)),
+      h('div',{className:'col-span-2'}, h('p',{className:'text-xs text-gray-400'},'Product'), h('p',{className:'font-medium'},ret.product)),
+      h('div',{className:'col-span-2'}, h('p',{className:'text-xs text-gray-400'},'Return Reason'), h('p',{className:'font-medium'},ret.reason))
+    ),
+    h('div',null, h('p',{className:'text-xs text-gray-400 mb-1'},'Customer Notes'), h('p',{className:'text-sm bg-[var(--trs-bg)] rounded-lg p-3 text-gray-600'},ret.customerNotes)),
+    h('div',null, h('p',{className:'text-xs text-gray-400 mb-1'},'Admin Notes'),
+      h('textarea',{ className:wInputCls, rows:2, value:notes, onChange:e=>setNotes(e.target.value) }),
+      h('button',{ type:'button', onClick:()=>onNote(ret.id, notes), className:'text-xs font-semibold text-[var(--trs-red)] mt-1.5' }, 'Save Notes')),
+    h('div',null, h('p',{className:'text-xs text-gray-400 mb-2'},'Timeline'),
+      h('div',{ className:'space-y-1.5' }, ret.timeline.map((t,i) => h('p',{ key:i, className:'text-xs text-gray-500' }, '• '+t.label+' — '+formatDateTime(t.date))))),
+    ret.status==='Pending' && h('div',{ className:'flex flex-wrap gap-2 pt-3 border-t border-[var(--trs-border)]' },
+      h('button',{ type:'button', onClick:()=>{onAction(ret.id,'approve'); onClose();}, className:'trs-btn-primary px-4 py-2 rounded-lg text-xs font-bold' }, 'Approve'),
+      h('button',{ type:'button', onClick:()=>{onAction(ret.id,'reject'); onClose();}, className:'px-4 py-2 rounded-lg text-xs font-bold border border-[var(--trs-red)]/30 text-[var(--trs-red)]' }, 'Reject'),
+      h('button',{ type:'button', onClick:()=>{onAction(ret.id,'refund'); onClose();}, className:'px-4 py-2 rounded-lg text-xs font-bold border border-[var(--trs-border)] text-gray-600' }, 'Refund'),
+      h('button',{ type:'button', onClick:()=>{onAction(ret.id,'replace'); onClose();}, className:'px-4 py-2 rounded-lg text-xs font-bold border border-[var(--trs-border)] text-gray-600' }, 'Replace Product')
+    )
+  );
+}
+
+// ==================== PAGE: SUPPLIERS ====================
+function SuppliersPage(){
+  const { data, receivePO, cancelPO } = useAdmin();
+  const showToast = useToast();
+  const [tab, setTab] = useState('suppliers');
+  return h('div',null,
+    h(PageHeader,{ title:'Suppliers' }),
+    h('div',{ className:'flex gap-2 mb-4 border-b border-[var(--trs-border)]' },
+      [['suppliers','Suppliers'],['po','Purchase Orders']].map(([k,l]) => h('button',{ key:k, type:'button', onClick:()=>setTab(k), className: cx('px-3 pb-3 text-sm font-semibold border-b-2 -mb-px', tab===k?'border-[var(--trs-red)] text-[var(--trs-red)]':'border-transparent text-gray-400') }, l))
+    ),
+    tab==='suppliers' && h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+      h('div',{ className:'overflow-x-auto trs-scrollbox' }, h('table',{ className:'w-full' },
+        h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Supplier','Contact','Products','Open PO','Outstanding','Last Purchase','Status'].map(c=>h(Th,{key:c},c)))),
+        h('tbody',null, data.suppliers.map(s => h('tr',{ key:s.id, className:'border-b border-gray-50 hover:bg-gray-50 last:border-0' },
+          h(Td,null, h('span',{className:'font-semibold text-gray-800'},s.name)), h(Td,null, s.contact), h(Td,null, s.products),
+          h(Td,null, s.openPO), h(Td,null, s.outstanding>0?formatIDR(s.outstanding):'-'), h(Td,null, formatDate(s.lastPurchase)), h(Td,null, h(StatusBadge,{status:s.status,size:'sm'}))
+        )))
+      ))
+    ),
+    tab==='po' && h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+      h('div',{ className:'overflow-x-auto trs-scrollbox' }, h('table',{ className:'w-full' },
+        h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['PO Number','Supplier','Products','Qty','Cost','Expected Arrival','Status','Payment','Actions'].map(c=>h(Th,{key:c},c)))),
+        h('tbody',null, data.purchaseOrders.map(po => { const sup = data.suppliers.find(s=>s.id===po.supplierId);
+          return h('tr',{ key:po.id, className:'border-b border-gray-50 hover:bg-gray-50 last:border-0' },
+            h(Td,null, h('span',{className:'font-semibold text-gray-800'},po.id)), h(Td,null, sup?sup.name:'-'), h(Td,null, po.products),
+            h(Td,null, po.qty), h(Td,null, formatIDR(po.cost)), h(Td,null, formatDate(po.expected)),
+            h(Td,null, h(StatusBadge,{status:po.status,size:'sm'})), h(Td,null, h(StatusBadge,{status:po.payment,size:'sm'})),
+            h(Td,{className:'space-x-2 whitespace-nowrap'},
+              po.status==='Ordered' && h('button',{ type:'button', onClick:()=>receivePO(po.id), className:'text-xs font-semibold text-emerald-600' }, 'Receive Goods'),
+              h('button',{ type:'button', onClick:()=>showToast('Print PO disiapkan (simulasi)'), className:'text-xs font-semibold text-gray-500' }, 'Print PO'),
+              po.status==='Ordered' && h('button',{ type:'button', onClick:()=>cancelPO(po.id), className:'text-xs font-semibold text-[var(--trs-red)]' }, 'Cancel')
+            )
+          );
+        }))
+      ))
+    )
+  );
+}
+// ==================== PAGE: PAYMENTS ====================
+function PaymentsPage(){
+  const { data } = useAdmin();
+  const showToast = useToast();
+  const [search, setSearch] = useState('');
+  const txns = data.orders.filter(o => o.paymentStatus!=='' ).filter(o=> o.orderNumber.toLowerCase().includes(search.toLowerCase()) || o.customer.toLowerCase().includes(search.toLowerCase()));
+  const paid = data.orders.filter(o=>o.paymentStatus==='Paid').length;
+  const pending = data.orders.filter(o=>o.paymentStatus==='Unpaid').length;
+  const failed = 2;
+  const refunded = data.orders.filter(o=>o.paymentStatus==='Refunded').length;
+  const settlement = data.orders.filter(o=>o.paymentStatus==='Paid').reduce((s,o)=>s+o.total,0);
+
+  return h('div',null,
+    h(PageHeader,{ title:'Payments', action: h('button',{ type:'button', onClick:()=>{ downloadCSV('payments.csv', [['Transaction ID','Order ID','Customer','Method','Amount','Status','Paid Date'], ...txns.map(o=>['TXN-'+o.orderNumber.slice(-8), o.orderNumber, o.customer, o.paymentMethod, o.total, o.paymentStatus, formatDate(o.date)])]); showToast('payments.csv diunduh'); }, className:'flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold border border-[var(--trs-border)] text-gray-600' }, h(Icon,{name:'download',size:14}), 'Export CSV') }),
+    h('div',{ className:'grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6' },
+      h(KpiCard,{ label:'Total Transactions', value:data.orders.length, icon:'card' }),
+      h(KpiCard,{ label:'Paid', value:paid, icon:'check-circle' }),
+      h(KpiCard,{ label:'Pending', value:pending, icon:'clock' }),
+      h(KpiCard,{ label:'Failed', value:failed, icon:'alert-circle' }),
+      h(KpiCard,{ label:'Settlement', value:formatIDR(settlement), icon:'bar-chart' })
+    ),
+    h('div',{ className:'mb-4 max-w-sm' }, h(SearchInput,{ value:search, onChange:setSearch, placeholder:'Cari order ID atau customer...' })),
+    h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+      h('div',{ className:'overflow-x-auto trs-scrollbox' }, h('table',{ className:'w-full' },
+        h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Transaction ID','Order ID','Customer','Method','Amount','Status','Paid Date','Actions'].map(c=>h(Th,{key:c},c)))),
+        h('tbody',null, txns.slice(0,20).map(o => h('tr',{ key:o.orderNumber, className:'border-b border-gray-50 hover:bg-gray-50 last:border-0' },
+          h(Td,null, 'TXN-'+o.orderNumber.slice(-8)), h(Td,null, h(Link,{to:'/admin/orders/'+o.orderNumber, className:'font-semibold text-gray-800 hover:text-[var(--trs-red)]'},o.orderNumber)),
+          h(Td,null, o.customer), h(Td,null, o.paymentMethod), h(Td,null, formatIDR(o.total)),
+          h(Td,null, h(StatusBadge,{status:o.paymentStatus,size:'sm'})), h(Td,null, formatDate(o.date)),
+          h(Td,null, h(Link,{to:'/admin/orders/'+o.orderNumber, className:'text-xs font-semibold text-[var(--trs-red)]'}, 'Detail'))
+        )))
+      ))
+    )
+  );
+}
+
+// ==================== PAGE: REPORTS ====================
+const REPORT_TABS = ['Sales','Orders','Products','Inventory','Profit','Customers','Payments','Shipping'];
+const DATE_FILTERS = ['Today','Yesterday','7 Days','30 Days','This Month','Last Month'];
+function ReportsPage(){
+  const { data } = useAdmin();
+  const showToast = useToast();
+  const [tab, setTab] = useState('Sales');
+  const [dateFilter, setDateFilter] = useState('30 Days');
+
+  const paidOrders = data.orders.filter(o=>o.paymentStatus==='Paid');
+  const grossSales = paidOrders.reduce((s,o)=>s+o.subtotal,0);
+  const netSales = paidOrders.reduce((s,o)=>s+o.total,0);
+  const aov = paidOrders.length ? Math.round(netSales/paidOrders.length) : 0;
+  const totalDiscount = paidOrders.reduce((s,o)=>s+o.discount,0);
+  const shippingRevenue = paidOrders.reduce((s,o)=>s+o.shippingCost,0);
+  const refundAmount = data.orders.filter(o=>o.paymentStatus==='Refunded').reduce((s,o)=>s+o.total,0);
+  const revenue = netSales;
+  const cogs = data.products.reduce((s,p)=> s + p.hpp * 7, 0);
+  const grossProfit = revenue - cogs;
+  const grossMargin = revenue ? Math.round((grossProfit/revenue)*100) : 0;
+
+  function exportCurrentTab(){
+    let rows = [['Metric','Value']];
+    if(tab==='Sales') rows = [['Metric','Value'],['Gross Sales',grossSales],['Net Sales',netSales],['Orders',paidOrders.length],['AOV',aov],['Discount',totalDiscount],['Shipping Revenue',shippingRevenue],['Refund',refundAmount]];
+    else if(tab==='Products') rows = [['Product','SKU','Units','Revenue'], ...data.products.map(p=>[p.name,p.sku,p.reviewCount,p.salePrice*p.reviewCount])];
+    else if(tab==='Customers') rows = [['Customer','Orders','Total Spend'], ...data.customers.map(c=>[c.name,c.orders,c.totalSpend])];
+    downloadCSV('report-'+tab.toLowerCase()+'.csv', rows);
+    showToast('report-'+tab.toLowerCase()+'.csv diunduh');
+  }
+
+  return h('div',null,
+    h(PageHeader,{ title:'Reports', action: h('div',{ className:'flex items-center gap-2' },
+      h('div',{ className:'relative' }, h(ExportDropdown,{ onExport:exportCurrentTab }))
+    )}),
+    h('div',{ className:'flex flex-wrap gap-2 mb-5' }, DATE_FILTERS.map(f => h('button',{ key:f, type:'button', onClick:()=>setDateFilter(f), className: cx('px-3 py-1.5 rounded-lg text-xs font-semibold border', dateFilter===f?'border-[var(--trs-red)] bg-red-50 text-[var(--trs-red)]':'border-[var(--trs-border)] text-gray-500') }, f))),
+    h('div',{ className:'flex gap-2 mb-5 overflow-x-auto no-scrollbar border-b border-[var(--trs-border)]' },
+      REPORT_TABS.map(t => h('button',{ key:t, type:'button', onClick:()=>setTab(t), className: cx('px-3 pb-3 text-sm font-semibold border-b-2 -mb-px whitespace-nowrap', tab===t?'border-[var(--trs-red)] text-[var(--trs-red)]':'border-transparent text-gray-400') }, t))
+    ),
+
+    tab==='Sales' && h('div',{ className:'space-y-4' },
+      h('div',{ className:'grid grid-cols-2 lg:grid-cols-4 gap-3' },
+        h(KpiCard,{ label:'Gross Sales', value:formatIDR(grossSales) }), h(KpiCard,{ label:'Net Sales', value:formatIDR(netSales) }),
+        h(KpiCard,{ label:'Average Order Value', value:formatIDR(aov) }), h(KpiCard,{ label:'Discount Given', value:formatIDR(totalDiscount) }),
+        h(KpiCard,{ label:'Shipping Revenue', value:formatIDR(shippingRevenue) }), h(KpiCard,{ label:'Refunds', value:formatIDR(refundAmount) })
+      ),
+      h(Card,{ title:'Sales Trend' }, h(LineChartSVG,{ data:SALES_TREND, valueKey:'sales' }))
+    ),
+    tab==='Orders' && h(Card,{ title:'Orders Trend' }, h(BarChartSVG,{ data: SALES_TREND.slice(-10).map(d=>({ label: new Date(d.date).getDate(), value: d.orders })) })),
+    tab==='Products' && h(Card,{ title:'Revenue by Product' }, h('div',{ className:'space-y-2.5' }, [...data.products].sort((a,b)=>b.reviewCount-a.reviewCount).slice(0,8).map(p => h('div',{ key:p.id, className:'flex items-center justify-between text-sm border-b border-gray-50 pb-2 last:border-0' }, h('span',{className:'text-gray-700 trs-line-clamp-1'},p.name), h('span',{className:'font-semibold text-gray-800'},formatIDR(p.salePrice*p.reviewCount)))))),
+    tab==='Inventory' && h(Card,{ title:'Stock Status Overview' }, h(BarChartSVG,{ data:[ {label:'Active', value:data.products.filter(p=>p.status==='Active').length}, {label:'Low', value:data.products.filter(p=>p.status==='Low Stock').length}, {label:'Out', value:data.products.filter(p=>p.status==='Out of Stock').length}, {label:'Draft', value:data.products.filter(p=>p.status==='Draft').length} ] })),
+    tab==='Profit' && h('div',{ className:'space-y-4' },
+      h('div',{ className:'grid grid-cols-2 lg:grid-cols-3 gap-3' },
+        h(KpiCard,{ label:'Revenue', value:formatIDR(revenue) }), h(KpiCard,{ label:'COGS / HPP', value:formatIDR(cogs) }),
+        h(KpiCard,{ label:'Gross Profit', value:formatIDR(grossProfit) }), h(KpiCard,{ label:'Gross Margin', value:grossMargin+'%' }),
+        h(KpiCard,{ label:'Refund', value:formatIDR(refundAmount) }), h(KpiCard,{ label:'Net Profit Estimate', value:formatIDR(grossProfit-refundAmount) })
+      )
+    ),
+    tab==='Customers' && h('div',{ className:'grid grid-cols-2 lg:grid-cols-4 gap-3' },
+      h(KpiCard,{ label:'New Customers', value: Math.round(data.customers.length*0.3) }), h(KpiCard,{ label:'Repeat Customers', value: data.customers.filter(c=>c.orders>1).length }),
+      h(KpiCard,{ label:'Top Customer Spend', value: formatIDR(data.customers[0]?data.customers[0].totalSpend:0) }), h(KpiCard,{ label:'Average Spend', value: formatIDR(Math.round(data.customers.reduce((s,c)=>s+c.totalSpend,0)/(data.customers.length||1))) })
+    ),
+    tab==='Payments' && h(Card,{ title:'Payment Method Distribution' }, h('div',{ className:'flex items-center gap-6' }, h('div',{className:'w-32'},h(DonutChartSVG,{ data:[{name:'VA',value:12},{name:'QRIS',value:8},{name:'E-Wallet',value:6},{name:'Bank Transfer',value:4}] })))),
+    tab==='Shipping' && h(Card,{ title:'Courier Performance' }, h(BarChartSVG,{ data: COURIERS.map(c=>({ label:c.split(' ')[0], value: data.orders.filter(o=>o.courier===c).length })) }))
+  );
+}
+function ExportDropdown({ onExport }){
+  const [open,setOpen] = useState(false);
+  const ref = useRef(null);
+  useEffect(()=>{ function onDoc(e){ if(ref.current && !ref.current.contains(e.target)) setOpen(false); } document.addEventListener('mousedown', onDoc); return ()=>document.removeEventListener('mousedown', onDoc); },[]);
+  const showToast = useToast();
+  return h('div',{ ref, className:'relative' },
+    h('button',{ type:'button', onClick:()=>setOpen(o=>!o), className:'flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold border border-[var(--trs-border)] text-gray-600' }, h(Icon,{name:'download',size:14}), 'Export'),
+    open && h('div',{ className:'absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-xl border border-[var(--trs-border)] overflow-hidden z-40' },
+      [['CSV', onExport], ['Excel', ()=>{ onExport(); }], ['PDF', ()=> showToast('Export PDF disimulasikan untuk prototype ini') ]].map(([l,fn]) => h('button',{ key:l, type:'button', onClick:()=>{ setOpen(false); fn(); }, className:'w-full text-left px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50' }, l))
+    )
+  );
+}
+
+// ==================== PAGE: STAFF & ROLES ====================
+function StaffPage(){
+  const { data, updateStaffRole } = useAdmin();
+  const [tab, setTab] = useState('staff');
+  return h('div',null,
+    h(PageHeader,{ title:'Staff & Roles' }),
+    h('div',{ className:'flex gap-2 mb-4 border-b border-[var(--trs-border)]' },
+      [['staff','Staff'],['roles','Role Permissions'],['audit','Audit Log']].map(([k,l]) => h('button',{ key:k, type:'button', onClick:()=>setTab(k), className: cx('px-3 pb-3 text-sm font-semibold border-b-2 -mb-px', tab===k?'border-[var(--trs-red)] text-[var(--trs-red)]':'border-transparent text-gray-400') }, l))
+    ),
+    tab==='staff' && h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+      h('div',{ className:'overflow-x-auto trs-scrollbox' }, h('table',{ className:'w-full' },
+        h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, ['Name','Role','Email','Status','Last Active'].map(c=>h(Th,{key:c},c)))),
+        h('tbody',null, data.staff.map(s => h('tr',{ key:s.id, className:'border-b border-gray-50 hover:bg-gray-50 last:border-0' },
+          h(Td,null, h('span',{className:'font-semibold text-gray-800'},s.name)),
+          h(Td,null, h(Select,{ value:s.role, onChange:(v)=>updateStaffRole(s.id,v), options:Object.keys(ROLE_PERMISSIONS) })),
+          h(Td,null, s.email), h(Td,null, h(StatusBadge,{status:s.status,size:'sm'})), h(Td,null, formatDate(s.lastActive))
+        )))
+      ))
+    ),
+    tab==='roles' && h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] overflow-hidden' },
+      h('div',{ className:'overflow-x-auto trs-scrollbox' }, h('table',{ className:'w-full' },
+        h('thead',null, h('tr',{className:'border-b border-[var(--trs-border)]'}, h(Th,null,'Permission'), Object.keys(ROLE_PERMISSIONS).map(r=>h(Th,{key:r},r)))),
+        h('tbody',null, ALL_PERMISSIONS.map(perm => h('tr',{ key:perm, className:'border-b border-gray-50 last:border-0' },
+          h(Td,null, h('span',{className:'font-medium text-gray-700'},perm)),
+          Object.keys(ROLE_PERMISSIONS).map(role => h(Td,{ key:role, className:'text-center' }, ROLE_PERMISSIONS[role].includes(perm) ? h(Icon,{name:'check',size:14,className:'text-emerald-500 mx-auto'}) : h('span',{className:'text-gray-200'},'—')))
+        )))
+      ))
+    ),
+    tab==='audit' && h('div',{ className:'bg-white rounded-xl border border-[var(--trs-border)] p-2' },
+      h('div',{ className:'divide-y divide-gray-50' }, data.auditLog.map(a => h('div',{ key:a.id, className:'flex items-start gap-3 px-3 py-3' },
+        h('div',{ className:'w-7 h-7 rounded-full bg-[var(--trs-bg)] flex items-center justify-center text-[10px] font-bold text-gray-500 flex-shrink-0' }, a.staff[0]),
+        h('div',null, h('p',{className:'text-sm text-gray-700'}, h('span',{className:'font-semibold'},a.staff), ' '+a.action), h('p',{className:'text-xs text-gray-400 mt-0.5'}, formatDateTime(a.time)))
+      )))
+    )
+  );
+}
+
+// ==================== PAGE: SETTINGS ====================
+const SETTINGS_TABS = ['General','Store','Payments','Shipping','Notifications','WhatsApp','Email','Invoice','Tax','SEO','Users','Security'];
+function SettingsPage(){
+  const [tab, setTab] = useState('General');
+  const showToast = useToast();
+  const { data } = useAdmin();
+  const [form, setForm] = useState(()=> loadLS('trastar_settings', {
+    storeName:'TRASTAR', storeEmail:'hello@trastar.id', storePhone:'+62 812-3456-7890', storeAddress:'Jl. Kaliurang KM 7, Sleman, Yogyakarta',
+    currency:'IDR', timezone:'Asia/Jakarta', freeShippingMin:300000, cod:true, invoicePrefix:'INV/TRASTAR/', taxRate:11, taxIncluded:true,
+    metaTitle:'TRASTAR — Performance Parts for Every Ride', metaDesc:'Toko online sparepart dan aksesoris motor berkualitas.',
+    notifNewOrder:true, notifPayment:true, notifShipped:true, notifLowStock:true, waEnabled:true, emailEnabled:true, twoFactor:false,
+  }));
+  useEffect(()=>{ saveLS('trastar_settings', form); }, [form]);
+  function set(k){ return (v)=> setForm(f=>({...f,[k]:v})); }
+  function setEv(k){ return (e)=> set(k)(e.target.value); }
+  function save(){ showToast('Pengaturan berhasil disimpan'); }
+
+  return h('div',null,
+    h(PageHeader,{ title:'Settings' }),
+    h('div',{ className:'grid lg:grid-cols-[180px_1fr] gap-6' },
+      h('div',{ className:'flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible no-scrollbar' },
+        SETTINGS_TABS.map(t => h('button',{ key:t, type:'button', onClick:()=>setTab(t), className: cx('text-left px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap flex-shrink-0', tab===t?'bg-[var(--trs-red)]/10 text-[var(--trs-red)]':'text-gray-600 hover:bg-gray-50') }, t))
+      ),
+      h(Card,null,
+        tab==='General' && h('div',{ className:'space-y-4 max-w-lg' },
+          h(WField,{ label:'Store Name' }, h('input',{ className:wInputCls, value:form.storeName, onChange:setEv('storeName') })),
+          h(WField,{ label:'Store Email' }, h('input',{ className:wInputCls, value:form.storeEmail, onChange:setEv('storeEmail') })),
+          h(WField,{ label:'Store Phone' }, h('input',{ className:wInputCls, value:form.storePhone, onChange:setEv('storePhone') })),
+          h(WField,{ label:'Store Address' }, h('textarea',{ className:wInputCls, rows:2, value:form.storeAddress, onChange:setEv('storeAddress') })),
+          h('div',{ className:'grid grid-cols-2 gap-4' },
+            h(WField,{ label:'Currency' }, h(Select,{ value:form.currency, onChange:set('currency'), options:['IDR'], className:'w-full' })),
+            h(WField,{ label:'Timezone' }, h(Select,{ value:form.timezone, onChange:set('timezone'), options:['Asia/Jakarta','Asia/Makassar','Asia/Jayapura'], className:'w-full' }))
+          )
+        ),
+        tab==='Store' && h('div',{ className:'space-y-4 max-w-lg' },
+          h('p',{className:'text-sm text-gray-500'},'Informasi toko yang tampil di halaman customer-facing.'),
+          h(WField,{ label:'Store Tagline' }, h('input',{ className:wInputCls, defaultValue:'Performance Parts for Every Ride' })),
+          h(WField,{ label:'Store Logo' }, h('div',{ className:'w-20 h-20 rounded-lg bg-[var(--trs-dark)] flex items-center justify-center text-white font-display font-bold' }, 'TS'))
+        ),
+        tab==='Payments' && h('div',{ className:'space-y-3 max-w-lg' },
+          [['Midtrans','Payment gateway aggregator'],['Xendit','Payment gateway aggregator'],['Manual Bank Transfer','BCA, Mandiri, BNI, BRI'],['QRIS','Semua e-wallet & mobile banking'],['E-Wallet','GoPay, ShopeePay, DANA, OVO']].map(([name,desc]) => h('div',{ key:name, className:'flex items-center justify-between border border-[var(--trs-border)] rounded-lg px-4 py-3' },
+            h('div',null, h('p',{className:'text-sm font-semibold text-gray-800'},name), h('p',{className:'text-xs text-gray-400'},desc)),
+            h('span',{ className:'text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md' }, 'Configured')
+          ))
+        ),
+        tab==='Shipping' && h('div',{ className:'space-y-4 max-w-lg' },
+          h(WField,{ label:'Minimum Order for Free Shipping' }, h('input',{ type:'number', className:wInputCls, value:form.freeShippingMin, onChange:e=>set('freeShippingMin')(Number(e.target.value)) })),
+          h(WField,{ label:'Active Couriers' }, h('div',{ className:'flex flex-wrap gap-2' }, COURIERS.map(c=>h(Badge2,{key:c},c)))),
+          h('label',{ className:'flex items-center gap-2 text-sm text-gray-600' }, h(Checkbox,{ checked:form.cod, onChange:set('cod') }), 'Aktifkan Cash on Delivery (COD)')
+        ),
+        tab==='Notifications' && h('div',{ className:'space-y-3 max-w-lg' },
+          [['notifNewOrder','New Order'],['notifPayment','Payment Received'],['notifShipped','Order Shipped'],['notifLowStock','Low Stock Alert']].map(([k,l]) => h('label',{ key:k, className:'flex items-center justify-between border border-[var(--trs-border)] rounded-lg px-4 py-3' },
+            h('span',{className:'text-sm text-gray-700'},l), h(Checkbox,{ checked:form[k], onChange:set(k) })))
+        ),
+        tab==='WhatsApp' && h('div',{ className:'space-y-4 max-w-lg' },
+          h('label',{ className:'flex items-center justify-between border border-[var(--trs-border)] rounded-lg px-4 py-3' }, h('span',{className:'text-sm text-gray-700'},'Aktifkan notifikasi WhatsApp'), h(Checkbox,{ checked:form.waEnabled, onChange:set('waEnabled') })),
+          h(WField,{ label:'WhatsApp Business Number' }, h('input',{ className:wInputCls, defaultValue:'+62 812-3456-7890' }))
+        ),
+        tab==='Email' && h('div',{ className:'space-y-4 max-w-lg' },
+          h('label',{ className:'flex items-center justify-between border border-[var(--trs-border)] rounded-lg px-4 py-3' }, h('span',{className:'text-sm text-gray-700'},'Aktifkan notifikasi Email'), h(Checkbox,{ checked:form.emailEnabled, onChange:set('emailEnabled') })),
+          h(WField,{ label:'Sender Email' }, h('input',{ className:wInputCls, value:form.storeEmail, onChange:setEv('storeEmail') }))
+        ),
+        tab==='Invoice' && h('div',{ className:'space-y-4 max-w-lg' },
+          h(WField,{ label:'Invoice Number Prefix' }, h('input',{ className:wInputCls, value:form.invoicePrefix, onChange:setEv('invoicePrefix') })),
+          h(WField,{ label:'Invoice Footer Note' }, h('textarea',{ className:wInputCls, rows:2, defaultValue:'Terima kasih telah berbelanja di TRASTAR.' }))
+        ),
+        tab==='Tax' && h('div',{ className:'space-y-4 max-w-lg' },
+          h(WField,{ label:'Tax Rate (%)' }, h('input',{ type:'number', className:wInputCls, value:form.taxRate, onChange:e=>set('taxRate')(Number(e.target.value)) })),
+          h('label',{ className:'flex items-center gap-2 text-sm text-gray-600' }, h(Checkbox,{ checked:form.taxIncluded, onChange:set('taxIncluded') }), 'Harga sudah termasuk pajak')
+        ),
+        tab==='SEO' && h('div',{ className:'space-y-4 max-w-lg' },
+          h(WField,{ label:'Meta Title' }, h('input',{ className:wInputCls, value:form.metaTitle, onChange:setEv('metaTitle') })),
+          h(WField,{ label:'Meta Description' }, h('textarea',{ className:wInputCls, rows:2, value:form.metaDesc, onChange:setEv('metaDesc') }))
+        ),
+        tab==='Users' && h('div',{ className:'space-y-3 max-w-lg' },
+          h('p',{className:'text-sm text-gray-500 mb-2'}, 'Kelola staff & role di halaman '), h(Link,{to:'/admin/staff', className:'text-sm font-semibold text-[var(--trs-red)]'},'Staff & Roles →')
+        ),
+        tab==='Security' && h('div',{ className:'space-y-4 max-w-lg' },
+          h('label',{ className:'flex items-center justify-between border border-[var(--trs-border)] rounded-lg px-4 py-3' }, h('span',{className:'text-sm text-gray-700'},'Two-Factor Authentication'), h(Checkbox,{ checked:form.twoFactor, onChange:set('twoFactor') })),
+          h('button',{ type:'button', onClick:()=>showToast('Password reset link dikirim ke email (simulasi)'), className:'text-sm font-semibold text-[var(--trs-red)]' }, 'Reset Password')
+        ),
+        h('div',{ className:'pt-5 mt-5 border-t border-[var(--trs-border)]' }, h('button',{ type:'button', onClick:save, className:'trs-btn-primary px-6 py-2.5 rounded-lg text-sm font-bold' }, 'Save Changes'))
+      )
+    )
+  );
+}
+
+function LogoutPage(){
+  const { navigate } = useRouter();
+  return h('div',{ className:'min-h-[70vh] flex items-center justify-center' },
+    h('div',{ className:'text-center' },
+      h('div',{ className:'w-16 h-16 rounded-full bg-[var(--trs-bg)] flex items-center justify-center mx-auto mb-4' }, h(Icon,{name:'log-out',size:26,className:'text-gray-400'})),
+      h('h1',{ className:'font-display font-bold text-xl text-[var(--trs-dark)] mb-2' }, 'Anda telah logout'),
+      h('p',{ className:'text-sm text-gray-400 mb-5' }, 'Sesi demo TRASTAR Commerce Admin diakhiri.'),
+      h('button',{ type:'button', onClick:()=>navigate('/admin'), className:'trs-btn-primary px-6 py-2.5 rounded-lg text-sm font-bold' }, 'Login Kembali')
+    )
+  );
+}
+function NotFoundAdminPage(){
+  return h(EmptyState,{ title:'Halaman Tidak Ditemukan', subtitle:'Route admin ini belum tersedia.' });
+}
+
+// ==================== ROUTES / APP ====================
+const ADMIN_ROUTES = [
+  { pattern:'/admin', component: DashboardPage },
+  { pattern:'/admin/products', component: ProductListPage },
+  { pattern:'/admin/products/new', component: ProductWizardPage },
+  { pattern:'/admin/products/:id', component: ProductDetailAdminPage },
+  { pattern:'/admin/orders', component: OrdersListPage },
+  { pattern:'/admin/orders/:orderId', component: OrderDetailPage },
+  { pattern:'/admin/shipping', component: ShippingPage },
+  { pattern:'/admin/inventory', component: InventoryPage },
+  { pattern:'/admin/customers', component: CustomersPage },
+  { pattern:'/admin/customers/:id', component: CustomerDetailPage },
+  { pattern:'/admin/promotions', component: PromotionsPage },
+  { pattern:'/admin/returns', component: ReturnsPage },
+  { pattern:'/admin/suppliers', component: SuppliersPage },
+  { pattern:'/admin/payments', component: PaymentsPage },
+  { pattern:'/admin/reports', component: ReportsPage },
+  { pattern:'/admin/staff', component: StaffPage },
+  { pattern:'/admin/settings', component: SettingsPage },
+  { pattern:'/admin/logout', component: LogoutPage },
+];
+function resolveAdminRoute(path){
+  for(const r of ADMIN_ROUTES){ const params = matchRoute(r.pattern, path); if(params) return { component:r.component, params }; }
+  return { component: NotFoundAdminPage, params:{} };
+}
+
+function App(){
+  const [path, setPath] = useState(getHashPath());
+  useEffect(()=>{ function onHashChange(){ setPath(getHashPath()); window.scrollTo(0,0); } window.addEventListener('hashchange', onHashChange); return ()=>window.removeEventListener('hashchange', onHashChange); },[]);
+  const navigate = useCallback((to)=>{
+    if(('#'+to) === window.location.hash){ setPath(to); window.scrollTo(0,0); } else { window.location.hash = to; }
+  },[]);
+  const router = useMemo(()=>({ path, navigate }), [path, navigate]);
+  const { toasts, show } = useToastState();
+  const admin = useAdminLogic(show);
+
+  const { component: PageComponent, params } = resolveAdminRoute(path);
+
+  return h(RouterContext.Provider, { value: router },
+    h(ToastContext.Provider, { value: show },
+      h(AdminContext.Provider, { value: admin },
+        h(AdminShell, { path },
+          h(PageComponent, { params, key: path })
+        ),
+        h(ToastHost, { toasts })
+      )
+    )
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(h(App));
+</script></body></html>
