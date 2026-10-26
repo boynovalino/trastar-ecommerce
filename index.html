@@ -640,6 +640,32 @@ const TESTIMONIALS = [
   { name:'Dewi P.', role:'Komunitas Vario Club Jogja', text:'Sudah 3x order buat kebutuhan komunitas, selalu original dan sesuai deskripsi. Recommended banget.', rating:5 },
   { name:'Fajar S.', role:'Pengguna Harian NMAX', text:'CS-nya responsif dan barangnya sampai lebih cepat dari estimasi. Bakal repeat order lagi.', rating:4.5 },
 ];
+const MEDIA_PARTNERS = [
+  {
+    source:'AUTONINE',
+    title:'Soft Launching TRASTAR, Option Part Racing Karya Anak Bangsa Adopsi Kualitas Internasional',
+    url:'https://autonine.co/news/3890-soft-launching-trastar-option-part-racing-karya-anak-bangsa-adopsi-kualitas-internasional',
+    image:''
+  },
+  {
+    source:'OTOSPEED.ID',
+    title:'Koizumi TRAstar Bikin Gebrakan Lagi, Setang dan Footstep Baru untuk Ohvale 160',
+    url:'https://otospeed.id/koizumi-trastar-bikin-gebrakan-lagi-setang-dan-footstep-baru-untuk-ohvale-160/',
+    image:'https://otospeed.id/wp-content/uploads/2026/09/WhatsApp-Image-2026-09-30-at-19.29.42.jpeg'
+  },
+  {
+    source:'BALAPMOTOR.NET',
+    title:'TRAstar Resmi Hadirkan Part Racing Berkualitas',
+    url:'https://balapmotor.net/trastar-resmi-hadirkan-part-racing-berkualitas/',
+    image:'https://balapmotor.net/wp-content/uploads/2023/08/TRAstar-Launching.jpg'
+  },
+  {
+    source:'OTOMOTIFZONE',
+    title:'Koizumi dan TRAStar Fokus Pengembangan 2026, Part Apa Saja?',
+    url:'https://otomotifzone.com/koizumi-dan-trastar-fokus-pengembangan-2026-part-apa-saja/',
+    image:'https://otomotifzone.com/wp-content/uploads/2026/03/IMG-20260312-WA0014.jpg'
+  },
+];
 
 function HomePage(){
   const { navigate } = useRouter();
@@ -725,6 +751,41 @@ function HomePage(){
             h('span',{ className:'text-sm font-semibold text-gray-700' }, b.label)
           ))
         )
+      )
+    ),
+
+    // MEDIA PARTNERS
+    h('section',{ className:'max-w-7xl mx-auto px-4 py-14' },
+      h(SectionHeading,{ title:'TRASTAR di Media', subtitle:'Berita, liputan, dan perkembangan TRASTAR dari media partner.' }),
+      h('div',{ className:'grid md:grid-cols-2 gap-3 sm:gap-4' },
+        MEDIA_PARTNERS.map((article) => h('a',{
+          key:article.url,
+          href:article.url,
+          target:'_blank',
+          rel:'noopener noreferrer',
+          className:'group bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-4 hover:border-[var(--trs-red)]/30 hover:shadow-md transition-all'
+        },
+          h('div',{ className:'relative w-28 sm:w-32 h-20 rounded-lg overflow-hidden bg-[var(--trs-dark)] flex-shrink-0' },
+            article.image
+              ? h(React.Fragment,null,
+                  h('img',{
+                    src:article.image,
+                    alt:article.title,
+                    loading:'lazy',
+                    referrerPolicy:'no-referrer',
+                    className:'w-full h-full object-cover',
+                    onError:(e)=>{ e.currentTarget.style.display='none'; e.currentTarget.nextSibling.style.display='flex'; }
+                  }),
+                  h('div',{ className:'hidden absolute inset-0 items-center justify-center px-2 text-center font-display font-extrabold text-[10px] tracking-wide text-white' }, article.source)
+                )
+              : h('div',{ className:'absolute inset-0 flex items-center justify-center px-2 text-center font-display font-extrabold text-[10px] tracking-wide text-white' }, article.source)
+          ),
+          h('div',{ className:'min-w-0 flex-1' },
+            h('p',{ className:'text-[10px] sm:text-xs font-bold tracking-wide text-[var(--trs-red)] mb-1.5' }, article.source),
+            h('h3',{ className:'font-display font-bold text-sm sm:text-base text-gray-800 leading-snug trs-line-clamp-2 group-hover:text-[var(--trs-red)] transition-colors' }, article.title),
+            h('span',{ className:'inline-flex items-center gap-1 mt-2 text-xs font-semibold text-gray-400 group-hover:text-gray-600' }, 'Baca artikel', h(Icon,{name:'chevron-right',size:13}))
+          )
+        ))
       )
     ),
 
