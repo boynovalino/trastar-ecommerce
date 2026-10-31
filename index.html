@@ -670,29 +670,24 @@ const MEDIA_PARTNERS = [
 function HeroCarousel(){
   const [slide,setSlide] = useState(0);
   const [manualPaused,setManualPaused] = useState(false);
-  const [interactionPaused,setInteractionPaused] = useState(false);
   const count = MEDIA_PARTNERS.length + 1;
   const article = slide === 0 ? null : MEDIA_PARTNERS[slide-1];
   useEffect(()=>{
-    if(manualPaused || interactionPaused || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    if(manualPaused || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
     const timer = window.setInterval(()=>{
       if(!document.hidden) setSlide(s=>(s+1)%count);
-    },9000);
+    },7000);
     return ()=>window.clearInterval(timer);
-  },[manualPaused,interactionPaused,count]);
+  },[manualPaused,count]);
   const move = (direction)=>setSlide(s=>(s+direction+count)%count);
   return h('section',{
     className:'relative bg-[var(--trs-dark)] overflow-hidden',
     'aria-label':'Sorotan TRASTAR dan media partner',
-    'aria-roledescription':'carousel',
-    onMouseEnter:()=>setInteractionPaused(true),
-    onMouseLeave:()=>setInteractionPaused(false),
-    onFocusCapture:()=>setInteractionPaused(true),
-    onBlurCapture:(e)=>{ if(!e.currentTarget.contains(e.relatedTarget)) setInteractionPaused(false); }
+    'aria-roledescription':'carousel'
   },
     h('div',{className:'absolute inset-0 opacity-20 pointer-events-none',style:{background:'radial-gradient(circle at 80% 20%, var(--trs-red), transparent 55%)'}}),
-    h('div',{className:'relative max-w-7xl mx-auto px-4 pt-12 pb-24 sm:pt-16 sm:pb-28 min-h-[450px] md:min-h-[490px] grid md:grid-cols-2 gap-7 md:gap-12 items-center'},
-      h('div',{key:slide,className:'trs-animate-in','aria-live':(manualPaused||interactionPaused)?'polite':'off'},
+    h('div',{className:'relative max-w-7xl mx-auto px-4 pt-10 pb-7 sm:pt-14 sm:pb-8 min-h-[360px] sm:min-h-[390px] md:min-h-[420px] grid md:grid-cols-2 gap-7 md:gap-12 items-center'},
+      h('div',{key:slide,className:'trs-animate-in','aria-live':manualPaused?'polite':'off'},
         h('span',{className:'inline-flex items-center gap-2 text-[var(--trs-red)] font-bold text-xs tracking-widest mb-4'},
           article ? 'TRASTAR DI MEDIA / '+article.source : h(React.Fragment,null,h(Icon,{name:'zap',size:14}),'PERFORMANCE PARTS')
         ),
@@ -734,23 +729,24 @@ function HeroCarousel(){
             )
           )
     ),
-    h('div',{className:'absolute bottom-5 inset-x-0 z-10'},
-      h('div',{className:'max-w-7xl mx-auto px-4 flex items-center gap-3'},
+    h('div',{className:'relative z-30 max-w-7xl mx-auto px-4 pb-24 sm:pb-28 flex justify-center md:justify-start'},
+      h('div',{className:'inline-flex items-center gap-2 sm:gap-3 rounded-2xl bg-white/10 border border-white/20 px-3 py-2 shadow-md'},
         h('button',{type:'button',onClick:()=>move(-1),'aria-label':'Slide sebelumnya',
-          className:'w-9 h-9 rounded-full border border-white/30 text-white hover:bg-white/15 flex items-center justify-center'},
+          className:'w-11 h-11 shrink-0 rounded-full border border-white/55 bg-black/20 text-white hover:bg-[var(--trs-red)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white flex items-center justify-center'},
           h(Icon,{name:'chevron-left',size:18})),
-        h('div',{className:'flex items-center gap-2','aria-label':'Pilih slide'},
+        h('div',{className:'flex items-center gap-0.5 sm:gap-1','aria-label':'Pilih slide'},
           Array.from({length:count},(_,i)=>h('button',{key:i,type:'button',onClick:()=>setSlide(i),
             'aria-label':i===0?'Tampilkan slide utama':'Tampilkan liputan '+MEDIA_PARTNERS[i-1].source,
             'aria-current':slide===i?'true':undefined,
-            className:cx('h-2.5 rounded-full transition-all',slide===i?'bg-[var(--trs-red)] w-8':'bg-white/35 hover:bg-white/65 w-2.5')}))
+            className:'w-6 h-11 flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-white',
+          },h('span',{className:cx('block h-2.5 rounded-full transition-all',slide===i?'bg-[var(--trs-red)] w-6':'bg-white/55 w-2.5')})))
         ),
         h('button',{type:'button',onClick:()=>move(1),'aria-label':'Slide berikutnya',
-          className:'w-9 h-9 rounded-full border border-white/30 text-white hover:bg-white/15 flex items-center justify-center'},
+          className:'w-11 h-11 shrink-0 rounded-full border border-white/55 bg-black/20 text-white hover:bg-[var(--trs-red)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-white flex items-center justify-center'},
           h(Icon,{name:'chevron-right',size:18})),
         h('button',{type:'button',onClick:()=>setManualPaused(p=>!p),
           'aria-label':manualPaused?'Putar slider otomatis':'Jeda slider otomatis',
-          className:'ml-2 h-9 px-3 rounded-full border border-white/30 text-white text-xs font-semibold hover:bg-white/15'},
+          className:'ml-1 h-11 px-3 rounded-full border border-white/50 text-white text-xs font-semibold hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white'},
           manualPaused?'PUTAR':'JEDA')
       )
     )
