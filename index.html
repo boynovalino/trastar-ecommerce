@@ -667,34 +667,102 @@ const MEDIA_PARTNERS = [
   },
 ];
 
+function HeroCarousel(){
+  const [slide,setSlide] = useState(0);
+  const [manualPaused,setManualPaused] = useState(false);
+  const [interactionPaused,setInteractionPaused] = useState(false);
+  const count = MEDIA_PARTNERS.length + 1;
+  const article = slide === 0 ? null : MEDIA_PARTNERS[slide-1];
+  useEffect(()=>{
+    if(manualPaused || interactionPaused || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    const timer = window.setInterval(()=>{
+      if(!document.hidden) setSlide(s=>(s+1)%count);
+    },9000);
+    return ()=>window.clearInterval(timer);
+  },[manualPaused,interactionPaused,count]);
+  const move = (direction)=>setSlide(s=>(s+direction+count)%count);
+  return h('section',{
+    className:'relative bg-[var(--trs-dark)] overflow-hidden',
+    'aria-label':'Sorotan TRASTAR dan media partner',
+    'aria-roledescription':'carousel',
+    onMouseEnter:()=>setInteractionPaused(true),
+    onMouseLeave:()=>setInteractionPaused(false),
+    onFocusCapture:()=>setInteractionPaused(true),
+    onBlurCapture:(e)=>{ if(!e.currentTarget.contains(e.relatedTarget)) setInteractionPaused(false); }
+  },
+    h('div',{className:'absolute inset-0 opacity-20 pointer-events-none',style:{background:'radial-gradient(circle at 80% 20%, var(--trs-red), transparent 55%)'}}),
+    h('div',{className:'relative max-w-7xl mx-auto px-4 pt-12 pb-24 sm:pt-16 sm:pb-28 min-h-[450px] md:min-h-[490px] grid md:grid-cols-2 gap-7 md:gap-12 items-center'},
+      h('div',{key:slide,className:'trs-animate-in','aria-live':(manualPaused||interactionPaused)?'polite':'off'},
+        h('span',{className:'inline-flex items-center gap-2 text-[var(--trs-red)] font-bold text-xs tracking-widest mb-4'},
+          article ? 'TRASTAR DI MEDIA / '+article.source : h(React.Fragment,null,h(Icon,{name:'zap',size:14}),'PERFORMANCE PARTS')
+        ),
+        h('h1',{className:cx('font-display font-extrabold text-white leading-tight mb-4',article?'text-2xl sm:text-4xl lg:text-[44px]':'text-4xl sm:text-6xl')},
+          article ? article.title : 'Upgrade Your Ride.'
+        ),
+        h('p',{className:'text-gray-300 text-sm sm:text-lg max-w-lg mb-7 leading-relaxed'},
+          article ? 'Liputan TRASTAR yang diterbitkan oleh '+article.source+'.' : 'Sparepart & aksesoris motor berkualitas untuk performa maksimal.'
+        ),
+        article
+          ? h('a',{href:article.url,target:'_blank',rel:'noopener noreferrer',className:'trs-btn-primary inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-lg text-sm font-bold',
+            'aria-label':'Baca artikel TRASTAR di '+article.source},'BACA ARTIKEL',h(Icon,{name:'chevron-right',size:16}))
+          : h('div',{className:'flex flex-wrap gap-3'},
+              h(Link,{to:'/shop',className:'trs-btn-primary px-7 py-3.5 rounded-lg text-sm font-bold'},'SHOP NOW'),
+              h(Link,{to:'/shop',className:'px-7 py-3.5 rounded-lg text-sm font-bold border border-white/25 text-white hover:bg-white/10 transition-colors'},'EXPLORE PRODUCTS')
+            )
+      ),
+      article
+        ? h('div',{className:'relative w-full'},
+            h('div',{className:'relative aspect-video w-full rounded-2xl border border-white/15 overflow-hidden bg-[var(--trs-dark-2)] shadow-2xl'},
+              article.image
+                ? h(React.Fragment,null,
+                    h('img',{src:article.image,alt:'Foto liputan '+article.source,loading:'eager',referrerPolicy:'no-referrer',
+                      className:'w-full h-full object-cover',
+                      onError:(e)=>{e.currentTarget.style.display='none';e.currentTarget.nextSibling.style.display='flex';}}),
+                    h('div',{className:'absolute inset-0 hidden items-center justify-center font-display font-extrabold text-2xl text-white'},article.source)
+                  )
+                : h('div',{className:'absolute inset-0 flex items-center justify-center font-display font-extrabold text-2xl text-white'},article.source),
+              h('div',{className:'absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3 text-white text-xs font-bold tracking-wide'},article.source)
+            )
+          )
+        : h('div',{className:'relative hidden md:block'},
+            h('svg',{viewBox:'0 0 400 400',className:'w-full h-auto'},
+              h('circle',{cx:200,cy:200,r:170,fill:'none',stroke:'#E11D2E',strokeOpacity:0.3,strokeWidth:2,strokeDasharray:'10 14'}),
+              h('circle',{cx:200,cy:200,r:120,fill:'#1B1B1B',stroke:'#ffffff',strokeOpacity:0.1}),
+              h('g',{transform:'translate(120,120)'},h(Icon,{name:'disc',size:160,className:'text-[var(--trs-red)]',strokeWidth:1})),
+              h('g',{transform:'translate(60,40)'},h(Icon,{name:'zap',size:40,className:'text-white'})),
+              h('g',{transform:'translate(300,300)'},h(Icon,{name:'settings',size:36,className:'text-white/70'}))
+            )
+          )
+    ),
+    h('div',{className:'absolute bottom-5 inset-x-0 z-10'},
+      h('div',{className:'max-w-7xl mx-auto px-4 flex items-center gap-3'},
+        h('button',{type:'button',onClick:()=>move(-1),'aria-label':'Slide sebelumnya',
+          className:'w-9 h-9 rounded-full border border-white/30 text-white hover:bg-white/15 flex items-center justify-center'},
+          h(Icon,{name:'chevron-left',size:18})),
+        h('div',{className:'flex items-center gap-2','aria-label':'Pilih slide'},
+          Array.from({length:count},(_,i)=>h('button',{key:i,type:'button',onClick:()=>setSlide(i),
+            'aria-label':i===0?'Tampilkan slide utama':'Tampilkan liputan '+MEDIA_PARTNERS[i-1].source,
+            'aria-current':slide===i?'true':undefined,
+            className:cx('h-2.5 rounded-full transition-all',slide===i?'bg-[var(--trs-red)] w-8':'bg-white/35 hover:bg-white/65 w-2.5')}))
+        ),
+        h('button',{type:'button',onClick:()=>move(1),'aria-label':'Slide berikutnya',
+          className:'w-9 h-9 rounded-full border border-white/30 text-white hover:bg-white/15 flex items-center justify-center'},
+          h(Icon,{name:'chevron-right',size:18})),
+        h('button',{type:'button',onClick:()=>setManualPaused(p=>!p),
+          'aria-label':manualPaused?'Putar slider otomatis':'Jeda slider otomatis',
+          className:'ml-2 h-9 px-3 rounded-full border border-white/30 text-white text-xs font-semibold hover:bg-white/15'},
+          manualPaused?'PUTAR':'JEDA')
+      )
+    )
+  );
+}
+
 function HomePage(){
   const { navigate } = useRouter();
   const bestSellers = PRODUCTS.slice(0,8);
   return h('div',null,
-    // HERO
-    h('section',{ className:'relative bg-[var(--trs-dark)] overflow-hidden' },
-      h('div',{ className:'absolute inset-0 opacity-20', style:{ background:'radial-gradient(circle at 80% 20%, var(--trs-red), transparent 55%)' } }),
-      h('div',{ className:'max-w-7xl mx-auto px-4 pt-14 pb-24 sm:pt-20 sm:pb-32 relative grid md:grid-cols-2 gap-8 items-center' },
-        h('div',{ className:'trs-animate-in' },
-          h('span',{ className:'inline-flex items-center gap-2 text-[var(--trs-red)] font-semibold text-xs tracking-wide mb-4' }, h(Icon,{name:'zap',size:14}), 'PERFORMANCE PARTS'),
-          h('h1',{ className:'font-display font-extrabold text-4xl sm:text-6xl text-white leading-[1.05] mb-4' }, 'Upgrade Your Ride.'),
-          h('p',{ className:'text-gray-400 text-base sm:text-lg max-w-md mb-8' }, 'Sparepart & aksesoris motor berkualitas untuk performa maksimal.'),
-          h('div',{ className:'flex flex-wrap gap-3' },
-            h(Link,{ to:'/shop', className:'trs-btn-primary px-7 py-3.5 rounded-lg text-sm font-bold' }, 'SHOP NOW'),
-            h(Link,{ to:'/shop', className:'px-7 py-3.5 rounded-lg text-sm font-bold border border-white/25 text-white hover:bg-white/10 transition-colors' }, 'EXPLORE PRODUCTS')
-          )
-        ),
-        h('div',{ className:'relative hidden md:block' },
-          h('svg',{ viewBox:'0 0 400 400', className:'w-full h-auto' },
-            h('circle',{ cx:200, cy:200, r:170, fill:'none', stroke:'#E11D2E', strokeOpacity:0.3, strokeWidth:2, strokeDasharray:'10 14' }),
-            h('circle',{ cx:200, cy:200, r:120, fill:'#1B1B1B', stroke:'#ffffff', strokeOpacity:0.1 }),
-            h('g',{ transform:'translate(120,120)' }, h(Icon,{ name:'disc', size:160, className:'text-[var(--trs-red)]', strokeWidth:1 })),
-            h('g',{ transform:'translate(60,40)' }, h(Icon,{ name:'zap', size:40, className:'text-white' })),
-            h('g',{ transform:'translate(300,300)' }, h(Icon,{ name:'settings', size:36, className:'text-white/70' }))
-          )
-        )
-      )
-    ),
+    // HERO SLIDER
+    h(HeroCarousel),
     h(MotoSelector,{ onSearch:()=> navigate('/shop') }),
 
     // CATEGORIES
@@ -751,41 +819,6 @@ function HomePage(){
             h('span',{ className:'text-sm font-semibold text-gray-700' }, b.label)
           ))
         )
-      )
-    ),
-
-    // MEDIA PARTNERS
-    h('section',{ className:'max-w-7xl mx-auto px-4 py-14' },
-      h(SectionHeading,{ title:'TRASTAR di Media', subtitle:'Berita, liputan, dan perkembangan TRASTAR dari media partner.' }),
-      h('div',{ className:'grid md:grid-cols-2 gap-3 sm:gap-4' },
-        MEDIA_PARTNERS.map((article) => h('a',{
-          key:article.url,
-          href:article.url,
-          target:'_blank',
-          rel:'noopener noreferrer',
-          className:'group bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-4 hover:border-[var(--trs-red)]/30 hover:shadow-md transition-all'
-        },
-          h('div',{ className:'relative w-28 sm:w-32 h-20 rounded-lg overflow-hidden bg-[var(--trs-dark)] flex-shrink-0' },
-            article.image
-              ? h(React.Fragment,null,
-                  h('img',{
-                    src:article.image,
-                    alt:article.title,
-                    loading:'lazy',
-                    referrerPolicy:'no-referrer',
-                    className:'w-full h-full object-cover',
-                    onError:(e)=>{ e.currentTarget.style.display='none'; e.currentTarget.nextSibling.style.display='flex'; }
-                  }),
-                  h('div',{ className:'hidden absolute inset-0 items-center justify-center px-2 text-center font-display font-extrabold text-[10px] tracking-wide text-white' }, article.source)
-                )
-              : h('div',{ className:'absolute inset-0 flex items-center justify-center px-2 text-center font-display font-extrabold text-[10px] tracking-wide text-white' }, article.source)
-          ),
-          h('div',{ className:'min-w-0 flex-1' },
-            h('p',{ className:'text-[10px] sm:text-xs font-bold tracking-wide text-[var(--trs-red)] mb-1.5' }, article.source),
-            h('h3',{ className:'font-display font-bold text-sm sm:text-base text-gray-800 leading-snug trs-line-clamp-2 group-hover:text-[var(--trs-red)] transition-colors' }, article.title),
-            h('span',{ className:'inline-flex items-center gap-1 mt-2 text-xs font-semibold text-gray-400 group-hover:text-gray-600' }, 'Baca artikel', h(Icon,{name:'chevron-right',size:13}))
-          )
-        ))
       )
     ),
 
