@@ -70,3 +70,9 @@ Production uses a separate PostgreSQL instance controlled by client. Apply revie
 - Expired preview orders are reclaimed before catalog, shipping quote or customer order-status reads. These lazy cleanup calls are for QA. Production requires durable payment/stock reservation policies and scheduled reconciliation.
 - Migration 003_admin_audit.sql is additive and applies only to verified TRASTAR development PostgreSQL. It must not be applied to any unrelated app or client database.
 - Lifecycle test: node --env-file=.env.local test/integration-admin-lifecycle.mjs; writes only synthetic fixtures to TRASTAR development and verifies concurrent checkout oversell prevention, cancellation idempotency, expiry release and audit trail.
+
+## Final development QA corrections
+- Product creation and SKU quantity price-tier changes now write actor-linked audit records in admin_audit_events.
+- The login throttle now counts failed authentication only. Successful logins no longer exhaust the 15-minute failed-attempt budget.
+- Admin integration assertions allow expired test orders; an always-PENDING fixture is not required because expiry cleanup is active.
+- Vercel /admin uses a redirect to /admin-live because cleanUrls previously took precedence over a filesystem rewrite. Exact preview HTTP routing must be verified after deployment.

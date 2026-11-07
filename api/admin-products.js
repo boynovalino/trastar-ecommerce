@@ -25,6 +25,8 @@ export default run(async(req,res)=>{
   const p=await withTransaction(async db=>{
     const r=await db.query('INSERT INTO products(sku,slug,name,description,image_url,brand,category,is_active,export_allowed,weight_grams) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id,sku,name',[sku,slug,label,String(input.description||'').slice(0,10000),input.imageUrl||null,String(input.brand||'').slice(0,100),String(input.category||'').slice(0,100),Boolean(input.active),Boolean(input.exportAllowed),input.weightGrams]);
     for(const v of variants) await db.query('INSERT INTO variants(product_id,sku,options,unit_price_idr,stock_on_hand) VALUES($1,$2,$3,$4,$5)',[r.rows[0].id,v.sku,JSON.stringify(v.options||{}),v.unitPriceIdr,v.stock]);
+    await db.query('INSERT INTO admin_audit_events(actor_user_id,action,target_id,before_data,after_data,reason) VALUES($1,$2,$3,$4::jsonb,$5::jsonb,$6)',
+      [user.id,'PRODUCT_CREATED',r.rows[0].id,JSON.stringify({}),JSON.stringify({product:r.rows[0],variants:variants.map(v=>({sku:v.sku,unitPriceIdr:v.unitPriceIdr,stock:v.stock}))}),'Development product created']);
     return r.rows[0];
   });
   json(res,201,{product:p});

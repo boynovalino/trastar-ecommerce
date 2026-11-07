@@ -31,10 +31,15 @@
     "concurrent_stock_reservations": "PASS Neon dev",
     "admin_audit_log": "PASS Neon dev",
     "browser_interactive": "NOT RUN",
-    "production_health": "NOT RUN"
+    "production_health": "NOT RUN",
+    "quantity_tier_audit": "PASS Neon development",
+    "product_create_audit": "PASS Neon development",
+    "admin_login_failure_budget": "PASS Neon development",
+    "local_tests": "14 PASS",
+    "legacy_admin_redirect": "Preview HTTP PASS on previous candidate; verify final candidate"
   },
   "recovery_state": "Prototype baseline known, client production release not approved",
-  "last_successful_gate": "DEVELOPMENT_NEON_ADMIN_LIFECYCLE_INTEGRATION_PASS",
-  "next_action": "Commit and push dev branch, verify PR CI and preview exact SHA; do not merge or deploy client production without CTO/CEO release approval",
-  "observed_at": "2026-11-07T14:49:40.680Z"
+  "last_successful_gate": "LOCAL_ADMIN_QA_AND_NEON_INTEGRATION_VERIFIED",
+  "next_action": "Commit final QA corrections, push draft PR, verify CI and exact Vercel preview; production release blocked by gateway, carrier, catalog, hosting and approvals",
+  "observed_at": "2026-11-07T14:56:11.148Z"
 }

@@ -2,7 +2,7 @@ import {withTransaction} from '../lib/db.js';
 import {requireAdmin} from '../lib/auth.js';
 import {json,run,method,body,HttpError} from '../lib/http.js';
 export default run(async(req,res)=>{
-  method(req,['POST']);await requireAdmin(req,['OWNER','ADMIN']);
+  method(req,['POST']);const user=await requireAdmin(req,['OWNER','ADMIN']);
   const input=await body(req);
   const id=String(input.variantId||'');
   if(!/^[0-9a-f-]{36}$/i.test(id) || !Array.isArray(input.tiers)||input.tiers.length>20)throw new HttpError(422,'INVALID_TIERS','Invalid tier configuration');
@@ -14,10 +14,13 @@ export default run(async(req,res)=>{
   const out=await withTransaction(async db=>{
     const vr=await db.query('SELECT id,unit_price_idr FROM variants WHERE id=$1 FOR UPDATE',[id]);
     if(!vr.rowCount)throw new HttpError(404,'VARIANT_NOT_FOUND','Variant not found');
+    const original=await db.query('SELECT min_qty,unit_price_idr FROM product_price_tiers WHERE variant_id=$1 ORDER BY min_qty',[id]);
     let ceiling=Number(vr.rows[0].unit_price_idr);
     for(const t of input.tiers){if(t.unitPriceIdr>ceiling)throw new HttpError(422,'TIER_PRICE_INCREASE','Volume tiers may not increase the unit price');ceiling=t.unitPriceIdr;}
     await db.query('DELETE FROM product_price_tiers WHERE variant_id=$1',[id]);
     for(const t of input.tiers)await db.query('INSERT INTO product_price_tiers(variant_id,min_qty,unit_price_idr) VALUES($1,$2,$3)',[id,t.minQty,t.unitPriceIdr]);
+    await db.query('INSERT INTO admin_audit_events(actor_user_id,action,target_id,before_data,after_data,reason) VALUES($1,$2,$3,$4::jsonb,$5::jsonb,$6)',
+      [user.id,'PRICE_TIERS_UPDATED',id,JSON.stringify(original.rows.map(t=>({minQty:t.min_qty,unitPriceIdr:Number(t.unit_price_idr)}))),JSON.stringify(input.tiers),'Development SKU volume pricing update']);
     return input.tiers;
   });
   json(res,200,{variantId:id,tiers:out});
