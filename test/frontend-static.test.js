@@ -14,8 +14,10 @@ for (const file of ['index.html','admin.html']) {
 }
 test('buyer payment cannot create a fake PAID order in the prototype',()=>{
  const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
- assert.match(html,/PAYMENT DISABLED \(DEMO\)/);
- assert.match(html,/disabled:true, onClick:handlePayNow/);
+ assert.match(html,/Disabled legacy payment and localStorage order pages/);
+ assert.match(html,/startTrastarStorefront/);
+ assert.match(html,/storefront-connected\.js/);
+ assert.match(html,/const PRODUCTS = \[\];/);
  assert.doesNotMatch(html,/paymentStatus:'PAID', orderStatus:'PROCESSING'/);
 });
 
@@ -37,4 +39,19 @@ test('admin-live.html uses auth session and server-backed product/order APIs',()
  for(const path of ['/api/session','/api/admin-products','/api/admin-price-tiers','/api/admin-orders'])assert.ok(html.includes(path));
  const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(x=>x[1]).filter(Boolean);
  assert.ok(scripts.length);for(const source of scripts)new vm.Script(source,{filename:'admin-live.html'});
+});
+
+test('connected storefront uses database-backed catalog and unpaid orders',()=>{
+ const js=fs.readFileSync(new URL('../storefront-connected.js',import.meta.url),'utf8');
+ new vm.Script(js,{filename:'storefront-connected.js'});
+ assert.match(js,/api\('\/api\/products'\)/);
+ assert.match(js,/api\('\/api\/quote'/);
+ assert.match(js,/api\('\/api\/orders'/);
+ assert.match(js,/data\.paymentStatus!=='PENDING'/);
+ assert.match(js,/sessionStorage\.setItem\('trastar_preview_order'/);
+ assert.match(js,/trastar_preview_order/);
+ assert.match(js,/ConnectedCheckoutPage/);
+ assert.match(js,/ConnectedOrderPage/);
+ assert.doesNotMatch(js,/localStorage\./);
+ assert.doesNotMatch(js,/paymentStatus\s*:\s*['"]PAID['"]/);
 });

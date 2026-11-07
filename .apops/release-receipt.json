@@ -13,16 +13,21 @@
   "production_url": "UNKNOWN_CLIENT_HOST",
   "health_checks": {
     "local_syntax": "PASS",
-    "unit_tests": "8 PASS",
+    "unit_tests": "13 PASS",
     "neon_migrations": "PASS 12 tables",
     "neon_order_integration": "PASS simulated PENDING",
     "preview_api": "NOT RUN",
     "payment_gateway": "BLOCKED MERCHANT_ACCOUNT",
     "international_shipping": "BLOCKED CARRIER_SCOPE",
-    "backup_restore": "NOT RUN"
+    "backup_restore": "NOT RUN",
+    "storefront_bootstrap": "PASS mocked API",
+    "storefront_to_neon_to_admin": "PASS synthetic international PENDING order",
+    "full_storefront_browser_interactive": "NOT RUN",
+    "live_gateway": "BLOCKED MERCHANT",
+    "real_international_shipping": "BLOCKED CARRIER"
   },
   "recovery_state": "Prototype baseline known, client production release not approved",
-  "last_successful_gate": "LOCAL_DEVELOPMENT_VERIFIED",
-  "next_action": "Commit isolated branch, create PR, check preview rollout; do not merge/deploy client production",
+  "last_successful_gate": "NEON_ORDER_AND_ADMIN_INTEGRATION_VERIFIED",
+  "next_action": "Push candidate branch, observe CI and Vercel preview; no merge while release conditions are unapproved",
   "observed_at": "2026-11-07T00:00:00+07:00"
 }

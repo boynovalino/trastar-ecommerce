@@ -51,3 +51,14 @@ Production uses a separate PostgreSQL instance controlled by client. Apply revie
 - `/admin-live` is the separate database-backed admin prototype. It supports session login, product creation, per-SKU quantity price tiers, and order reporting. Existing `/admin` remains the original demo and is not connected to PostgreSQL.
 - The development QA admin is provisioned using an isolated, gitignored local environment. Do not publish credentials or reuse this account for the client. Production owner onboarding and MFA are still pending.
 - Backend tests against Neon development include `node --env-file=.env.local test/integration-neon.mjs` and `node --env-file=.env.local test/integration-admin.mjs`. These tests WRITE clearly labeled fixtures; they are not part of routine CI and must never run against client production.
+
+## Customer storefront integration (development preview)
+- index.html now waits for GET /api/products and builds the customer-facing catalog from database variants. No hardcoded catalog fallback on API failure.
+- Legacy localStorage checkout/order and fake payment/VA display routes are removed from the customer path. Guest cart uses sessionStorage only. Server recalculates price/stock/total.
+- storefront-connected.js preserves the home/shop/product shell and provides connected cart, preview checkout and customer order status.
+- Preview checkout calls POST /api/quote for an HMAC-signed simulated shipping quote, then POST /api/orders. Backend stores an unpaid PENDING simulation in Neon. Customer checks status using session token and GET /api/orders.
+- admin-live.html reads the same order through authenticated GET /api/admin-orders.
+- Preview uses fixed .invalid email and synthetic customer name; address fields are test-only. DO NOT collect actual customer information until privacy/payment/shipping scope gates pass.
+- Multiple variants are separate SKU cards until a final variant picker is approved. Quantity tier pricing is displayed on product detail and cart.
+- npm test exercises mock catalog boot; node --env-file=.env.local test/integration-storefront.mjs exercises the TRASTAR development database. Never run against production.
+- Browser-interactive UI QA: NOT RUN. Vercel preview GET health and catalog checks are separate.

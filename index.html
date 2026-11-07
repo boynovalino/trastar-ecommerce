@@ -163,80 +163,7 @@ const YEARS = ['2026','2025','2024','2023','2022','2021','2020'];
 
 function img(seed){ return seed; }
 
-const PRODUCTS = [
-  { id:1, slug:'brake-disc-racing', name:'TRASTAR Racing Brake Disc 220MM', brand:'TRASTAR', category:'Brake System', icon:'disc',
-    price:525000, salePrice:425000, rating:4.9, reviewCount:124, stock:38,
-    description:'High performance racing brake disc dengan material stainless steel berkualitas tinggi untuk pengereman lebih responsif dan stabil. Dirancang dengan pola ventilasi khusus untuk membuang panas lebih cepat sehingga performa pengereman tetap konsisten meski dipakai agresif.\n\nCocok untuk penggunaan harian maupun track day, disc ini melalui proses precision-machining untuk memastikan permukaan rata dan minim getaran pada kecepatan tinggi.',
-    compatibility:['Honda Vario 125','Honda Vario 150','Honda Vario 160','Honda PCX 160'],
-    specs:{ Material:'Stainless Steel', Diameter:'220 MM', Thickness:'3.5 MM', Weight:'800 gram', Brand:'TRASTAR', Warranty:'6 Bulan' },
-    variants:{ Diameter:['220MM','240MM'], Color:['Silver','Black','Gold'] }, sku:'TRS-BRK-001' },
-  { id:2, slug:'performance-brake-pad', name:'TRASTAR Performance Brake Pad', brand:'TRASTAR', category:'Brake System', icon:'disc',
-    price:220000, salePrice:185000, rating:4.7, reviewCount:98, stock:52,
-    description:'Brake pad dengan campuran material semi-metallic yang memberikan gigitan rem lebih pakem tanpa membuat piringan cepat aus. Minim decit dan tahan panas tinggi.\n\nDiformulasikan khusus untuk penggunaan harian di perkotaan maupun perjalanan jauh.',
-    compatibility:['Honda Vario 125','Honda Beat','Yamaha NMAX','Yamaha Aerox 155'],
-    specs:{ Material:'Semi-Metallic', Fitment:'Universal Bracket', Weight:'150 gram', Brand:'TRASTAR', Warranty:'3 Bulan' },
-    variants:{ Compound:['Standard','Sport'], Color:['Black'] }, sku:'TRS-BRK-002' },
-  { id:3, slug:'led-headlight-pro', name:'TRASTAR LED Headlight Pro', brand:'TRASTAR', category:'Lighting', icon:'zap',
-    price:320000, salePrice:275000, rating:4.8, reviewCount:210, stock:64,
-    description:'Headlight LED dengan output cahaya lebih terang dan hemat daya dibanding bohlam halogen standar. Beam pattern dirancang agar tidak menyilaukan pengendara dari arah berlawanan.\n\nBody aluminium dengan heatsink membuat unit ini tahan lama meski digunakan dalam durasi panjang.',
-    compatibility:['Honda Vario series','Yamaha NMAX','Yamaha Aerox 155','Suzuki Nex II'],
-    specs:{ 'Light Output':'6000 Lumen', 'Color Temp':'6500K', Voltage:'12V', Brand:'TRASTAR', Warranty:'1 Tahun' },
-    variants:{ Beam:['H4','H11'], Color:['White 6500K','Ice Blue'] }, sku:'TRS-LGT-001' },
-  { id:4, slug:'premium-chain-kit', name:'TRASTAR Premium Chain Kit', brand:'TRASTAR', category:'Transmission', icon:'layers',
-    price:560000, salePrice:495000, rating:4.9, reviewCount:156, stock:29,
-    description:'Satu set chain kit (rantai, gear depan, gear belakang) dengan material high-carbon steel yang lebih kuat dan awet. Cocok untuk motor harian maupun motor dengan performa yang sudah ditingkatkan.\n\nProses heat-treatment membuat komponen ini lebih tahan terhadap keausan dan perpanjangan rantai.',
-    compatibility:['Honda CBR150R','Yamaha R15','Suzuki GSX-R150','Kawasaki Ninja 250'],
-    specs:{ Material:'High-Carbon Steel', 'Chain Size':'428H', Links:'128', Brand:'TRASTAR', Warranty:'6 Bulan' },
-    variants:{ Size:['420','428H'], Color:['Gold','Silver'] }, sku:'TRS-TRN-001' },
-  { id:5, slug:'adjustable-shock', name:'TRASTAR Adjustable Shock', brand:'TRASTAR', category:'Suspension', icon:'gauge',
-    price:950000, salePrice:850000, rating:4.8, reviewCount:87, stock:21,
-    description:'Shockbreaker belakang dengan preload yang bisa disesuaikan untuk kenyamanan maupun handling yang lebih presisi. Menggunakan gas nitrogen untuk redaman yang lebih stabil di berbagai kondisi jalan.\n\nDilengkapi per progresif yang membuat karakter suspensi tetap empuk di kecepatan rendah namun stabil saat menikung.',
-    compatibility:['Honda Vario 160','Yamaha Aerox 155','Yamaha NMAX'],
-    specs:{ Type:'Gas Nitrogen', Length:'320 MM', Adjustability:'7-step preload', Brand:'TRASTAR', Warranty:'1 Tahun' },
-    variants:{ Length:['320MM','330MM'], Color:['Red','Black','Gold'] }, sku:'TRS-SUS-001' },
-  { id:6, slug:'racing-spark-plug', name:'TRASTAR Racing Spark Plug', brand:'TRASTAR', category:'Engine Parts', icon:'settings',
-    price:120000, salePrice:95000, rating:4.6, reviewCount:143, stock:110,
-    description:'Busi racing dengan elektroda iridium untuk pengapian yang lebih sempurna, membantu pembakaran lebih efisien dan tarikan mesin lebih responsif.\n\nDirekomendasikan untuk penggantian berkala guna menjaga performa mesin tetap optimal.',
-    compatibility:['Universal 125-160cc'],
-    specs:{ Electrode:'Iridium', Thread:'M10 x 1.0', Brand:'TRASTAR', Warranty:'3 Bulan' },
-    variants:{ Type:['Standard','Racing'], Color:['-'] }, sku:'TRS-ENG-001' },
-  { id:7, slug:'cnc-brake-lever', name:'TRASTAR CNC Brake Lever', brand:'TRASTAR', category:'Brake System', icon:'disc',
-    price:375000, salePrice:325000, rating:4.7, reviewCount:76, stock:40,
-    description:'Tuas rem hasil proses CNC dari billet aluminium, memberikan tampilan lebih premium sekaligus bobot yang lebih ringan dibanding tuas standar.\n\nDilengkapi adjuster 6 posisi untuk menyesuaikan jarak tuas dengan genggaman tangan.',
-    compatibility:['Honda Vario series','Honda PCX 160','Yamaha NMAX'],
-    specs:{ Material:'CNC Billet Aluminum', Adjuster:'6-position', Brand:'TRASTAR', Warranty:'6 Bulan' },
-    variants:{ Side:['Kiri & Kanan'], Color:['Red','Black','Blue','Gold'] }, sku:'TRS-BRK-003' },
-  { id:8, slug:'usb-fast-charger', name:'TRASTAR USB Fast Charger', brand:'TRASTAR', category:'Accessories', icon:'zap',
-    price:210000, salePrice:175000, rating:4.5, reviewCount:189, stock:75,
-    description:'Modul dual USB charger dengan indikator tegangan aki, memudahkan pengisian daya smartphone maupun perangkat lain selama berkendara.\n\nDilengkapi waterproof cap untuk melindungi port saat tidak digunakan.',
-    compatibility:['Universal semua motor matic'],
-    specs:{ Output:'2x USB, 3.1A', Display:'Voltmeter LED', Brand:'TRASTAR', Warranty:'3 Bulan' },
-    variants:{ Mount:['Stang','Dek Depan'], Color:['Black'] }, sku:'TRS-ACC-001' },
-  { id:9, slug:'air-filter-racing', name:'TRASTAR Air Filter Racing', brand:'TRASTAR', category:'Engine Parts', icon:'wind',
-    price:165000, salePrice:139000, rating:4.6, reviewCount:112, stock:58,
-    description:'Filter udara racing dengan material foam berlapis yang memiliki aliran udara lebih baik dibanding filter standar, membantu proses pembakaran lebih optimal.\n\nDapat dicuci dan digunakan kembali (reusable) untuk efisiensi jangka panjang.',
-    compatibility:['Honda Vario series','Honda Beat','Yamaha Mio'],
-    specs:{ Material:'Multi-layer Foam', Type:'Reusable', Brand:'TRASTAR', Warranty:'3 Bulan' },
-    variants:{ Type:['Standard','High-Flow'], Color:['-'] }, sku:'TRS-ENG-002' },
-  { id:10, slug:'digital-speedometer', name:'TRASTAR Digital Speedometer', brand:'TRASTAR', category:'Electrical', icon:'gauge',
-    price:480000, salePrice:420000, rating:4.8, reviewCount:64, stock:19,
-    description:'Speedometer digital full LCD dengan tampilan RPM, kecepatan, odometer, dan indikator bahan bakar yang lebih jelas dibanding panel analog standar.\n\nAnti air dan anti getar, cocok untuk penggunaan harian maupun modifikasi tampilan panel.',
-    compatibility:['Honda Vario 125','Honda Vario 150','Honda Beat'],
-    specs:{ Display:'Full LCD', 'Water Resistance':'IP67', Brand:'TRASTAR', Warranty:'6 Bulan' },
-    variants:{ Backlight:['White','Blue'], Color:['Black'] }, sku:'TRS-ELC-001' },
-  { id:11, slug:'body-fairing-set', name:'TRASTAR Body Fairing Set', brand:'TRASTAR', category:'Body Parts', icon:'shirt',
-    price:1250000, salePrice:1050000, rating:4.7, reviewCount:41, stock:12,
-    description:'Satu set body fairing dengan material ABS berkualitas tinggi, presisi dengan lekukan body asli sehingga mudah dipasang tanpa modifikasi berlebihan.\n\nSudah termasuk primer coating sehingga siap untuk proses pengecatan sesuai selera.',
-    compatibility:['Yamaha R15', 'Honda CBR150R'],
-    specs:{ Material:'ABS Plastic', Finish:'Primer Coated', Brand:'TRASTAR', Warranty:'3 Bulan' },
-    variants:{ Set:['Half Set','Full Set'], Color:['Primer White'] }, sku:'TRS-BDY-001' },
-  { id:12, slug:'racing-exhaust-slip-on', name:'TRASTAR Racing Exhaust Slip-On', brand:'TRASTAR', category:'Engine Parts', icon:'wind',
-    price:1450000, salePrice:1250000, rating:4.9, reviewCount:167, stock:16,
-    description:'Knalpot slip-on dengan konstruksi full stainless steel yang memberikan karakter suara lebih sporty tanpa mengorbankan tenaga di putaran bawah.\n\nDatang dengan sertifikat uji emisi dan kebisingan sesuai standar yang berlaku.',
-    compatibility:['Yamaha NMAX','Yamaha Aerox 155','Honda PCX 160'],
-    specs:{ Material:'Full Stainless Steel', Type:'Slip-On', Brand:'TRASTAR', Warranty:'1 Tahun' },
-    variants:{ Finish:['Matte Black','Chrome'], Color:['-'] }, sku:'TRS-ENG-003' },
-];
+const PRODUCTS = [];
 
 function getProductBySlug(slug){ return PRODUCTS.find(p => p.slug === slug); }
 function discountPct(p){ return Math.round((1 - p.salePrice/p.price)*100); }
@@ -271,86 +198,42 @@ function Link({ to, className, children, onClick, ariaLabel }){
 const AppStateContext = createContext(null);
 function useAppState(){ return useContext(AppStateContext); }
 
-function defaultCheckout(){
-  return {
-    fullName:'Budi Santoso', email:'budi@email.com', phone:'081234567890',
-    province:'D.I. Yogyakarta', city:'Sleman', district:'Depok', postalCode:'55281',
-    address:'Jl. Kaliurang KM 7, Sleman',
-    shippingMethod:'jne',
-  };
+// No legacy customer/checkout data stored in frontend. Rates come from signed API quotes.
+
+function tierPrice(product,qty){
+  return (product.priceTiers||[]).reduce((price,t)=>qty>=t.minQty?t.unitPriceIdr:price,product.salePrice);
 }
-const SHIPPING_METHODS = [
-  { id:'jne', name:'JNE Regular', cost:20000, eta:'2-3 Hari' },
-  { id:'jnt', name:'J&T Express', cost:22000, eta:'1-2 Hari' },
-  { id:'sicepat', name:'SiCepat', cost:18000, eta:'2-3 Hari' },
-  { id:'instant', name:'Instant Courier', cost:35000, eta:'Same Day' },
-];
-
 function useCartLogic(){
-  const [items, setItems] = useState(()=> loadLS('trastar_cart', []));
-  useEffect(()=>{ saveLS('trastar_cart', items); }, [items]);
-
-  const [coupon, setCoupon] = useState(()=> loadLS('trastar_coupon', null));
-  useEffect(()=>{ saveLS('trastar_coupon', coupon); }, [coupon]);
-
-  function variantKey(variant){ return Object.values(variant||{}).join('|'); }
-
-  function addToCart(product, variant, qty){
+  const [items,setItems]=useState(()=>{
+    try {return JSON.parse(sessionStorage.getItem('trastar_qa_cart')||'[]')} catch{return []}
+  });
+  useEffect(()=>{sessionStorage.setItem('trastar_qa_cart',JSON.stringify(items))},[items]);
+  function addToCart(product,variant,qty){
+    if(!product||!product.variantId||!Number.isSafeInteger(qty)||qty<1)return;
     setItems(prev=>{
-      const key = variantKey(variant);
-      const idx = prev.findIndex(it => it.productId === product.id && it.variantKey === key);
-      if(idx > -1){
-        const next = [...prev];
-        next[idx] = { ...next[idx], qty: next[idx].qty + qty };
-        return next;
-      }
-      return [...prev, { productId: product.id, variant, variantKey: key, qty }];
+      const found=prev.find(i=>i.productId===product.id);
+      const count=Math.min(product.stock,(found?.qty||0)+qty,999);
+      if(count<1)return prev;
+      return found?prev.map(i=>i.productId===product.id?{...i,qty:count}:i):[...prev,{productId:product.id,qty:count}];
     });
   }
-  function updateQty(idx, qty){
-    setItems(prev => prev.map((it,i)=> i===idx ? { ...it, qty: Math.max(1, qty) } : it));
+  function updateQty(idx,qty){
+    setItems(prev=>prev.map((it,i)=>{
+      if(i!==idx)return it;
+      const p=PRODUCTS.find(x=>x.id===it.productId);
+      return {...it,qty:Math.max(1,Math.min(qty,999,p?.stock||1))};
+    }));
   }
-  function removeItem(idx){
-    setItems(prev => prev.filter((_,i)=> i!==idx));
-  }
-  function clearCart(){ setItems([]); setCoupon(null); }
-
-  function applyCoupon(code){
-    const norm = (code||'').trim().toUpperCase();
-    if(norm === 'TRASTAR10'){ setCoupon({ code:norm, percent:10 }); return { ok:true, message:'Kupon berhasil diterapkan! Diskon 10%.' }; }
-    setCoupon(null);
-    return { ok:false, message:'Kode kupon tidak valid.' };
-  }
-
-  const enrichedItems = items.map((it,idx)=>({ ...it, index: idx, product: PRODUCTS.find(p=>p.id===it.productId) })).filter(it=>it.product);
-  const subtotal = enrichedItems.reduce((sum,it)=> sum + it.product.salePrice * it.qty, 0);
-  const discount = coupon ? Math.round(subtotal * coupon.percent/100) : 0;
-  const itemCount = enrichedItems.reduce((sum,it)=> sum + it.qty, 0);
-
-  return { items: enrichedItems, addToCart, updateQty, removeItem, clearCart, coupon, applyCoupon, subtotal, discount, itemCount };
+  function removeItem(idx){setItems(prev=>prev.filter((_,i)=>i!==idx))}
+  function clearCart(){setItems([])}
+  function applyCoupon(){return {ok:false,message:'Kupon belum aktif pada checkout development.'}}
+  const enriched=items.map((it,index)=>({...it,index,variant:{},product:PRODUCTS.find(p=>p.id===it.productId)})).filter(it=>it.product&&it.product.stock>0);
+  const subtotal=enriched.reduce((sum,it)=>sum+tierPrice(it.product,it.qty)*it.qty,0);
+  const itemCount=enriched.reduce((sum,it)=>sum+it.qty,0);
+  return {items:enriched,addToCart,updateQty,removeItem,clearCart,applyCoupon,coupon:null,subtotal,discount:0,itemCount};
 }
 
-function useOrdersLogic(){
-  function generateOrderNumber(){
-    const d = new Date();
-    const dateStr = d.getFullYear().toString() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0');
-    let seq = loadLS('trastar_order_seq', 0) + 1;
-    saveLS('trastar_order_seq', seq);
-    return 'TRS' + dateStr + String(seq).padStart(3,'0');
-  }
-  function saveOrder(order){
-    const all = loadLS('trastar_orders', {});
-    all[order.orderNumber] = order;
-    saveLS('trastar_orders', all);
-    saveLS('trastar_last_order', order.orderNumber);
-  }
-  function getOrder(orderNumber){
-    const all = loadLS('trastar_orders', {});
-    return all[orderNumber] || null;
-  }
-  function getLastOrderNumber(){ return loadLS('trastar_last_order', null); }
-  return { generateOrderNumber, saveOrder, getOrder, getLastOrderNumber };
-}
+
 
 // ==================== SHARED UI ====================
 function ProductThumb({ product, className }){
@@ -960,7 +843,7 @@ function ProductDetailPage({ params }){
           h(StarRating,{ rating:product.rating }), h('span',{ className:'text-sm font-semibold text-gray-700' }, product.rating), h('span',{ className:'text-sm text-gray-400' }, '('+product.reviewCount+' Reviews)')
         ),
         h('div',{ className:'flex items-baseline gap-3 mb-1' },
-          h('span',{ className:'font-display font-extrabold text-3xl text-[var(--trs-dark)]' }, formatIDR(product.salePrice)),
+          h('span',{ className:'font-display font-extrabold text-3xl text-[var(--trs-dark)]' }, formatIDR(tierPrice(product,qty))),
           pct>0 && h('span',{ className:'text-lg text-gray-400 line-through' }, formatIDR(product.price)),
           pct>0 && h(Badge,null, pct+'% OFF')
         ),
@@ -977,13 +860,17 @@ function ProductDetailPage({ params }){
 
         h('div',{ className:'flex items-center gap-4 mb-6' },
           h('span',{ className:'text-sm font-semibold text-gray-700' }, 'Jumlah:'),
-          h(QuantitySelector,{ value:qty, onChange:setQty })
+          h(QuantitySelector,{ value:qty, onChange:q=>setQty(Math.min(q,Math.max(1,product.stock))) })
         ),
 
+        product.priceTiers.length>0&&h('div',{className:'mb-5 text-xs rounded-lg bg-gray-50 border p-3'},
+          h('strong',null,'Harga berdasarkan quantity'),
+          product.priceTiers.map(t=>h('p',{key:t.minQty,className:'mt-1 text-gray-600'},t.minQty+'+ pcs: '+formatIDR(t.unitPriceIdr)+'/unit'))
+        ),
         h('div',{ className:'flex flex-col sm:flex-row gap-3 mb-4' },
-          h('button',{ type:'button', onClick:handleAdd, className:'trs-btn-primary flex-1 py-3.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2' },
+          h('button',{ type:'button', disabled:product.stock<1, onClick:handleAdd, className:'trs-btn-primary flex-1 py-3.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2' },
             h(Icon,{name:'cart',size:16}), added ? 'Ditambahkan ✓' : 'ADD TO CART'),
-          h('button',{ type:'button', onClick:handleBuyNow, className:'flex-1 py-3.5 rounded-lg font-bold text-sm border-2 border-[var(--trs-dark)] text-[var(--trs-dark)] hover:bg-[var(--trs-dark)] hover:text-white transition-colors' }, 'BUY NOW')
+          h('button',{ type:'button', disabled:product.stock<1, onClick:handleBuyNow, className:'flex-1 py-3.5 rounded-lg font-bold text-sm border-2 border-[var(--trs-dark)] text-[var(--trs-dark)] hover:bg-[var(--trs-dark)] hover:text-white transition-colors' }, 'BUY NOW')
         ),
         h('button',{ type:'button', onClick:()=>setWish(w=>!w), className:'flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-[var(--trs-red)] transition-colors mb-6' },
           h(Icon,{ name: wish?'heart-fill':'heart', size:16, className: wish?'text-[var(--trs-red)]':'' }), wish?'Ditambahkan ke Wishlist':'ADD TO WISHLIST'),
@@ -1024,76 +911,7 @@ function ProductDetailPage({ params }){
 }
 
 // ==================== CART PAGE ====================
-function CartPage(){
-  const { items, updateQty, removeItem, clearCart, coupon, applyCoupon, subtotal, discount } = useAppState();
-  const { navigate } = useRouter();
-  const [couponInput, setCouponInput] = useState('');
-  const [couponMsg, setCouponMsg] = useState(null);
-  const shipping = items.length ? 20000 : 0;
-  const total = subtotal - discount + shipping;
-
-  function handleApply(e){
-    e.preventDefault();
-    const res = applyCoupon(couponInput);
-    setCouponMsg(res);
-  }
-
-  if(items.length === 0){
-    return h('div',{ className:'max-w-3xl mx-auto px-4 py-20 text-center' },
-      h(Icon,{ name:'cart', size:56, className:'text-gray-200 mx-auto mb-4' }),
-      h('h1',{ className:'font-display font-bold text-xl text-gray-800 mb-2' }, 'Keranjang Anda kosong'),
-      h('p',{ className:'text-sm text-gray-400 mb-6' }, 'Yuk mulai belanja sparepart favorit Anda.'),
-      h(Link,{ to:'/shop', className:'trs-btn-primary inline-block px-6 py-3 rounded-lg text-sm font-bold' }, 'MULAI BELANJA')
-    );
-  }
-
-  return h('div',{ className:'max-w-7xl mx-auto px-4 py-8' },
-    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:'Shopping Cart'}] }),
-    h('h1',{ className:'font-display font-extrabold text-2xl text-[var(--trs-dark)] mb-6' }, 'Shopping Cart'),
-    h('div',{ className:'grid lg:grid-cols-[1fr_360px] gap-8' },
-      h('div',null,
-        h('div',{ className:'hidden sm:grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 pb-3 border-b border-gray-200 text-xs font-semibold text-gray-400 uppercase tracking-wide' },
-          h('span',null,'Product'), h('span',null,'Price'), h('span',null,'Quantity'), h('span',null,'Subtotal'), h('span',null)
-        ),
-        items.map(it => h('div',{ key:it.index, className:'grid sm:grid-cols-[2fr_1fr_1fr_1fr_auto] grid-cols-1 gap-3 sm:gap-4 items-center py-4 border-b border-gray-100' },
-          h('div',{ className:'flex items-center gap-3' },
-            h('div',{ className:'w-16 h-16 rounded-lg overflow-hidden flex-shrink-0' }, h(ProductThumb,{ product: it.product })),
-            h('div',{ className:'min-w-0' },
-              h(Link,{ to:'/product/'+it.product.slug, className:'font-semibold text-sm text-gray-800 hover:text-[var(--trs-red)] transition-colors trs-line-clamp-2' }, it.product.name),
-              h('p',{ className:'text-xs text-gray-400 mt-0.5' }, Object.values(it.variant||{}).filter(v=>v!=='-').join(' / '))
-            )
-          ),
-          h('span',{ className:'text-sm text-gray-600 sm:block flex justify-between'}, h('span',{className:'sm:hidden text-gray-400'},'Price: '), formatIDR(it.product.salePrice)),
-          h('div',{ className:'sm:block flex items-center justify-between' }, h('span',{className:'sm:hidden text-gray-400 text-sm'},'Quantity'), h(QuantitySelector,{ value:it.qty, onChange:(v)=>updateQty(it.index, v), size:'sm' })),
-          h('span',{ className:'text-sm font-semibold text-gray-800 sm:block flex justify-between'}, h('span',{className:'sm:hidden text-gray-400 font-normal'},'Subtotal: '), formatIDR(it.product.salePrice*it.qty)),
-          h('button',{ type:'button', onClick:()=>removeItem(it.index), 'aria-label':'Hapus item', className:'text-gray-300 hover:text-[var(--trs-red)] transition-colors justify-self-end' }, h(Icon,{name:'x',size:18}))
-        )),
-        h('div',{ className:'flex items-center justify-between mt-5' },
-          h(Link,{ to:'/shop', className:'text-sm font-semibold text-gray-600 hover:text-[var(--trs-red)] flex items-center gap-1.5' }, h(Icon,{name:'chevron-left',size:14}), 'Continue Shopping'),
-          h('button',{ type:'button', onClick:clearCart, className:'text-sm font-semibold text-gray-400 hover:text-[var(--trs-red)]' }, 'Clear Cart')
-        )
-      ),
-      h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5 h-fit sticky top-24' },
-        h('h3',{ className:'font-display font-bold text-base mb-4' }, 'Order Summary'),
-        h('div',{ className:'space-y-2.5 text-sm' },
-          h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Subtotal'), h('span',{className:'text-gray-800 font-medium'}, formatIDR(subtotal))),
-          h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Estimated Shipping'), h('span',{className:'text-gray-800 font-medium'}, formatIDR(shipping))),
-          coupon && h('div',{ className:'flex justify-between text-emerald-600' }, h('span',null,'Discount ('+coupon.code+')'), h('span',{className:'font-medium'}, '-'+formatIDR(discount)))
-        ),
-        h('form',{ onSubmit:handleApply, className:'flex gap-2 my-4' },
-          h('input',{ type:'text', value:couponInput, onChange:e=>setCouponInput(e.target.value), placeholder:'Enter coupon code', className:'flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm min-w-0' }),
-          h('button',{ type:'submit', className:'px-3.5 py-2 rounded-lg text-xs font-bold bg-[var(--trs-dark)] text-white whitespace-nowrap' }, 'APPLY')
-        ),
-        couponMsg && h('p',{ className: cx('text-xs mb-3 -mt-2', couponMsg.ok ? 'text-emerald-600' : 'text-[var(--trs-red)]') }, couponMsg.message),
-        h('p',{ className:'text-xs text-gray-400 mb-4' }, 'Coba kode: TRASTAR10'),
-        h('div',{ className:'border-t border-gray-100 pt-3 flex justify-between items-baseline mb-5' },
-          h('span',{ className:'font-semibold text-gray-700' }, 'TOTAL'), h('span',{ className:'font-display font-extrabold text-xl text-[var(--trs-dark)]' }, formatIDR(total))
-        ),
-        h('button',{ type:'button', onClick:()=>navigate('/checkout'), className:'trs-btn-primary w-full py-3.5 rounded-lg font-bold text-sm' }, 'PROCEED TO CHECKOUT')
-      )
-    )
-  );
-}
+function CartPage(){return null;} // Route overridden by database-connected cart
 
 // ==================== CHECKOUT PAGE ====================
 function Field({ label, children }){
@@ -1101,351 +919,12 @@ function Field({ label, children }){
 }
 const inputCls = 'w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-[var(--trs-red)]/30';
 
-function CheckoutPage(){
-  const { items, subtotal, discount, coupon } = useAppState();
-  const { navigate } = useRouter();
-  const [form, setForm] = useState(()=> loadLS('trastar_checkout', defaultCheckout()));
-  const [paymentGroup, setPaymentGroup] = useState('va');
+function CheckoutPage(){return null;} // Route overridden by database-connected checkout
 
-  useEffect(()=>{ if(items.length===0) navigate('/shop'); },[]);
-  useEffect(()=>{ saveLS('trastar_checkout', form); }, [form]);
-
-  const shippingMethod = SHIPPING_METHODS.find(s=>s.id===form.shippingMethod) || SHIPPING_METHODS[0];
-  const total = subtotal - discount + shippingMethod.cost;
-
-  function set(field){ return (e)=> setForm(f=>({ ...f, [field]: e.target.value })); }
-
-  function handleContinue(e){
-    e.preventDefault();
-    saveLS('trastar_checkout_payment_group', paymentGroup);
-    navigate('/payment');
-  }
-
-  if(items.length===0) return null;
-
-  return h('div',{ className:'max-w-7xl mx-auto px-4 py-8' },
-    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:'Cart', to:'/cart'},{label:'Checkout'}] }),
-    h('h1',{ className:'font-display font-extrabold text-2xl text-[var(--trs-dark)] mb-6' }, 'Checkout'),
-    h('form',{ onSubmit:handleContinue, className:'grid lg:grid-cols-[1fr_360px] gap-8' },
-      h('div',{ className:'space-y-8' },
-        h('section',null,
-          h('h3',{ className:'font-display font-bold text-base mb-4 flex items-center gap-2' }, h(Icon,{name:'user',size:16,className:'text-[var(--trs-red)]'}), 'Contact Information'),
-          h('div',{ className:'grid sm:grid-cols-2 gap-4' },
-            h(Field,{ label:'Full Name' }, h('input',{ className:inputCls, required:true, value:form.fullName, onChange:set('fullName') })),
-            h(Field,{ label:'Email' }, h('input',{ type:'email', className:inputCls, required:true, value:form.email, onChange:set('email') })),
-            h(Field,{ label:'Phone Number' }, h('input',{ className:inputCls, required:true, value:form.phone, onChange:set('phone') }))
-          )
-        ),
-        h('section',null,
-          h('h3',{ className:'font-display font-bold text-base mb-4 flex items-center gap-2' }, h(Icon,{name:'map-pin',size:16,className:'text-[var(--trs-red)]'}), 'Shipping Address'),
-          h('div',{ className:'grid sm:grid-cols-2 gap-4' },
-            h(Field,{ label:'Province' }, h('input',{ className:inputCls, required:true, value:form.province, onChange:set('province') })),
-            h(Field,{ label:'City' }, h('input',{ className:inputCls, required:true, value:form.city, onChange:set('city') })),
-            h(Field,{ label:'District' }, h('input',{ className:inputCls, required:true, value:form.district, onChange:set('district') })),
-            h(Field,{ label:'Postal Code' }, h('input',{ className:inputCls, required:true, value:form.postalCode, onChange:set('postalCode') })),
-            h('div',{ className:'sm:col-span-2' }, h(Field,{ label:'Full Address' }, h('textarea',{ className:inputCls, rows:2, required:true, value:form.address, onChange:set('address') })))
-          )
-        ),
-        h('section',null,
-          h('h3',{ className:'font-display font-bold text-base mb-4 flex items-center gap-2' }, h(Icon,{name:'truck',size:16,className:'text-[var(--trs-red)]'}), 'Shipping Method'),
-          h('div',{ className:'space-y-2.5' },
-            SHIPPING_METHODS.map(m => h('label',{ key:m.id, className: cx('flex items-center justify-between border rounded-lg px-4 py-3 cursor-pointer transition-colors', form.shippingMethod===m.id ? 'border-[var(--trs-red)] bg-[var(--trs-red)]/5' : 'border-gray-200 hover:border-gray-300') },
-              h('div',{ className:'flex items-center gap-3' },
-                h('input',{ type:'radio', name:'shipping', checked:form.shippingMethod===m.id, onChange:()=>setForm(f=>({...f, shippingMethod:m.id})), className:'accent-[var(--trs-red)]' }),
-                h('div',null, h('p',{ className:'text-sm font-semibold text-gray-800' }, m.name), h('p',{ className:'text-xs text-gray-400' }, m.eta))
-              ),
-              h('span',{ className:'text-sm font-semibold text-gray-700' }, formatIDR(m.cost))
-            ))
-          )
-        ),
-        h('section',null,
-          h('h3',{ className:'font-display font-bold text-base mb-4 flex items-center gap-2' }, h(Icon,{name:'wallet',size:16,className:'text-[var(--trs-red)]'}), 'Payment Method'),
-          h('div',{ className:'grid grid-cols-2 sm:grid-cols-4 gap-2.5' },
-            [ {id:'bank', label:'Bank Transfer', icon:'building'}, {id:'va', label:'Virtual Account', icon:'wallet'}, {id:'qris', label:'QRIS', icon:'qr'}, {id:'ewallet', label:'E-Wallet', icon:'phone'} ]
-            .map(g => h('button',{ key:g.id, type:'button', onClick:()=>setPaymentGroup(g.id),
-              className: cx('flex flex-col items-center gap-2 border rounded-lg py-4 text-xs font-semibold transition-colors', paymentGroup===g.id ? 'border-[var(--trs-red)] text-[var(--trs-red)] bg-[var(--trs-red)]/5' : 'border-gray-200 text-gray-600 hover:border-gray-300') },
-              h(Icon,{ name:g.icon, size:20 }), g.label))
-          )
-        ),
-        h('button',{ type:'submit', className:'trs-btn-primary w-full sm:w-auto px-8 py-3.5 rounded-lg font-bold text-sm' }, 'CONTINUE TO PAYMENT')
-      ),
-      h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5 h-fit sticky top-24' },
-        h('h3',{ className:'font-display font-bold text-base mb-4' }, 'Order Summary'),
-        h('div',{ className:'space-y-3 mb-4 max-h-64 overflow-y-auto pr-1' },
-          items.map(it => h('div',{ key:it.index, className:'flex items-center gap-3' },
-            h('div',{ className:'w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 relative' }, h(ProductThumb,{ product: it.product }),
-              h('span',{ className:'absolute -top-1.5 -right-1.5 bg-[var(--trs-dark)] text-white text-[10px] w-4.5 h-4.5 min-w-[18px] h-[18px] rounded-full flex items-center justify-center' }, it.qty)),
-            h('div',{ className:'flex-1 min-w-0' }, h('p',{ className:'text-xs font-semibold text-gray-700 trs-line-clamp-2' }, it.product.name)),
-            h('span',{ className:'text-xs font-semibold text-gray-600 flex-shrink-0' }, formatIDR(it.product.salePrice*it.qty))
-          ))
-        ),
-        h('div',{ className:'space-y-2 text-sm border-t border-gray-100 pt-3' },
-          h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Subtotal'), h('span',{className:'text-gray-800 font-medium'}, formatIDR(subtotal))),
-          h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Shipping'), h('span',{className:'text-gray-800 font-medium'}, formatIDR(shippingMethod.cost))),
-          coupon && h('div',{ className:'flex justify-between text-emerald-600' }, h('span',null,'Discount'), h('span',{className:'font-medium'}, '-'+formatIDR(discount)))
-        ),
-        h('div',{ className:'border-t border-gray-100 mt-3 pt-3 flex justify-between items-baseline' },
-          h('span',{ className:'font-semibold text-gray-700' }, 'Total'), h('span',{ className:'font-display font-extrabold text-xl text-[var(--trs-dark)]' }, formatIDR(total))
-        )
-      )
-    )
-  );
-}
-
-// ==================== PAYMENT PAGE ====================
-const PAYMENT_OPTIONS = {
-  bank: { title:'Bank Transfer', icon:'building', options:[
-    { id:'bca', name:'BCA', account:'8808 1234 5678 90', holder:'PT TRASTAR INDONESIA' },
-    { id:'mandiri', name:'Bank Mandiri', account:'137 00 1234567 8', holder:'PT TRASTAR INDONESIA' },
-    { id:'bni', name:'BNI', account:'0123456789', holder:'PT TRASTAR INDONESIA' },
-    { id:'bri', name:'BRI', account:'0021 0123 4567 890', holder:'PT TRASTAR INDONESIA' },
-  ]},
-  va: { title:'Virtual Account', icon:'wallet', options:[
-    { id:'bca-va', name:'BCA Virtual Account', account:'88081234567890' },
-    { id:'mandiri-va', name:'Mandiri Virtual Account', account:'88091234567890' },
-    { id:'bni-va', name:'BNI Virtual Account', account:'8810123456789' },
-    { id:'bri-va', name:'BRI Virtual Account', account:'8812345678901' },
-    { id:'permata-va', name:'Permata Virtual Account', account:'8823456789012' },
-  ]},
-  qris: { title:'QRIS', icon:'qr', options:[ { id:'qris', name:'QRIS' } ]},
-  ewallet: { title:'E-Wallet', icon:'phone', options:[
-    { id:'gopay', name:'GoPay' }, { id:'shopeepay', name:'ShopeePay' }, { id:'dana', name:'DANA' }, { id:'ovo', name:'OVO' }, { id:'linkaja', name:'LinkAja' },
-  ]},
-};
-
-function QRPlaceholder(){
-  const cells = useMemo(()=>{
-    const seed = 42; let s = seed; const arr = [];
-    for(let i=0;i<21*21;i++){ s = (s*9301+49297)%233280; arr.push(s/233280 > 0.52); }
-    return arr;
-  },[]);
-  const size = 21, cell = 8;
-  const finder = (x,y) => h('g',{ key:x+'-'+y },
-    h('rect',{x,y,width:cell*7,height:cell*7,fill:'#111'}), h('rect',{x:x+cell,y:y+cell,width:cell*5,height:cell*5,fill:'#fff'}), h('rect',{x:x+cell*2,y:y+cell*2,width:cell*3,height:cell*3,fill:'#111'})
-  );
-  return h('svg',{ viewBox:`0 0 ${size*cell} ${size*cell}`, className:'w-44 h-44 sm:w-52 sm:h-52' },
-    h('rect',{x:0,y:0,width:size*cell,height:size*cell,fill:'#fff'}),
-    cells.map((on,i)=>{
-      const x = i % size, y = Math.floor(i/size);
-      if((x<7&&y<7)||(x>=size-7&&y<7)||(x<7&&y>=size-7)) return null;
-      return on ? h('rect',{ key:i, x:x*cell, y:y*cell, width:cell, height:cell, fill:'#111' }) : null;
-    }),
-    finder(0,0), finder((size-7)*cell,0), finder(0,(size-7)*cell)
-  );
-}
-
-function PaymentPage(){
-  const { items, subtotal, discount, coupon, clearCart } = useAppState();
-  const { navigate } = useRouter();
-  const { generateOrderNumber, saveOrder } = useOrdersOnce();
-  const [checkout] = useState(()=> loadLS('trastar_checkout', defaultCheckout()));
-  const [openGroup, setOpenGroup] = useState(()=> loadLS('trastar_checkout_payment_group','va'));
-  const [selected, setSelected] = useState(null);
-  const [processing, setProcessing] = useState(false);
-  const [orderNumber] = useState(()=>{
-    let pending = loadLS('trastar_pending_order_number', null);
-    if(!pending){ pending = generateOrderNumber(); saveLS('trastar_pending_order_number', pending); }
-    return pending;
-  });
-
-  useEffect(()=>{ if(items.length===0 && !processing) navigate('/shop'); },[]);
-
-  const shippingMethod = SHIPPING_METHODS.find(s=>s.id===checkout.shippingMethod) || SHIPPING_METHODS[0];
-  const total = subtotal - discount + shippingMethod.cost;
-
-  function handlePayNow(){ window.alert('Pembayaran belum aktif. Tidak ada transaksi nyata.'); }
-
-  if(items.length===0 && !processing) return null;
-
-  return h('div',{ className:'max-w-4xl mx-auto px-4 py-8' },
-    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:'Checkout', to:'/checkout'},{label:'Payment'}] }),
-    h('div',{ className:'flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6' },
-      h('h1',{ className:'font-display font-extrabold text-2xl text-[var(--trs-dark)]' }, 'Choose Payment Method'),
-      h('div',{ className:'text-sm text-gray-500' }, 'Order: ', h('span',{className:'font-semibold text-gray-800'}, orderNumber))
-    ),
-    h('div',{ className:'bg-[var(--trs-dark)] rounded-xl px-5 py-4 flex items-center justify-between mb-6' },
-      h('span',{ className:'text-gray-300 text-sm' }, 'Total Payment'),
-      h('span',{ className:'font-display font-extrabold text-2xl text-white' }, formatIDR(total))
-    ),
-    h('div',{ className:'space-y-3' },
-      Object.entries(PAYMENT_OPTIONS).map(([key, group]) => h('div',{ key, className:'border border-gray-200 rounded-xl overflow-hidden bg-white' },
-        h('button',{ type:'button', onClick:()=>setOpenGroup(g=> g===key ? null : key),
-          className:'w-full flex items-center justify-between px-4 py-3.5' },
-          h('span',{ className:'flex items-center gap-2.5 font-semibold text-sm text-gray-800' }, h(Icon,{name:group.icon,size:18,className:'text-[var(--trs-red)]'}), group.title),
-          h(Icon,{ name:'chevron-down', size:16, className: cx('text-gray-400 transition-transform', openGroup===key && 'rotate-180') })
-        ),
-        openGroup===key && h('div',{ className:'border-t border-gray-100 px-4 pb-4' },
-          h('div',{ className:'space-y-2 pt-3' },
-            group.options.map(opt => {
-              const isSel = selected && selected.id===opt.id;
-              return h('div',{ key:opt.id },
-                h('button',{ type:'button', onClick:()=>setSelected({...opt, groupTitle:group.title}),
-                  className: cx('w-full flex items-center justify-between border rounded-lg px-3.5 py-3 text-left transition-colors', isSel ? 'border-[var(--trs-red)] bg-[var(--trs-red)]/5' : 'border-gray-200 hover:border-gray-300') },
-                  h('span',{ className:'text-sm font-medium text-gray-800' }, opt.name),
-                  h('span',{ className: cx('w-4 h-4 rounded-full border-2 flex-shrink-0', isSel ? 'border-[var(--trs-red)] bg-[var(--trs-red)]' : 'border-gray-300') })
-                ),
-                isSel && h('div',{ className:'mt-2 bg-gray-50 rounded-lg p-4' },
-                  key==='qris' ? h('div',{ className:'flex flex-col items-center text-center gap-3' },
-                    h(QRPlaceholder), h('p',{ className:'text-xs text-gray-500 max-w-xs' }, 'Scan QR menggunakan aplikasi bank atau e-wallet.')
-                  ) : key==='ewallet' ? h('p',{ className:'text-xs text-gray-500' }, 'Anda akan diarahkan ke aplikasi '+opt.name+' untuk menyelesaikan pembayaran (simulasi).')
-                  : h(React.Fragment,null,
-                      h('p',{ className:'text-xs text-gray-400 mb-1' }, key==='bank' ? 'No. Rekening ('+opt.holder+')' : 'Virtual Account Number'),
-                      h('div',{ className:'flex items-center justify-between gap-3' },
-                        h('span',{ className:'font-display font-bold text-base sm:text-lg text-gray-800 tracking-wide' }, opt.account),
-                        h(CopyButton,{ text: opt.account })
-                      )
-                    )
-                )
-              );
-            })
-          ),
-          h('p',{ className:'text-xs text-gray-400 mt-3' }, 'Nomor pembayaran contoh. Jangan lakukan transfer. Metode pembayaran belum aktif.')
-        )
-      ))
-    ),
-    h('button',{ type:'button', disabled:true, onClick:handlePayNow,
-      className: cx('trs-btn-primary w-full py-4 rounded-lg font-bold text-sm mt-6 flex items-center justify-center gap-2', processing && 'opacity-80 cursor-not-allowed') },
-      processing ? h(React.Fragment,null, h(Icon,{name:'loader', size:16}), 'Processing Payment...') : 'PAYMENT DISABLED (DEMO)')
-  );
-}
-
-function CopyButton({ text }){
-  const [copied, setCopied] = useState(false);
-  return h('button',{ type:'button', onClick:()=>{
-      if(navigator.clipboard){ navigator.clipboard.writeText(text).catch(()=>{}); }
-      setCopied(true); setTimeout(()=>setCopied(false), 1500);
-    }, className:'flex items-center gap-1.5 text-xs font-bold text-[var(--trs-red)] border border-[var(--trs-red)]/30 rounded-lg px-3 py-1.5 hover:bg-[var(--trs-red)]/5 flex-shrink-0' },
-    h(Icon,{ name: copied?'check':'copy', size:13 }), copied ? 'Copied' : 'COPY'
-  );
-}
-
-function useOrdersOnce(){
-  const ref = useRef(null);
-  if(!ref.current) ref.current = useOrdersLogic();
-  return ref.current;
-}
-
-// ==================== THANK YOU PAGE ====================
-function ThankYouPage(){
-  const { navigate } = useRouter();
-  const { getOrder, getLastOrderNumber } = useOrdersOnce();
-  const orderNumber = getLastOrderNumber();
-  const order = orderNumber ? getOrder(orderNumber) : null;
-
-  useEffect(()=>{ window.scrollTo(0,0); },[]);
-
-  if(!order){
-    return h('div',{ className:'max-w-lg mx-auto px-4 py-24 text-center' },
-      h('p',{ className:'text-gray-500 mb-4' }, 'Tidak ada pesanan yang bisa ditampilkan.'),
-      h(Link,{ to:'/', className:'text-[var(--trs-red)] font-semibold' }, 'Kembali ke Beranda')
-    );
-  }
-
-  return h('div',{ className:'max-w-2xl mx-auto px-4 py-12 sm:py-16' },
-    h('div',{ className:'text-center mb-10' },
-      h('div',{ className:'w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-5' },
-        h(Icon,{ name:'check-circle', size:44, className:'text-emerald-500' })),
-      h('h1',{ className:'font-display font-extrabold text-2xl sm:text-3xl text-[var(--trs-dark)] mb-2' }, 'Thank You For Your Order!'),
-      h('p',{ className:'text-gray-500 text-sm' }, 'Pesanan kamu berhasil dibuat.')
-    ),
-    h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5 sm:p-6 mb-6' },
-      h('div',{ className:'flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-gray-100 mb-4' },
-        h('div',null, h('p',{ className:'text-xs text-gray-400' }, 'Order Number'), h('p',{ className:'font-display font-bold text-lg text-gray-800' }, order.orderNumber)),
-        h('div',{ className:'flex gap-2' }, h(Badge,{tone:'green'}, 'PAID'), h(Badge,{tone:'dark'}, order.orderStatus))
-      ),
-      h('div',{ className:'space-y-3 mb-4' },
-        order.items.map((it,i) => h('div',{ key:i, className:'flex items-center justify-between text-sm' },
-          h('span',{ className:'text-gray-600' }, it.name+' × '+it.qty), h('span',{ className:'font-medium text-gray-800' }, formatIDR(it.price*it.qty))))
-      ),
-      h('div',{ className:'space-y-2 text-sm border-t border-gray-100 pt-3' },
-        h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Shipping'), h('span',{className:'text-gray-800'}, formatIDR(order.shippingCost))),
-        order.discount>0 && h('div',{ className:'flex justify-between text-emerald-600' }, h('span',null,'Discount'), h('span',null, '-'+formatIDR(order.discount))),
-        h('div',{ className:'flex justify-between items-baseline pt-2' }, h('span',{className:'font-semibold text-gray-700'},'Grand Total'), h('span',{ className:'font-display font-extrabold text-lg text-[var(--trs-dark)]' }, formatIDR(order.total)))
-      ),
-      h('div',{ className:'grid sm:grid-cols-2 gap-4 mt-5 pt-4 border-t border-gray-100 text-sm' },
-        h('div',null, h('p',{ className:'text-xs text-gray-400 mb-1' }, 'Payment Method'), h('p',{ className:'font-medium text-gray-700' }, order.paymentMethod)),
-        h('div',null, h('p',{ className:'text-xs text-gray-400 mb-1' }, 'Shipping Address'), h('p',{ className:'font-medium text-gray-700 leading-relaxed' },
-          order.customer.fullName+', '+order.shippingAddress.address+', '+order.shippingAddress.district+', '+order.shippingAddress.city+', '+order.shippingAddress.province+' '+order.shippingAddress.postalCode))
-      )
-    ),
-    h('p',{ className:'text-xs text-gray-400 text-center mb-8' }, 'Konfirmasi pesanan telah dikirim ke email Anda.'),
-    h('div',{ className:'flex flex-col sm:flex-row gap-3 mb-10' },
-      h(Link,{ to:'/orders/'+order.orderNumber, className:'trs-btn-primary flex-1 text-center py-3.5 rounded-lg font-bold text-sm' }, 'VIEW ORDER'),
-      h(Link,{ to:'/', className:'flex-1 text-center py-3.5 rounded-lg font-bold text-sm border-2 border-gray-200 text-gray-700 hover:border-gray-300' }, 'CONTINUE SHOPPING')
-    ),
-    h('div',{ className:'bg-gray-50 rounded-xl p-5' },
-      h('h4',{ className:'font-semibold text-sm text-gray-700 mb-3' }, "What's Next?"),
-      h('ol',{ className:'space-y-2' },
-        ['Payment confirmed','Order processing','Order shipped','Order delivered'].map((s,i) => h('li',{ key:i, className:'flex items-center gap-3 text-sm' },
-          h('span',{ className: cx('w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0', i<2 ? 'bg-[var(--trs-red)] text-white' : 'bg-gray-200 text-gray-500') }, i+1),
-          h('span',{ className: i<2 ? 'text-gray-700 font-medium':'text-gray-400' }, s)))
-      )
-    )
-  );
-}
-
-// ==================== ORDER DETAIL PAGE ====================
-const ORDER_STEPS = ['Order Placed','Payment Confirmed','Processing','Shipped','Delivered'];
-function OrderDetailPage({ params }){
-  const { getOrder } = useOrdersOnce();
-  const order = getOrder(params.orderId);
-  useEffect(()=>{ window.scrollTo(0,0); },[]);
-
-  if(!order){
-    return h('div',{ className:'max-w-lg mx-auto px-4 py-24 text-center' },
-      h('p',{ className:'text-gray-500 mb-4' }, 'Pesanan tidak ditemukan.'),
-      h(Link,{ to:'/', className:'text-[var(--trs-red)] font-semibold' }, 'Kembali ke Beranda')
-    );
-  }
-  const activeStepIdx = 2; // Processing
-
-  return h('div',{ className:'max-w-3xl mx-auto px-4 py-8' },
-    h(Breadcrumb,{ items:[{label:'Home', to:'/'},{label:'My Order'}] }),
-    h('div',{ className:'flex flex-wrap items-center justify-between gap-3 mb-8' },
-      h('div',null, h('h1',{ className:'font-display font-extrabold text-2xl text-[var(--trs-dark)]' }, 'My Order'), h('p',{ className:'text-sm text-gray-400 mt-1' }, 'Order Number: '+order.orderNumber)),
-      h(Badge,{tone:'dark'}, order.orderStatus)
-    ),
-
-    h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5 sm:p-6 mb-6 overflow-x-auto' },
-      h('div',{ className:'flex items-center min-w-[560px]' },
-        ORDER_STEPS.map((s,i) => h(React.Fragment,{key:s},
-          h('div',{ className:'flex flex-col items-center gap-2 flex-1' },
-            h('div',{ className: cx('w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0', i<=activeStepIdx ? 'bg-[var(--trs-red)] text-white' : 'bg-gray-100 text-gray-400') },
-              i < activeStepIdx ? h(Icon,{name:'check',size:14}) : i+1),
-            h('span',{ className: cx('text-xs font-medium text-center', i<=activeStepIdx ? 'text-gray-700':'text-gray-400') }, s)
-          ),
-          i < ORDER_STEPS.length-1 && h('div',{ className: cx('h-0.5 flex-1 -mt-6', i<activeStepIdx ? 'bg-[var(--trs-red)]' : 'bg-gray-100') })
-        ))
-      )
-    ),
-
-    h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5 sm:p-6 mb-6' },
-      h('h3',{ className:'font-semibold text-sm text-gray-800 mb-4' }, 'Product Information'),
-      h('div',{ className:'space-y-3 mb-4' },
-        order.items.map((it,i) => h('div',{ key:i, className:'flex items-center justify-between text-sm' },
-          h('span',{ className:'text-gray-600' }, it.name+' ('+Object.values(it.variant||{}).filter(v=>v!=='-').join(' / ')+') × '+it.qty), h('span',{ className:'font-medium text-gray-800' }, formatIDR(it.price*it.qty))))
-      ),
-      h('div',{ className:'space-y-2 text-sm border-t border-gray-100 pt-3' },
-        h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Subtotal'), h('span',{className:'text-gray-800'}, formatIDR(order.subtotal))),
-        h('div',{ className:'flex justify-between text-gray-500' }, h('span',null,'Shipping ('+order.shippingMethod+')'), h('span',{className:'text-gray-800'}, formatIDR(order.shippingCost))),
-        order.discount>0 && h('div',{ className:'flex justify-between text-emerald-600' }, h('span',null,'Discount'), h('span',null,'-'+formatIDR(order.discount))),
-        h('div',{ className:'flex justify-between items-baseline pt-2' }, h('span',{className:'font-semibold text-gray-700'},'Total'), h('span',{ className:'font-display font-extrabold text-lg text-[var(--trs-dark)]' }, formatIDR(order.total)))
-      )
-    ),
-
-    h('div',{ className:'grid sm:grid-cols-2 gap-4 mb-8' },
-      h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5' },
-        h('h3',{ className:'font-semibold text-sm text-gray-800 mb-2 flex items-center gap-2' }, h(Icon,{name:'map-pin',size:14,className:'text-[var(--trs-red)]'}), 'Shipping Address'),
-        h('p',{ className:'text-sm text-gray-600 leading-relaxed' }, order.customer.fullName, h('br'), order.shippingAddress.address, h('br'), order.shippingAddress.district+', '+order.shippingAddress.city, h('br'), order.shippingAddress.province+' '+order.shippingAddress.postalCode)
-      ),
-      h('div',{ className:'bg-white rounded-xl border border-gray-100 p-5' },
-        h('h3',{ className:'font-semibold text-sm text-gray-800 mb-2 flex items-center gap-2' }, h(Icon,{name:'wallet',size:14,className:'text-[var(--trs-red)]'}), 'Payment Information'),
-        h('p',{ className:'text-sm text-gray-600' }, order.paymentMethod), h('p',{ className:'text-xs text-emerald-600 font-semibold mt-1' }, order.paymentStatus)
-      )
-    ),
-    h(Link,{ to:'/', className:'trs-btn-primary inline-block px-8 py-3.5 rounded-lg font-bold text-sm' }, 'CONTINUE SHOPPING')
-  );
-}
+// Disabled legacy payment and localStorage order pages; preview uses Neon only.
+function PaymentPage(){return null;}
+function ThankYouPage(){return null;}
+function OrderDetailPage(){return null;}
 
 // ==================== ABOUT / CONTACT / 404 ====================
 function AboutPage(){
@@ -1533,5 +1012,6 @@ function App(){
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(h(App));
-</script></body></html>
+window.startTrastarStorefront = ()=>root.render(h(App));
+</script>
+<script defer src="/storefront-connected.js"></script></body></html>
