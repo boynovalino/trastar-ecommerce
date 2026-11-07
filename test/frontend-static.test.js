@@ -36,7 +36,7 @@ test('qa.html uses only development fixtures and inline script compiles',()=>{
 test('admin-live.html uses auth session and server-backed product/order APIs',()=>{
  const html=fs.readFileSync(new URL('../admin-live.html',import.meta.url),'utf8');
  assert.match(html,/DEV ONLY/);
- for(const path of ['/api/session','/api/admin-products','/api/admin-price-tiers','/api/admin-orders'])assert.ok(html.includes(path));
+ for(const path of ['/api/session','/api/admin-products','/api/admin-price-tiers','/api/admin-orders','/api/admin-inventory','/api/admin-product-update'])assert.ok(html.includes(path));
  const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(x=>x[1]).filter(Boolean);
  assert.ok(scripts.length);for(const source of scripts)new vm.Script(source,{filename:'admin-live.html'});
 });
@@ -54,4 +54,18 @@ test('connected storefront uses database-backed catalog and unpaid orders',()=>{
  assert.match(js,/ConnectedOrderPage/);
  assert.doesNotMatch(js,/localStorage\./);
  assert.doesNotMatch(js,/paymentStatus\s*:\s*['"]PAID['"]/);
+});
+
+test('admin main route serves database UI with audited actions',()=>{
+ const config=JSON.parse(fs.readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
+ for(const route of ['/admin','/admin/:path*']){
+  assert.equal(config.rewrites.find(x=>x.source===route)?.destination,'/admin-live.html');
+ }
+ const admin=fs.readFileSync(new URL('../admin-live.html',import.meta.url),'utf8');
+ for(const id of ['editProduct','editName','stockEdit','priceEdit','saveInventory','saveProduct','orderDetail','cancelReason']){
+  assert.match(admin,new RegExp('id="'+id+'"'));
+ }
+ assert.match(admin,/cancel_simulation/);
+ assert.match(admin,/reason:\$\('stockReason'\)/);
+ assert.match(admin,/reason:\$\('productReason'\)/);
 });

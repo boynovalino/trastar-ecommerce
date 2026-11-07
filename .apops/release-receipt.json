@@ -24,10 +24,17 @@
     "storefront_to_neon_to_admin": "PASS synthetic international PENDING order",
     "full_storefront_browser_interactive": "NOT RUN",
     "live_gateway": "BLOCKED MERCHANT",
-    "real_international_shipping": "BLOCKED CARRIER"
+    "real_international_shipping": "BLOCKED CARRIER",
+    "admin_inventory_mutation": "PASS Neon dev",
+    "admin_product_mutation": "PASS Neon dev",
+    "order_cancel_and_expiry": "PASS Neon dev",
+    "concurrent_stock_reservations": "PASS Neon dev",
+    "admin_audit_log": "PASS Neon dev",
+    "browser_interactive": "NOT RUN",
+    "production_health": "NOT RUN"
   },
   "recovery_state": "Prototype baseline known, client production release not approved",
-  "last_successful_gate": "NEON_ORDER_AND_ADMIN_INTEGRATION_VERIFIED",
-  "next_action": "Push candidate branch, observe CI and Vercel preview; no merge while release conditions are unapproved",
-  "observed_at": "2026-11-07T00:00:00+07:00"
+  "last_successful_gate": "DEVELOPMENT_NEON_ADMIN_LIFECYCLE_INTEGRATION_PASS",
+  "next_action": "Commit and push dev branch, verify PR CI and preview exact SHA; do not merge or deploy client production without CTO/CEO release approval",
+  "observed_at": "2026-11-07T14:49:40.680Z"
 }

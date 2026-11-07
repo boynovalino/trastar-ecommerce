@@ -62,3 +62,11 @@ Production uses a separate PostgreSQL instance controlled by client. Apply revie
 - Multiple variants are separate SKU cards until a final variant picker is approved. Quantity tier pricing is displayed on product detail and cart.
 - npm test exercises mock catalog boot; node --env-file=.env.local test/integration-storefront.mjs exercises the TRASTAR development database. Never run against production.
 - Browser-interactive UI QA: NOT RUN. Vercel preview GET health and catalog checks are separate.
+
+## Admin inventory, order lifecycle and audit log
+- The Vercel /admin route now targets the database-backed admin-live.html. The old admin.html remains a visually labelled legacy demo, not a genuine management backend.
+- Dev admin OWNER/ADMIN may update product name, weight, visibility, export flag, SKU price/stock/active state, with an obligatory reason. Mutations are recorded in admin_audit_events. Staff view access remains limited to order listing.
+- Admin can read simulated order items and cancel a PENDING preview order exactly once. Cancellation releases reserved stock transactionally, updates order to EXPIRED/CANCELLED and records an audit event; it never marks PAID.
+- Expired preview orders are reclaimed before catalog, shipping quote or customer order-status reads. These lazy cleanup calls are for QA. Production requires durable payment/stock reservation policies and scheduled reconciliation.
+- Migration 003_admin_audit.sql is additive and applies only to verified TRASTAR development PostgreSQL. It must not be applied to any unrelated app or client database.
+- Lifecycle test: node --env-file=.env.local test/integration-admin-lifecycle.mjs; writes only synthetic fixtures to TRASTAR development and verifies concurrent checkout oversell prevention, cancellation idempotency, expiry release and audit trail.

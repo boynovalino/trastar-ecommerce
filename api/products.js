@@ -1,7 +1,9 @@
 import {pool,requireDatabase} from '../lib/db.js';
+import {releaseExpiredPreviewOrders} from '../lib/checkout.js';
 import {json,run,method} from '../lib/http.js';
 export default run(async(req,res)=>{
   method(req,['GET']);requireDatabase();
+  await releaseExpiredPreviewOrders();
   const products=await pool.query("SELECT id,sku,slug,name,description,image_url,brand,category,weight_grams,export_allowed FROM products WHERE is_active=true ORDER BY created_at DESC LIMIT 100");
   const ids=products.rows.map(p=>p.id);
   const variants=ids.length?await pool.query("SELECT id,product_id,sku,options,unit_price_idr,stock_on_hand-stock_reserved AS available_stock FROM variants WHERE product_id=ANY($1::uuid[]) AND is_active=true ORDER BY sku",[ids]):{rows:[]};
