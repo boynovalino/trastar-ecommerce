@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>TRASTAR | QA Database & Checkout Preview</title>
+<style>
+:root{font:14px system-ui,-apple-system,sans-serif;color:#1a1a1a;background:#f6f6f7}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#161616;color:white;padding:22px max(18px,calc((100vw - 1000px)/2));border-bottom:5px solid #dc2538}
+main{max-width:1000px;margin:20px auto;padding:0 18px 40px}
+h1{font-size:24px;margin:0 0 6px}h2{margin:0 0 12px;font-size:18px}
+p{line-height:1.5;margin:8px 0}
+small{color:#6b7280}
+.banner{background:#ffedd5;border:1px solid #f4c283;padding:14px 16px;border-radius:8px;margin-bottom:20px;color:#773a0c;font-weight:600}
+.grid{display:grid;grid-template-columns:1.25fr 1fr;gap:20px}
+.panel{background:white;border:1px solid #e1e2e5;border-radius:12px;padding:20px}
+.product{display:block;text-align:left;width:100%;border:1px solid #d4d4d8;background:#fff;border-radius:9px;padding:14px;margin:10px 0;cursor:pointer;color:inherit}
+.product.selected{border:2px solid #dc2538;background:#fff7f8}
+.product strong{font-size:16px}
+form{display:grid;gap:13px}
+label{display:grid;gap:6px;font-weight:600}
+input,select{font:inherit;padding:10px;border:1px solid #c5c6ce;border-radius:7px;width:100%}
+button.action{border:0;border-radius:7px;padding:12px 14px;background:#c82035;color:white;font-weight:700;cursor:pointer}
+button.action:disabled{background:#aaa;cursor:not-allowed}
+.result{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f4f6;border-radius:8px;padding:14px;min-height:72px}
+.amount{font-size:26px;font-weight:800;color:#b91c2a}
+.meta{color:#6b7280;font-size:12px}
+@media(max-width:680px){.grid{grid-template-columns:1fr}header{padding:20px 18px}}
+</style>
+</head>
+<body>
+<header><h1>TRASTAR / Developer QA</h1><p>Uji data Neon, harga quantity, ongkir simulasi dan pembuatan order belum dibayar.</p></header>
+<main>
+<section class="banner">KHUSUS DEVELOPMENT. Semua produk dan nama pelanggan di halaman ini adalah data fiktif. Ongkir bukan tarif kurir. Pembayaran VA, QRIS, e-wallet dan kartu internasional BELUM aktif. Jangan masukkan data pribadi atau transfer uang.</section>
+<div class="grid">
+<section class="panel"><h2>1. Produk database</h2><div id="products">Memuat produk Neon...</div></section>
+<section class="panel">
+<h2>2. Simulasi order</h2>
+<form id="form">
+<label>Jumlah unit<input id="quantity" type="number" min="1" max="50" step="1" value="5" required></label>
+<label>Negara tujuan
+<select id="country">
+<option value="ID">Indonesia</option><option value="SG" selected>Singapura</option>
+<option value="MY">Malaysia</option><option value="TH">Thailand</option><option value="PH">Filipina</option><option value="VN">Vietnam</option><option value="JP">Jepang</option>
+</select></label>
+<p>Harga satuan terhitung: <strong id="unitPrice">-</strong></p>
+<p>Total produk: <strong id="subtotal">-</strong></p>
+<button class="action" type="button" id="quote">Hitung ongkir DEMO (API)</button>
+<p class="meta" id="shippingLabel">Ongkir belum dihitung</p>
+<p class="amount" id="total">-</p>
+<button class="action" type="submit" id="submit" disabled>Buat order demo (PENDING)</button>
+</form>
+<h2 style="margin-top:24px">3. Bukti API</h2><div class="result" id="result" role="status">Belum ada order dibuat.</div>
+</section></div>
+<p class="meta">Halaman ini bukan storefront final. Prototype pelanggan tetap di halaman utama sampai UI API dan merchant gateway selesai diintegrasikan.</p>
+</main>
+<script>
+(function(){
+'use strict';
+var products=[],selected=null,quote=null;
+var $=function(id){return document.getElementById(id)};
+function idr(n){return 'Rp'+Number(n).toLocaleString('id-ID')}
+function price(v,q){var p=v.unitPriceIdr;v.tiers.forEach(function(t){if(q>=t.minQty)p=t.unitPriceIdr});return p}
+function setError(e){$('result').textContent=String(e&&e.message||e);$('result').style.color='#b91c2a'}
+async function request(url,options){
+ var r=await fetch(url,options||{});
+ var data=await r.json();
+ if(!r.ok)throw new Error(data.error+': '+data.message);
+ return data;
+}
+function items(){return [{variantId:selected.id,quantity:Number($('quantity').value)}]}
+function update(){
+ quote=null;$('shippingLabel').textContent='Ongkir belum dihitung';$('submit').disabled=true;
+ if(!selected)return;
+ var q=Number($('quantity').value);
+ if(!Number.isSafeInteger(q)||q<1||q>50)return;
+ $('unitPrice').textContent=idr(price(selected,q));
+ $('subtotal').textContent=idr(price(selected,q)*q);
+ $('total').textContent=idr(price(selected,q)*q)+' + ongkir';
+}
+function render(){
+ var container=$('products');container.textContent='';
+ products.forEach(function(p){
+  p.variants.forEach(function(v){
+   var b=document.createElement('button');b.type='button';b.className='product'+(selected&&v.id===selected.id?' selected':'');
+   var h=document.createElement('strong');h.textContent=p.name+' / '+v.sku;b.append(h);
+   var sub=document.createElement('p');sub.className='meta';sub.textContent='SKU '+v.sku+' · stok tersedia '+v.availableStock+' · '+p.weight_grams+' gram/unit';b.append(sub);
+   var t=document.createElement('p');t.textContent='Harga normal '+idr(v.unitPriceIdr)+' | '+v.tiers.map(function(x){return x.minQty+'+ '+idr(x.unitPriceIdr)}).join(', ');b.append(t);
+   b.addEventListener('click',function(){selected=v;render();update()});
+   container.append(b);
+  });
+ });
+}
+$('quantity').addEventListener('input',update);
+$('country').addEventListener('change',update);
+$('quote').addEventListener('click',async function(){
+ try{
+  if(!selected)throw Error('Pilih produk dari database terlebih dahulu.');
+  var data=await request('/api/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({country:$('country').value,items:items()})});
+  quote=data.quote;
+  $('shippingLabel').textContent=quote.label+' | '+idr(quote.costIdr);
+  $('total').textContent=idr(price(selected,Number($('quantity').value))*Number($('quantity').value)+quote.costIdr);
+  $('submit').disabled=false;$('result').textContent='Quote signed. Belum membuat order dan tidak ada transaksi pembayaran.';$('result').style.color='';
+ }catch(e){setError(e)}
+});
+$('form').addEventListener('submit',async function(e){
+ e.preventDefault();
+ if(!quote||!selected)return;
+ $('submit').disabled=true;
+ try{
+  var country=$('country').value;
+  var data=await request('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+    items:items(),quoteToken:quote.quoteToken,email:'qa-fixture@example.invalid',recipientName:'TRASTAR QA FIXTURE',
+    address:{country:country,city:country==='ID'?'Jakarta':'Demo City',line1:'TEST ONLY 123 Example Road',postalCode:'000000'}
+  })});
+  $('result').style.color='';
+  $('result').textContent='ORDER DEMO: '+data.orderNo+'\nStatus pembayaran: '+data.paymentStatus+'\nTotal: '+idr(data.totalIdr)+'\n'+data.notice;
+  quote=null;$('shippingLabel').textContent='Quote sudah dipakai. Hitung ulang untuk tes berikutnya.';
+ }catch(err){setError(err)}
+});
+request('/api/products').then(function(data){
+ products=data.products||[];
+ if(!products.length){$('products').textContent='Belum ada produk development';return}
+ selected=products[0].variants[0];render();update();
+}).catch(setError);
+})();
+</script>
+</body>
+</html>

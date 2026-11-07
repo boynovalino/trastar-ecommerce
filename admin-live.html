@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="id"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>TRASTAR | Data-backed Admin Preview</title>
+<style>
+:root{font:14px system-ui,-apple-system,sans-serif;color:#171717;background:#f5f5f6}
+*{box-sizing:border-box}body{margin:0}
+header{background:#171717;color:#fff;padding:20px max(18px,calc((100vw - 1080px)/2));border-bottom:5px solid #cf2137}
+h1{margin:0 0 4px;font-size:25px}h2{font-size:18px;margin:0 0 15px}h3{font-size:15px;margin:8px 0}
+main{max-width:1080px;padding:22px 18px 60px;margin:auto}
+.banner{background:#ffeed8;border:1px solid #f3c99d;color:#843b0e;padding:13px 16px;border-radius:9px;font-weight:600;margin-bottom:20px}
+.panel{background:white;padding:22px;border:1px solid #e1e2e5;border-radius:12px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+label{display:grid;gap:5px;font-weight:600;margin:9px 0}
+input,select{padding:11px;border:1px solid #c8ccd3;border-radius:7px;font:inherit;width:100%;max-width:100%}
+input[type=checkbox]{width:auto}
+button{padding:10px 16px;border:0;border-radius:7px;font:700 13px system-ui;cursor:pointer}
+button.primary{background:#c51f34;color:#fff}
+button.secondary{border:1px solid #bbb;background:#fff}
+button:disabled{background:#aaa;cursor:not-allowed}
+small,.muted{color:#62666b}p{line-height:1.5}
+.status{padding:12px;border-radius:7px;white-space:pre-wrap;overflow-wrap:anywhere;background:#eff1f4;min-height:35px}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:10px 8px;text-align:left;border-bottom:1px solid #e6e6e8;font-size:13px}
+th{color:#52565c}
+.scroll{overflow:auto}
+#mainAdmin[hidden],#loginPanel[hidden]{display:none}
+.flex{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
+</style>
+</head><body>
+<header><h1>TRASTAR / Admin Data Preview</h1><p style="margin:0">Admin terautentikasi, data PostgreSQL, harga grosir, pesanan demo.</p></header>
+<main>
+<div class="banner">DEV ONLY. Dashboard terhubung Neon di <code>/admin</code>; UI lama tersimpan sebagai demo di <code>/admin.html</code>. Halaman ini memakai API dengan autentikasi server, tetapi BELUM untuk produk, pelanggan, atau transaksi nyata.</div>
+<section class="panel" id="loginPanel">
+<h2>Login akun QA admin</h2>
+<form id="loginForm">
+<label>Email<input type="email" id="email" required autocomplete="username"></label>
+<label>Password<input type="password" id="password" required autocomplete="current-password"></label>
+<button type="submit" class="primary">Masuk ke admin database</button>
+</form>
+<p class="muted">Akun QA harus dibuat melalui prosedur provisioning developer, bukan lewat registrasi publik.</p>
+</section>
+<div id="mainAdmin" hidden>
+<section class="panel flex">
+<div><strong id="identity">Admin</strong><p class="muted" style="margin:3px 0">Semua data yang dipakai saat pengujian harus fiktif.</p></div>
+<button class="secondary" type="button" id="logout">Logout</button>
+</section>
+<div class="grid">
+<section class="panel">
+<h2>Tambah produk development</h2>
+<form id="productForm">
+<label>SKU produk<input id="sku" required placeholder="DEMO-CHAIN-01" pattern="[A-Z0-9_-]+"></label>
+<label>Slug<input id="slug" required placeholder="demo-rantai-motor"></label>
+<label>Nama produk<input id="name" required placeholder="[DEMO] Rantai Motor"></label>
+<label>SKU varian<input id="variantSku" required placeholder="DEMO-CHAIN-01-A"></label>
+<label>Harga satuan IDR<input id="price" type="number" min="0" step="1" required></label>
+<label>Stok<input id="stock" type="number" min="0" step="1" required></label>
+<label>Berat gram<input id="weight" type="number" min="1" step="1" required></label>
+<label><span><input type="checkbox" id="exportAllowed"> Diizinkan ekspor (fixture saja)</span></label>
+<button class="primary">Simpan produk ke Neon</button>
+</form>
+</section>
+<section class="panel">
+<h2>Harga grosir per varian</h2>
+<label>SKU varian<select id="variant"></select></label>
+<label>Tingkatan quantity<input id="tiers" placeholder="5:140000, 10:130000"></label>
+<p class="muted">Format: <code>minQuantity:hargaIDR</code>, dipisahkan koma. Contoh: <code>5:140000,10:130000</code>.</p>
+<button id="saveTiers" class="primary" type="button">Simpan aturan grosir</button>
+<h3 style="margin-top:22px">Perbarui stok dan harga SKU</h3>
+<label>Stok total (unit)<input id="stockEdit" type="number" min="0" max="1000000" step="1"></label>
+<label>Harga satuan IDR<input id="priceEdit" type="number" min="0" max="1000000000000" step="1"></label>
+<label><span><input id="skuActive" type="checkbox"> Varian aktif</span></label>
+<label>Alasan perubahan<input id="stockReason" maxlength="200" placeholder="Koreksi stok setelah audit QA"></label>
+<button id="saveInventory" class="primary" type="button">Simpan stok dan harga SKU</button>
+<h3 style="margin-top:25px">Status eksekusi</h3>
+<div id="status" class="status" role="status">Menunggu aksi.</div>
+</section>
+</div>
+<section class="panel">
+<h2>Edit produk yang tersimpan</h2>
+<div class="grid">
+ <div>
+ <label>Pilih produk<select id="editProduct"></select></label>
+ <label>Nama produk<input id="editName" maxlength="180"></label>
+ <label>Berat per unit (gram)<input id="editWeight" type="number" min="1" max="500000" step="1"></label>
+ </div>
+ <div>
+ <label><span><input id="editActive" type="checkbox"> Produk tampil di katalog</span></label>
+ <label><span><input id="editExport" type="checkbox"> Produk memenuhi persyaratan ekspor (QA)</span></label>
+ <label>Alasan perubahan<input id="productReason" maxlength="200" placeholder="Koreksi katalog hasil QA"></label>
+ <button id="saveProduct" class="primary" type="button">Simpan perubahan produk</button>
+ </div>
+</div>
+</section>
+<section class="panel">
+<div class="flex"><h2>Produk tersimpan di database</h2><button id="refresh" class="secondary" type="button">Refresh data</button></div>
+<div class="scroll"><table><thead><tr><th>SKU</th><th>Nama produk</th><th>Aktif</th><th>Varian</th></tr></thead><tbody id="productRows"></tbody></table></div>
+</section>
+<section class="panel">
+<h2>Pesanan masuk (simulasi)</h2>
+<div class="scroll"><table><thead><tr><th>Order</th><th>Negara</th><th>Total</th><th>Pembayaran</th><th>Fulfillment</th><th>Action</th></tr></thead><tbody id="orderRows"></tbody></table></div>
+<h3 style="margin-top:18px">Detail pesanan</h3>
+<div id="orderDetail" class="status" role="status">Klik Detail untuk membaca order dari Neon.</div>
+<label>Alasan pembatalan QA<input id="cancelReason" value="QA fixture cancelled after testing" maxlength="200"></label>
+<p class="muted">Pembatalan hanya untuk order simulasi yang belum dibayar. Reservasi stok dilepas satu kali.</p>
+</section>
+</div>
+</main>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+var productsCache=[],variantsCache=[];
+function money(n){return 'Rp'+Number(n).toLocaleString('id-ID')}
+function msg(s,isError){$('status').textContent=s;$('status').style.color=isError?'#b91c2a':'#125b33'}
+async function request(path,method,data){
+ var options={method:method||'GET',credentials:'same-origin',headers:{}};
+ if(data){options.headers['Content-Type']='application/json';options.body=JSON.stringify(data)}
+ var r=await fetch(path,options);var raw=await r.json().catch(function(){return {}});
+ if(!r.ok)throw Error((raw.error||r.status)+': '+(raw.message||'Request failed'));
+ return raw;
+}
+function td(tr,text){var el=document.createElement('td');el.textContent=String(text);tr.append(el)}
+function setLoggedIn(user){
+ $('loginPanel').hidden=true;$('mainAdmin').hidden=false;$('identity').textContent=user.email+' ('+user.role+')';
+}
+function setLoggedOut(){$('loginPanel').hidden=false;$('mainAdmin').hidden=true}
+function fillVariant(){
+ const v=variantsCache.find(x=>x.id===$('variant').value);
+ if(!v)return;
+ $('stockEdit').value=v.stock_on_hand;$('priceEdit').value=v.unit_price_idr;$('skuActive').checked=!!v.is_active;
+}
+function fillProduct(){
+ const p=productsCache.find(x=>x.id===$('editProduct').value);
+ if(!p)return;
+ $('editName').value=p.name;$('editWeight').value=p.weight_grams;
+ $('editActive').checked=!!p.is_active;$('editExport').checked=!!p.export_allowed;
+}
+async function showOrder(orderNo){
+ try{
+  const {order}=await request('/api/admin-orders?orderNo='+encodeURIComponent(orderNo));
+  $('orderDetail').textContent=
+   order.order_no+' | '+order.payment_status+' | '+order.fulfillment_status+
+   '\nNegara: '+order.shipping_country+' | Ongkir: '+money(order.shipping_cost_idr)+
+   '\nTotal: '+money(order.total_idr)+
+   '\n'+order.items.map(i=>i.sku_snapshot+' x '+i.quantity+' @ '+money(i.unit_price_idr)).join('\n')+
+   '\n'+(order.is_simulation?'DATA SIMULASI':'ORDER ASLI, tidak dapat diedit dari QA');
+ }catch(e){msg(e.message,true)}
+}
+async function cancelOrder(orderNo){
+ const reason=$('cancelReason').value.trim();
+ if(reason.length<8){msg('Alasan pembatalan minimal 8 karakter',true);return}
+ if(!window.confirm('Batalkan order SIMULASI '+orderNo+' dan lepaskan stok yang direservasi?'))return;
+ try {
+  const out=await request('/api/admin-orders','POST',{action:'cancel_simulation',orderNo,reason});
+  await refresh();await showOrder(orderNo);
+  msg(out.cancelled?'Order QA dibatalkan dan reservasi dilepas.':'Order sudah tertutup; tidak ada stok yang dilepas dua kali.');
+ }catch(e){msg(e.message,true)}
+}
+async function refresh(){
+ try{
+  var response=await Promise.all([request('/api/admin-products'),request('/api/admin-orders')]);
+  var products=response[0].products||[],variants=response[0].variants||[],orders=response[1].orders||[];
+  productsCache=products;variantsCache=variants;
+  var oldVariant=$('variant').value,oldProduct=$('editProduct').value;
+  $('productRows').textContent='';$('orderRows').textContent='';$('variant').textContent='';$('editProduct').textContent='';
+  products.forEach(function(p){
+   var option=document.createElement('option');option.value=p.id;option.textContent=p.sku+' | '+p.name;$('editProduct').append(option);
+   var tr=document.createElement('tr');
+   td(tr,p.sku);td(tr,p.name);td(tr,p.is_active?'YES':'NO');
+   td(tr,variants.filter(function(v){return v.product_id===p.id}).length);
+   $('productRows').append(tr);
+  });
+  variants.forEach(function(v){
+   var opt=document.createElement('option');opt.value=v.id;opt.textContent=v.sku+' | '+money(v.unit_price_idr);$('variant').append(opt);
+  });
+  $('variant').value=oldVariant;$('editProduct').value=oldProduct;
+  if(!$('variant').value&&variants.length)$('variant').value=variants[0].id;
+  if(!$('editProduct').value&&products.length)$('editProduct').value=products[0].id;
+  fillVariant();fillProduct();
+  orders.forEach(function(o){
+   var tr=document.createElement('tr');td(tr,o.order_no);td(tr,o.shipping_country);
+   td(tr,money(o.total_idr));td(tr,o.payment_status+(o.is_simulation?' (DEMO)':''));td(tr,o.fulfillment_status);
+   var cell=document.createElement('td');
+   var detail=document.createElement('button');detail.type='button';detail.className='secondary';detail.textContent='Detail';
+   detail.addEventListener('click',function(){showOrder(o.order_no)});cell.append(detail);
+   if(o.is_simulation&&o.payment_status==='PENDING'){
+    var cancel=document.createElement('button');cancel.type='button';cancel.className='secondary';cancel.style.marginLeft='6px';cancel.textContent='Batal QA';
+    cancel.addEventListener('click',function(){cancelOrder(o.order_no)});cell.append(cancel);
+   }
+   tr.append(cell);$('orderRows').append(tr);
+  });
+  msg('API ready. '+products.length+' produk, '+variants.length+' varian, '+orders.length+' order fixture.');
+ }catch(e){msg(e.message,true)}
+}
+$('loginForm').addEventListener('submit',async function(e){
+ e.preventDefault();
+ try{
+  var data=await request('/api/session','POST',{email:$('email').value,password:$('password').value});
+  $('password').value='';setLoggedIn(data.user);refresh();
+ }catch(e){$('password').value='';window.alert('Login gagal: '+e.message)}
+});
+$('logout').addEventListener('click',async function(){
+ try{await request('/api/session','DELETE');setLoggedOut()}catch(e){msg(e.message,true)}
+});
+$('productForm').addEventListener('submit',async function(e){
+ e.preventDefault();
+ try{
+  var input={
+    sku:$('sku').value,slug:$('slug').value,name:$('name').value,
+    weightGrams:Number($('weight').value),exportAllowed:$('exportAllowed').checked,
+    active:true,variants:[{sku:$('variantSku').value,unitPriceIdr:Number($('price').value),stock:Number($('stock').value)}]
+  };
+  await request('/api/admin-products','POST',input);
+  this.reset();await refresh();msg('Produk development tersimpan di Neon.');
+ }catch(e){msg(e.message,true)}
+});
+$('saveTiers').addEventListener('click',async function(){
+ try{
+  var text=$('tiers').value.trim();
+  var list=text?text.split(',').map(function(x){var m=x.trim().match(/^(\d+)\s*:\s*(\d+)$/);if(!m)throw Error('Tingkatan quantity tidak valid');return {minQty:Number(m[1]),unitPriceIdr:Number(m[2])}}):[];
+  if(!$('variant').value)throw Error('Pilih SKU varian');
+  await request('/api/admin-price-tiers','POST',{variantId:$('variant').value,tiers:list});
+  msg('Aturan grosir tersimpan untuk SKU terpilih.');await refresh();
+ }catch(e){msg(e.message,true)}
+});
+$('variant').addEventListener('change',fillVariant);
+$('editProduct').addEventListener('change',fillProduct);
+$('saveInventory').addEventListener('click',async function(){
+ try{
+  if(!$('variant').value)throw Error('Pilih SKU terlebih dahulu');
+  const response=await request('/api/admin-inventory','POST',{
+   variantId:$('variant').value,stockOnHand:Number($('stockEdit').value),
+   unitPriceIdr:Number($('priceEdit').value),active:$('skuActive').checked,
+   reason:$('stockReason').value.trim()
+  });
+  await refresh();msg('SKU '+response.variant.sku+' diperbarui dan diaudit.');
+ }catch(e){msg(e.message,true)}
+});
+$('saveProduct').addEventListener('click',async function(){
+ try{
+  const response=await request('/api/admin-product-update','POST',{
+   productId:$('editProduct').value,name:$('editName').value.trim(),
+   weightGrams:Number($('editWeight').value),active:$('editActive').checked,
+   exportAllowed:$('editExport').checked,reason:$('productReason').value.trim()
+  });
+  await refresh();msg('Produk '+response.product.sku+' diperbarui dan diaudit.');
+ }catch(e){msg(e.message,true)}
+});
+$('refresh').addEventListener('click',refresh);
+request('/api/session').then(function(d){setLoggedIn(d.user);refresh()}).catch(function(){setLoggedOut()});
+})();
+</script>
+</body></html>

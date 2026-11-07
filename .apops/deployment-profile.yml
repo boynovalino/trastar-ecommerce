@@ -1,0 +1,42 @@
+project_id: trastar-ecommerce
+repository: boynovalino/trastar-ecommerce
+default_branch: main
+working_branch: feat/ecommerce-foundation-neon
+verified_base_sha: d4c33cf6922a39ca2c327d8114ffff132ef838ae
+development:
+  database_provider: Neon
+  neon_project_id: frosty-frost-15366768
+  database_name: trastar_dev
+  database_branch: development
+  environment: local-dev
+preview:
+  provider: Vercel
+  team_id: team_1oGP6UlHFei71HoQ3qzJ6pcm
+  project_id: prj_A9Z2W1pJwKjxmMAhnvY8N6W8oOBV
+  git_branch: feat/ecommerce-foundation-neon
+  trigger: GitHub branch push and pull request
+  environment_vars_names: [DATABASE_URL, SESSION_SECRET, ALLOW_PREVIEW_SIMULATION]
+  protection: SSO enabled for preview deployments as observed
+production:
+  provider: CLIENT_HOSTING_NOT_SELECTED
+  url: UNKNOWN
+  app_identity_marker: trastar-ecommerce
+  database: CLIENT_OWNED_POSTGRES_NOT_PROVISIONED
+  authorization: CTO_AND_CEO_RELEASE_APPROVAL_REQUIRED
+  current_vercel_prototype_url: https://trastar-ecommerce.vercel.app
+  current_vercel_prototype_sha: d4c33cf6922a39ca2c327d8114ffff132ef838ae
+  deploy_trigger_current_prototype: main push auto-deploys Vercel production
+ci:
+  required_checks: UNKNOWN_NO_BRANCH_PROTECTION
+  review_policy: UNKNOWN
+  local_checks: [npm_run_check, npm_test, neon_integration_test]
+health:
+  checks: [deployment_identity, api_health, preview_catalog, preview_checkout_pending, admin_auth, database_integrity]
+  completion_criterion: no fatal errors, exact app identity, expected pending simulated order, zero captured payments
+rollback:
+  known_good_prototype_sha: d4c33cf6922a39ca2c327d8114ffff132ef838ae
+  procedure: do_not_merge_without_approved_release_plan
+  data_schema_compatibility: initial_additive_schema_only
+  restore_test: NOT_RUN
+secrets:
+  names_only: [DATABASE_URL, SESSION_SECRET, TRASTAR_INITIAL_ADMIN_EMAIL, TRASTAR_INITIAL_ADMIN_PASSWORD]
