@@ -58,9 +58,8 @@ test('connected storefront uses database-backed catalog and unpaid orders',()=>{
 
 test('admin main route serves database UI with audited actions',()=>{
  const config=JSON.parse(fs.readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
- for(const route of ['/admin','/admin/:path*']){
-  assert.equal(config.rewrites.find(x=>x.source===route)?.destination,'/admin-live.html');
- }
+ assert.equal(config.redirects.find(x=>x.source==='/admin')?.destination,'/admin-live');
+ assert.equal(config.rewrites.find(x=>x.source==='/admin/:path*')?.destination,'/admin-live.html');
  const admin=fs.readFileSync(new URL('../admin-live.html',import.meta.url),'utf8');
  for(const id of ['editProduct','editName','stockEdit','priceEdit','saveInventory','saveProduct','orderDetail','cancelReason']){
   assert.match(admin,new RegExp('id="'+id+'"'));

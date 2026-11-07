@@ -2,12 +2,15 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/admin",
-      "destination": "/admin-live.html"
-    },
-    {
       "source": "/admin/:path*",
       "destination": "/admin-live.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/admin",
+      "destination": "/admin-live",
+      "permanent": false
     }
   ]
 }
