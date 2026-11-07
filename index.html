@@ -55,6 +55,7 @@
 </style>
 </head>
 <body>
+<div role="status" style="position:sticky;top:0;z-index:9999;background:#fff7ed;color:#7c2d12;border-bottom:2px solid #fdba74;padding:10px 16px;font:600 13px/1.5 system-ui;text-align:center">TRASTAR PROTOTYPE. Produk, ongkir dan pembayaran masih simulasi. Jangan transfer uang atau gunakan data pribadi nyata.</div>
 <div id="root"></div>
 <script>
 window.addEventListener('error', function(e){ console.error('TRASTAR runtime error:', e.error || e.message); });
@@ -1252,25 +1253,7 @@ function PaymentPage(){
   const shippingMethod = SHIPPING_METHODS.find(s=>s.id===checkout.shippingMethod) || SHIPPING_METHODS[0];
   const total = subtotal - discount + shippingMethod.cost;
 
-  function handlePayNow(){
-    setProcessing(true);
-    setTimeout(()=>{
-      const order = {
-        orderNumber, createdAt: new Date().toISOString(),
-        items: items.map(it => ({ name: it.product.name, slug: it.product.slug, variant: it.variant, qty: it.qty, price: it.product.salePrice })),
-        customer: { fullName: checkout.fullName, email: checkout.email, phone: checkout.phone },
-        shippingAddress: { province: checkout.province, city: checkout.city, district: checkout.district, postalCode: checkout.postalCode, address: checkout.address },
-        shippingMethod: shippingMethod.name, shippingCost: shippingMethod.cost,
-        paymentMethod: selected ? selected.groupTitle + ' - ' + selected.name : 'Bank Transfer',
-        subtotal, discount, couponCode: coupon ? coupon.code : null, total,
-        paymentStatus:'PAID', orderStatus:'PROCESSING',
-      };
-      saveOrder(order);
-      saveLS('trastar_pending_order_number', null);
-      clearCart();
-      navigate('/thank-you');
-    }, 1600);
-  }
+  function handlePayNow(){ window.alert('Pembayaran belum aktif. Tidak ada transaksi nyata.'); }
 
   if(items.length===0 && !processing) return null;
 
@@ -1316,13 +1299,13 @@ function PaymentPage(){
               );
             })
           ),
-          h('p',{ className:'text-xs text-gray-400 mt-3' }, 'Bayar sebelum 28 September 2026, 23:59 WIB')
+          h('p',{ className:'text-xs text-gray-400 mt-3' }, 'Nomor pembayaran contoh. Jangan lakukan transfer. Metode pembayaran belum aktif.')
         )
       ))
     ),
-    h('button',{ type:'button', disabled:processing, onClick:handlePayNow,
+    h('button',{ type:'button', disabled:true, onClick:handlePayNow,
       className: cx('trs-btn-primary w-full py-4 rounded-lg font-bold text-sm mt-6 flex items-center justify-center gap-2', processing && 'opacity-80 cursor-not-allowed') },
-      processing ? h(React.Fragment,null, h(Icon,{name:'loader', size:16}), 'Processing Payment...') : 'PAY NOW')
+      processing ? h(React.Fragment,null, h(Icon,{name:'loader', size:16}), 'Processing Payment...') : 'PAYMENT DISABLED (DEMO)')
   );
 }
 
