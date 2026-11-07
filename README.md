@@ -1,43 +1,24 @@
-# TRASTAR — E-commerce Sparepart Motor (Prototype)
+# TRASTAR eCommerce Sparepart Motor
 
-Prototype front-end untuk toko online sparepart & aksesoris motor bernama **TRASTAR**.
+This repository contains the existing TRASTAR storefront/admin visual prototype and the initial Node.js + PostgreSQL backend foundation.
 
-## Tentang project ini
+**Status: DEVELOPMENT, NOT AN ONLINE STORE.** The storefront and existing admin are demo UI; checkout/payments are disabled, and the real admin dashboard integration is still under development. Do not use real customer information or attempt transfers to sample accounts.
 
-- Single-file app: seluruh UI (React + Tailwind) ada di `index.html`, React & ReactDOM dimuat lewat CDN — tidak perlu proses build (`npm install` / `npm run build`) sama sekali.
-- Routing memakai hash-based router kustom (`#/shop`, `#/product/:slug`, dst), sehingga tetap berfungsi penuh di static hosting seperti Vercel/Netlify/GitHub Pages.
-- Data produk masih dummy/statis (ada di dalam `index.html`), cart & order tersimpan di `localStorage` browser (tidak ada backend/database sungguhan).
-- Alur yang bisa dicoba: Home → Shop → Product Detail → Add to Cart → Cart → Checkout → Payment (simulasi VA/QRIS/E-Wallet) → Thank You → My Order.
+## Scope
+- Static prototype: `index.html`, `admin.html`, `assets/`.
+- Backend: `api/` Vercel Node.js functions and `lib/` shared services.
+- Database: `db/` versioned PostgreSQL migrations, `test/` source/integration tests.
+- Development database: Neon project `frosty-frost-15366768`, `trastar_dev`; no other project databases used.
+- Production database: client hosting PostgreSQL, not selected or provisioned.
+- Payment gateway, foreign card acceptance, carrier international rates, real admin UI, production release: **not completed**.
 
-## Menjalankan secara lokal
+See [DEVELOPMENT.md](DEVELOPMENT.md) for API usage, development-only migration/seed, safe simulation mode, and remaining blockers.
 
-Karena tidak ada proses build, cukup buka filenya langsung di browser:
-
-```bash
-open index.html      # macOS
-# atau
-start index.html     # Windows
+## Local verification
+```
+npm ci
+npm run check
+npm test
 ```
 
-Atau jalankan local server sederhana (disarankan, supaya localStorage & routing lebih stabil):
-
-```bash
-npx serve .
-```
-
-## Deploy ke Vercel
-
-Lihat instruksi lengkap di percakapan/README project, intinya:
-
-1. Push repo ini ke GitHub.
-2. Import repo di [vercel.com](https://vercel.com) → Add New Project.
-3. Framework Preset: pilih **Other** (Vercel akan otomatis serve `index.html` sebagai static site, tidak perlu build command).
-4. Deploy.
-
-## Struktur
-
-```
-.
-├── index.html   # seluruh aplikasi (HTML + CSS + JS/React)
-└── README.md
-```
+The legacy HTML prototype can still be served statically, but it is explicitly marked as non-transactional. No production release is authorized by this development branch.
