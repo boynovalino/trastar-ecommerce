@@ -45,3 +45,9 @@ Payment provider activation, verified international shipping carrier/coverage, f
 
 ## Database migration to client infrastructure
 Production uses a separate PostgreSQL instance controlled by client. Apply reviewed schema migrations to *empty* client database and import approved catalog only. Preview fixture orders must not become production orders. Verify DB connection, app identity, backup/restore and a known rollback path before DNS cutover.
+
+## Development-only QA screens
+- `/qa` reads Neon catalog and tests signed shipping quotes plus PENDING simulated orders using synthetic recipient data.
+- `/admin-live` is the separate database-backed admin prototype. It supports session login, product creation, per-SKU quantity price tiers, and order reporting. Existing `/admin` remains the original demo and is not connected to PostgreSQL.
+- The development QA admin is provisioned using an isolated, gitignored local environment. Do not publish credentials or reuse this account for the client. Production owner onboarding and MFA are still pending.
+- Backend tests against Neon development include `node --env-file=.env.local test/integration-neon.mjs` and `node --env-file=.env.local test/integration-admin.mjs`. These tests WRITE clearly labeled fixtures; they are not part of routine CI and must never run against client production.

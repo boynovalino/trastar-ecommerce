@@ -30,3 +30,11 @@ test('qa.html uses only development fixtures and inline script compiles',()=>{
  assert.ok(scripts.length);
  for(const source of scripts)new vm.Script(source,{filename:'qa.html'});
 });
+
+test('admin-live.html uses auth session and server-backed product/order APIs',()=>{
+ const html=fs.readFileSync(new URL('../admin-live.html',import.meta.url),'utf8');
+ assert.match(html,/DEV ONLY/);
+ for(const path of ['/api/session','/api/admin-products','/api/admin-price-tiers','/api/admin-orders'])assert.ok(html.includes(path));
+ const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(x=>x[1]).filter(Boolean);
+ assert.ok(scripts.length);for(const source of scripts)new vm.Script(source,{filename:'admin-live.html'});
+});
